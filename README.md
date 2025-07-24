@@ -47,7 +47,7 @@ The FastAPI app reads Neo4j credentials and connection info from environment var
 ### 1. `/ingestProfile2MoMa` (POST)
 
 **Purpose:**  
-Ingest profiling metadata into the MoMa property graph.
+Ingest profiling data into the MoMa property graph database.
 
 **Details:**  
 - Accepts input JSON in the **Croissant** format.
