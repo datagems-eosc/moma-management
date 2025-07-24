@@ -15,12 +15,12 @@ This project provides a containerized API for interacting with the MoMa Property
 │   └── manager.py
 ├── requirements.txt
 ├── Dockerfile
-└── docker-compose.yml
+├── docker-compose.yml
 └── README.md
 
 ## 📦 Run App
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/datagems-eosc/moma-management.git MoMaGateway
 cd MoMaGateway
 ```
 
@@ -54,8 +54,8 @@ Ingest profiling metadata into the MoMa property graph.
 - Converts it to **PG-JSON** based on the **MoMa structure**
 - Stores the data into **Neo4j**
 - Returns:
-	{"status": "success"} – if the data was ingested successfully
-	{"status": "An error occurred: <message>"} – if an error occurred during processing
+	- {"status": "success"} – if the data was ingested successfully
+	- {"status": "An error occurred: <message>"} – if an error occurred during processing
 
 
 **Usage:**
