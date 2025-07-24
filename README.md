@@ -1,19 +1,12 @@
 # MoMa API with FastAPI and Neo4j (Dockerized)
 
-This project provides a containerized API for interacting with the **MoMa Property Graph**, which is implemented using **Neo4j**. It includes:
+This project provides a containerized API for interacting with the MoMa Property Graph, which is implemented using Neo4j. It includes:
 
 - A **FastAPI** application that exposes two endpoints
 - A **Neo4j** database instance to store property graph data
-- A `docker-compose.yml` file to manage both services easily
-
+- A `docker-compose.yml` file to manage both services
 
 ---
-## 📦 Run App
-
-```bash
-git clone <your-repo-url>
-cd MoMaGateway
-
 **Project Structure**
 .
 ├── app/
@@ -25,10 +18,17 @@ cd MoMaGateway
 └── docker-compose.yml
 └── README.md
 
+## 📦 Run App
+```bash
+git clone <your-repo-url>
+cd MoMaGateway
+```
+
 **Build and start services**
 ```bash
 docker-compose build
 docker-compose up
+```
 
 **Services will be available at:**
 FastAPI: http://localhost:8000
@@ -40,7 +40,6 @@ environment:
   NEO4J_URI: bolt://neo4j:7687
   NEO4J_USER: neo4j
   NEO4J_PASSWORD: datagems
-
 
 ---
 ## 📦 Services Overview
@@ -63,7 +62,7 @@ Ingest profiling metadata into the MoMa property graph.
 ```bash
 POST /ingestProfile2MoMa
 Content-Type: application/json
-
+```
 
 ### 2. `/retrieveMoMaMetadata` (POST)
 
@@ -78,4 +77,4 @@ Retrieve metadata from the MoMa property graph.
 ```bash
 POST /retrieveMoMaMetadata
 Content-Type: application/json
-
+```
