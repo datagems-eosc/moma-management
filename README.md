@@ -26,10 +26,10 @@ cd MoMaGateway
 ```
 
 **Build and start services**
-```bash
-docker-compose build
-docker-compose up
-```
+- `docker-compose build` — Builds the images  
+- `docker-compose up -d` — Starts the containers in detached mode  
+- `docker-compose down` — Stops the containers
+
 
 **Services will be available at:**
 - FastAPI: http://localhost:8000
