@@ -25,14 +25,14 @@ git clone https://github.com/datagems-eosc/moma-management.git MoMaGateway
 cd MoMaGateway
 ```
 **Installation**
-*Install Docker*
+- Install Docker
 ```bash
 sudo apt update
 sudo apt install -y docker.io
 sudo systemctl start docker
 sudo systemctl enable docker
 ```
-*Install Docker Compose*
+- Install Docker Compose
 ```bash
 sudo apt install -y docker-compose
 ```
