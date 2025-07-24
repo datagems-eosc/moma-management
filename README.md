@@ -24,6 +24,18 @@ This project provides a containerized API for interacting with the MoMa Property
 git clone https://github.com/datagems-eosc/moma-management.git MoMaGateway
 cd MoMaGateway
 ```
+**Installation**
+*Install Docker*
+```bash
+sudo apt update
+sudo apt install -y docker.io
+sudo systemctl start docker
+sudo systemctl enable docker
+```
+*Install Docker Compose*
+```bash
+sudo apt install -y docker-compose
+```
 
 **Build and start services**
 ```bash
