@@ -35,7 +35,7 @@ docker-compose up
 - FastAPI: http://localhost:8000
 - Neo4j Browser: http://localhost:7474
 
-**Environment Variables**
+**Environment Variables:**
 The FastAPI app reads Neo4j credentials and connection info from environment variables set in docker-compose.yml.
   - NEO4J_URI: bolt://neo4j:7687
   - NEO4J_USER: neo4j
