@@ -8,6 +8,7 @@ This project provides a containerized API for interacting with the MoMa Property
 
 ---
 **Project Structure**
+```
 .
 ├── app/
 │   ├── main.py
@@ -16,6 +17,7 @@ This project provides a containerized API for interacting with the MoMa Property
 ├── requirements.txt
 ├── Dockerfile
 └── docker-compose.yml
+```
 
 ## 📦 Run App
 ```bash
