@@ -7,12 +7,11 @@ This project provides a containerized API for interacting with the MoMa Property
 - A `docker-compose.yml` file to manage both services
 
 ---
-**Project Structure**
 .
 ├── app/
-│   ├── main.py
-│   ├── converters.py
-│   └── manager.py
+│ ├── main.py
+│ ├── converters.py
+│ └── manager.py
 ├── requirements.txt
 ├── Dockerfile
 ├── docker-compose.yml
@@ -75,6 +74,5 @@ Retrieve metadata from the MoMa property graph.
 
 **Usage:**
 ```bash
-POST /retrieveMoMaMetadata
-Content-Type: application/json
+POST /retrieveMoMaMetadata?id=<your_id>
 ```
