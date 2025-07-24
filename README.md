@@ -7,15 +7,15 @@ This project provides a containerized API for interacting with the MoMa Property
 - A `docker-compose.yml` file to manage both services
 
 ---
+**Project Structure**
 .
 ├── app/
-│ ├── main.py
-│ ├── converters.py
-│ └── manager.py
+│   ├── main.py
+│   ├── converters.py
+│   └── manager.py
 ├── requirements.txt
 ├── Dockerfile
-├── docker-compose.yml
-└── README.md
+└── docker-compose.yml
 
 ## 📦 Run App
 ```bash
@@ -30,8 +30,8 @@ docker-compose up
 ```
 
 **Services will be available at:**
-FastAPI: http://localhost:8000
-Neo4j Browser: http://localhost:7474
+- FastAPI: http://localhost:8000
+- Neo4j Browser: http://localhost:7474
 
 **Environment Variables**
 The FastAPI app reads Neo4j credentials and connection info from environment variables set in docker-compose.yml.
