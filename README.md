@@ -26,14 +26,19 @@ cd MoMaGateway
 ```
 
 **Build and start services**
-- `docker-compose build` — Builds the images  
-- `docker-compose up -d` — Starts the containers in detached mode  
-- `docker-compose down` — Stops the containers
-
+```bash
+docker-compose build
+docker-compose up -d
+```
 
 **Services will be available at:**
 - FastAPI: http://localhost:8000
 - Neo4j Browser: http://localhost:7474
+
+**Stop services**
+```bash
+docker-compose down
+```
 
 **Environment Variables:**
 The FastAPI app reads Neo4j credentials and connection info from environment variables set in docker-compose.yml.
