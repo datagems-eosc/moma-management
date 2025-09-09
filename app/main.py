@@ -26,11 +26,11 @@ async def ingestProfile2MoMa(input_data: Dict[str, Any]):
 @app.get("/retrieveMoMaMetadata")
 async def retrieveMoMaMetadata(id: str):
     try:
-        metadata = retrieveMetadata(id)
-
-        return {
-            "metadata": metadata
-        }
+        #metadata = retrieveMetadata(id)
+        return {"metadata": "retrieveMoMaMetadata  is running"}
+        #return {
+        #    "metadata": metadata
+        #}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
