@@ -23,7 +23,7 @@ async def ingestProfile2MoMa(input_data: Dict[str, Any]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-@app.post("/retrieveMoMaMetadata")
+@app.get("/retrieveMoMaMetadata")
 async def retrieveMoMaMetadata(id: str):
     try:
         metadata = retrieveMetadata(id)
