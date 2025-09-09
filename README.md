@@ -81,7 +81,7 @@ POST /ingestProfile2MoMa
 Content-Type: application/json
 ```
 
-### 2. `/retrieveMoMaMetadata` (POST)
+### 2. `/retrieveMoMaMetadata` (GET)
 
 **Purpose:**  
 Retrieve metadata from the MoMa property graph.
@@ -92,5 +92,5 @@ Retrieve metadata from the MoMa property graph.
 
 **Usage:**
 ```bash
-POST /retrieveMoMaMetadata?id=<your_id>
+GET /retrieveMoMaMetadata?id=<your_id>
 ```
