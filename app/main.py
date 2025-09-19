@@ -46,8 +46,8 @@ async def getCollection(id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-@app.get("/getAllCollections")
-async def getAllCollections():
+@app.get("/listCollections")
+async def listCollections():
     try:
         metadata = retrieveAllCollections()
 
@@ -58,8 +58,8 @@ async def getAllCollections():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-@app.get("/getAllCollectionsDateOrdered")
-async def getAllCollectionsDateOrdered():
+@app.get("/listCollectionsDateOrdered")
+async def listCollectionsDateOrdered():
     try:
         metadata = retrieveAllCollectionsDateOrdered()
 
@@ -70,8 +70,8 @@ async def getAllCollectionsDateOrdered():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-@app.get("/getCollectionsByType")
-async def getCollectionsByType(label: str):
+@app.get("/listCollectionsByType")
+async def listCollectionsByType(label: str):
     try:
         types = ["PDF", "RelationalDatabase", "CSV", "ImageSet", "TextSet", "Table"]
         if label in types:
