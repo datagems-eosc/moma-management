@@ -21,7 +21,7 @@ This project provides a containerized API for interacting with the MoMa Property
 
 ## 📦 Run App
 ```bash
-git clone https://github.com/datagems-eosc/moma-management.git MoMaGateway
+git clone https://github.com/datagems-eosc/moma-management.git
 cd MoMaGateway
 ```
 **Installation**
@@ -81,16 +81,74 @@ POST /ingestProfile2MoMa
 Content-Type: application/json
 ```
 
-### 2. `/retrieveMoMaMetadata` (GET)
+### 2. `/getMoMaObject` (GET)
 
 **Purpose:**  
-Retrieve metadata from the MoMa property graph.
+Retrieve the metadata of a MoMa node from the MoMa property graph.
 
 **Details:**  
-- Accepts a dataset UUID
-- Returns: PG-JSON containing metadata of the requested dataset (MoMa node)
+- Accepts a UUID of a MoMa node
+- Returns: PG-JSON containing metadata of the requested MoMa node
 
 **Usage:**
 ```bash
-GET /retrieveMoMaMetadata?id=<your_id>
+GET /getMoMaObject?id=<your_id>
 ```
+
+### 3. `/getCollection` (GET)
+
+**Purpose:**  
+Retrieve the metadata of a Collection node and all nodes transitively connected to it that belong to this Collection.
+
+**Details:**  
+- Accepts a Collection UUID
+- Returns: PG-JSON containing metadata of the requested Collection and all nodes transitively connected to it
+
+**Usage:**
+```bash
+GET /getCollection?id=<your_id>
+```
+
+### 4. `/listCollections` (GET)
+
+**Purpose:**  
+Retrieve the metadata of the Collections stored in the MoMA property graph.
+
+**Details:**  
+- Returns: PG-JSON containing metadata of the Collections stored in the MoMA
+
+**Usage:**
+```bash
+GET /listCollections
+```
+
+### 5. `/listCollectionsOrderedBy` (GET)
+
+**Purpose:**  
+Retrieve the metadata of the Collections stored in the MoMA property graph, ordered by a specific property
+
+**Details:**  
+- Accepts a property of Collection label. Accepted properties: [“datePublished”]
+- Returns: PG-JSON containing metadata of the Collections, ordered by the specified property in the parameter
+	- {"metadata": "status: wrong parameter"} – returned if the parameter is wrong
+
+**Usage:**
+```bash
+GET /listCollectionsOrderedBy?orderBy=<your_id>
+```
+
+### 6. `/listCollectionsByType` (GET)
+
+**Purpose:**  
+Retrieve the metadata of Collection nodes that contain a specific type of dataset.
+
+**Details:**  
+- Accepts a type of a dataset. Accepted Types: ["PDF", "RelationalDatabase", "CSV", "ImageSet", "TextSet", "Table"]
+- Returns: PG-JSON containing metadata of the Collections, containing this dataset type.
+	- {"metadata": "status: wrong parameter"} – returned if the parameter is wrong
+
+**Usage:**
+```bash
+GET /listCollectionsByType?type=<your_id>
+```
+

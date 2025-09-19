@@ -184,13 +184,13 @@ def retrieveAllCollections() -> dict:
         logging.error(f"Neo4j retrieve failed: {e}")
         return {"error": str(e)}
 
-def retrieveAllCollectionsDateOrdered() -> dict:
+def retrieveCollectionsOrderedBy(orderBy: str) -> dict:
     try:
         driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
-        query = """
+        query = f"""
             MATCH (c:Collection)
             RETURN c.id AS id, labels(c) AS labels, properties(c) AS properties
-            ORDER BY c.datePublished DESC
+            ORDER BY c.{orderBy} DESC
         """
 
         with driver.session() as session:
@@ -210,12 +210,9 @@ def retrieveAllCollectionsDateOrdered() -> dict:
         logging.error(f"Neo4j retrieve failed: {e}")
         return {"error": str(e)}
 
-from neo4j import GraphDatabase
-import logging
-
 
 #Retrieve all Collection nodes that are transitively connected to at least one node with the given targetLabel.
-def retrieveCollectionsByLabel(targetLabel: str) -> dict:
+def retrieveCollectionsByType(targetLabel: str) -> dict:
     try:
         driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 

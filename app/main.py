@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from typing import Any, Dict
 from app.converters import Croissant2PGjson
-from app.manager import pgjson2Neo4j, retrieveMetadata, retrieveCollection, retrieveAllCollections, retrieveAllCollectionsDateOrdered, retrieveCollectionsByLabel
+from app.manager import pgjson2Neo4j, retrieveMetadata, retrieveCollection, retrieveAllCollections, retrieveCollectionsOrderedBy, retrieveCollectionsByType
 import json
 
 app = FastAPI(title="MoMa API")
@@ -58,24 +58,29 @@ async def listCollections():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-@app.get("/listCollectionsDateOrdered")
-async def listCollectionsDateOrdered():
+@app.get("/listCollectionsOrderedBy")
+async def listCollectionsOrderedBy(orderBy: str):
     try:
-        metadata = retrieveAllCollectionsDateOrdered()
-
-        return {
-            "metadata": metadata
-        }
+        properties = ["datePublished"]
+        if orderBy in properties:
+            metadata = retrieveCollectionsOrderedBy(properties)
+            return {
+                "metadata": metadata
+            }
+        else:
+            return {
+                "metadata": "status: wrong parameter"
+            }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 @app.get("/listCollectionsByType")
-async def listCollectionsByType(label: str):
+async def listCollectionsByType(type: str):
     try:
         types = ["PDF", "RelationalDatabase", "CSV", "ImageSet", "TextSet", "Table"]
-        if label in types:
-            metadata = retrieveCollectionsByLabel(label)
+        if type in types:
+            metadata = retrieveCollectionsByType(type)
             return {
                 "metadata": metadata
             }
