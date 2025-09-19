@@ -130,7 +130,7 @@ Retrieve the metadata of the Collections stored in the MoMA property graph, orde
 **Details:**  
 - Accepts a property of Collection label. Accepted properties: [“datePublished”]
 - Returns: PG-JSON containing metadata of the Collections, ordered by the specified property in the parameter
-	- {"metadata": "status: wrong parameter"} – returned if the parameter is wrong
+	- {"metadata": "status - wrong parameter"} – returned if the parameter is wrong
 
 **Usage:**
 ```bash
@@ -145,7 +145,7 @@ Retrieve the metadata of Collection nodes that contain a specific type of datase
 **Details:**  
 - Accepts a type of a dataset. Accepted Types: ["PDF", "RelationalDatabase", "CSV", "ImageSet", "TextSet", "Table"]
 - Returns: PG-JSON containing metadata of the Collections, containing this dataset type.
-	- {"metadata": "status: wrong parameter"} – returned if the parameter is wrong
+	- {"metadata": "status - wrong parameter"} – returned if the parameter is wrong
 
 **Usage:**
 ```bash

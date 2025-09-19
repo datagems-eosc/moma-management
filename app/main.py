@@ -63,13 +63,13 @@ async def listCollectionsOrderedBy(orderBy: str):
     try:
         properties = ["datePublished"]
         if orderBy in properties:
-            metadata = retrieveCollectionsOrderedBy(properties)
+            metadata = retrieveCollectionsOrderedBy(orderBy)
             return {
                 "metadata": metadata
             }
         else:
             return {
-                "metadata": "status: wrong parameter"
+                "metadata": "status - wrong parameter"
             }
 
     except Exception as e:
@@ -86,7 +86,7 @@ async def listCollectionsByType(type: str):
             }
         else:
             return {
-                "metadata": "status: wrong parameter"
+                "metadata": "status - wrong parameter"
             }
 
     except Exception as e:
