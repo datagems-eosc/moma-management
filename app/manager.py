@@ -107,43 +107,33 @@ def retrieveMetadata(nodeId: str) -> dict:
         logging.error(f"Neo4j retrieve failed: {e}")
         return f"Error: {str(e)}"
 
+
 def retrieveCollection(nodeId: str) -> dict:
     try:
         driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+
         query = """
             MATCH (n:Collection {id: $nodeId})
-            OPTIONAL MATCH (n)-[r]-(m)
+            // Find all paths from the collection to any node with Dataset or DatasetPart
+            OPTIONAL MATCH path = (n)-[*]-(m)
             WHERE m:Dataset OR m:DatasetPart
-            OPTIONAL MATCH (m)-[r2]-(d)
-            WHERE (d:Dataset OR d:DatasetPart) 
-              AND labels(m) = labels(d)
+            WITH n, collect(DISTINCT m) AS reachableNodes, collect(DISTINCT relationships(path)) AS paths
             RETURN {
                 id: n.id,
                 labels: labels(n),
                 properties: properties(n)
             } AS nodeInfo,
-            collect(DISTINCT {
-                id: m.id,
-                labels: labels(m),
-                properties: properties(m)
-            }) AS connectedNodes,
-            collect(DISTINCT {
-                id: d.id,
-                labels: labels(d),
-                properties: properties(d)
-            }) AS datasetNodes,
-            collect(DISTINCT {
+            [node IN reachableNodes | {
+                id: node.id,
+                labels: labels(node),
+                properties: properties(node)
+            }] AS nodes,
+            reduce(acc=[], rels IN paths | acc + [r IN rels | {
                 start: startNode(r).id,
                 end: endNode(r).id,
                 type: type(r),
                 properties: properties(r)
-            }) AS edges1,
-            collect(DISTINCT {
-                start: startNode(r2).id,
-                end: endNode(r2).id,
-                type: type(r2),
-                properties: properties(r2)
-            }) AS edges2
+            }]) AS edges
         """
 
         with driver.session() as session:
@@ -151,20 +141,16 @@ def retrieveCollection(nodeId: str) -> dict:
         driver.close()
 
         if record:
+            # main collection node
             nodeMetadata = record["nodeInfo"]
-
-            connectedNodes = [
-                n for n in record["connectedNodes"] if n.get("id") is not None
-            ]
-            datasetNodes = [
-                n for n in record["datasetNodes"] if n.get("id") is not None
-            ]
-            edges1 = [e for e in record["edges1"] if e.get("type") is not None]
-            edges2 = [e for e in record["edges2"] if e.get("type") is not None]
+            # reachable nodes (datasets/datasetParts)
+            reachableNodes = [n for n in record["nodes"] if n.get("id") is not None]
+            # edges from all paths
+            edges = [e for e in record["edges"] if e.get("type") is not None]
 
             result = {
-                "nodes": [nodeMetadata] + connectedNodes + datasetNodes,
-                "edges": edges1 + edges2
+                "nodes": [nodeMetadata] + reachableNodes,
+                "edges": edges
             }
         else:
             result = {"nodes": [], "edges": []}
