@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from typing import Any, Dict
 from app.converters import Croissant2PGjson
-from app.manager import pgjson2Neo4j, retrieveMetadata, retrieveCollection
+from app.manager import pgjson2Neo4j, retrieveMetadata, retrieveCollection, retrieveAllCollections, retrieveAllCollectionsDateOrdered, retrieveCollectionsByLabel
 import json
 
 app = FastAPI(title="MoMa API")
@@ -23,8 +23,8 @@ async def ingestProfile2MoMa(input_data: Dict[str, Any]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-@app.get("/retrieveMoMaMetadata")
-async def retrieveMoMaMetadata(id: str):
+@app.get("/getMoMaObject")
+async def getMoMaObject(id: str):
     try:
         metadata = retrieveMetadata(id)
         return {
@@ -34,14 +34,55 @@ async def retrieveMoMaMetadata(id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-@app.get("/retrieveMoMaCollection")
-async def retrieveMoMaCollection(id: str):
+@app.get("/getCollection")
+async def getCollection(id: str):
     try:
         metadata = retrieveCollection(id)
 
         return {
             "metadata": metadata
         }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@app.get("/getAllCollections")
+async def getAllCollections():
+    try:
+        metadata = retrieveAllCollections()
+
+        return {
+            "metadata": metadata
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@app.get("/getAllCollectionsDateOrdered")
+async def getAllCollectionsDateOrdered():
+    try:
+        metadata = retrieveAllCollectionsDateOrdered()
+
+        return {
+            "metadata": metadata
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@app.get("/getCollectionsByType")
+async def getCollectionsByType(label: str):
+    try:
+        types = ["PDF", "RelationalDatabase", "CSV", "ImageSet", "TextSet", "Table"]
+        if label in types:
+            metadata = retrieveCollectionsByLabel(label)
+            return {
+                "metadata": metadata
+            }
+        else:
+            return {
+                "metadata": "status: wrong parameter"
+            }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")

@@ -84,7 +84,6 @@ def retrieveMetadata(nodeId: str) -> dict:
                     properties: properties(n)
                 } AS nodeInfo
                """
-
         with driver.session() as session:
             result = session.run(query, nodeId=nodeId)
             record = result.single()
@@ -108,6 +107,7 @@ def retrieveMetadata(nodeId: str) -> dict:
         return f"Error: {str(e)}"
 
 
+#Retrieve a Collection node and all transitively connected nodes that has label Dataset or DatasetPart
 def retrieveCollection(nodeId: str) -> dict:
     try:
         driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
@@ -135,7 +135,6 @@ def retrieveCollection(nodeId: str) -> dict:
                 properties: properties(r)
             }]) AS edges
         """
-
         with driver.session() as session:
             record = session.run(query, nodeId=nodeId).single()
         driver.close()
@@ -160,3 +159,85 @@ def retrieveCollection(nodeId: str) -> dict:
     except Exception as e:
         logging.error(f"Neo4j retrieve failed: {e}")
         return {"error": str(e)}
+
+def retrieveAllCollections() -> dict:
+    try:
+        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        query = """
+            MATCH (c:Collection)
+            RETURN c.id AS id, labels(c) AS labels, properties(c) AS properties
+        """
+        with driver.session() as session:
+            result = session.run(query)
+            collections = []
+            for record in result:
+                collections.append({
+                    "id": record["id"],
+                    "labels": record["labels"],
+                    "properties": record["properties"]
+                })
+
+        driver.close()
+        return {"nodes": collections}
+
+    except Exception as e:
+        logging.error(f"Neo4j retrieve failed: {e}")
+        return {"error": str(e)}
+
+def retrieveAllCollectionsDateOrdered() -> dict:
+    try:
+        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        query = """
+            MATCH (c:Collection)
+            RETURN c.id AS id, labels(c) AS labels, properties(c) AS properties
+            ORDER BY c.datePublished DESC
+        """
+
+        with driver.session() as session:
+            result = session.run(query)
+            collections = []
+            for record in result:
+                collections.append({
+                    "id": record["id"],
+                    "labels": record["labels"],
+                    "properties": record["properties"]
+                })
+
+        driver.close()
+        return {"nodes": collections}
+
+    except Exception as e:
+        logging.error(f"Neo4j retrieve failed: {e}")
+        return {"error": str(e)}
+
+from neo4j import GraphDatabase
+import logging
+
+
+#Retrieve all Collection nodes that are transitively connected to at least one node with the given targetLabel.
+def retrieveCollectionsByLabel(targetLabel: str) -> dict:
+    try:
+        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+
+        # Inject targetLabel carefully (validate input before using in prod!)
+        query = f"""
+            MATCH (c:Collection)-[*]-(m:{targetLabel})
+            RETURN DISTINCT {{
+                id: c.id,
+                labels: labels(c),
+                properties: properties(c)
+            }} AS collection
+        """
+
+        with driver.session() as session:
+            result = session.run(query)
+            collections = [record["collection"] for record in result]
+
+        driver.close()
+        return {"nodes": collections}
+
+    except Exception as e:
+        logging.error(f"Neo4j retrieve failed: {e}")
+        return {"error": str(e)}
+
+
