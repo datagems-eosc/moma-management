@@ -46,7 +46,7 @@ def Croissant2PGjson(data: dict) -> dict:
                 "encodingFormat": dist.get("encodingFormat"),
                 "includes": dist.get("includes")
             }
-            nodes.append({"id": id, "labels": ["TextSet"], "properties": properties})
+            nodes.append({"id": id, "labels": ["TextSet", "Dataset"], "properties": properties})
             addEdge(edges, id, collectionID, "belong")
 
         elif encoding == "image/jpg":
@@ -60,7 +60,7 @@ def Croissant2PGjson(data: dict) -> dict:
                 "encodingFormat": dist.get("encodingFormat"),
                 "includes": dist.get("includes")
             }
-            nodes.append({"id": id, "labels": ["ImageSet"], "properties": properties})
+            nodes.append({"id": id, "labels": ["ImageSet", "Dataset"], "properties": properties})
             addEdge(edges, id, collectionID, "belong")
 
         elif encoding == "text/csv":
@@ -74,7 +74,7 @@ def Croissant2PGjson(data: dict) -> dict:
                 "encodingFormat": dist.get("encodingFormat"),
                 "sha256": dist.get("sha256")
             }
-            nodes.append({"id": id, "labels": ["CSV"], "properties": properties})
+            nodes.append({"id": id, "labels": ["CSV", "DatasetPart"], "properties": properties})
             addEdge(edges, id, collectionID, "belong")
 
         elif encoding == "text/sql":
@@ -89,7 +89,7 @@ def Croissant2PGjson(data: dict) -> dict:
                     "encodingFormat": dist.get("encodingFormat"),
                 }
                 source = dist.get("containedIn", {}).get("@id", {})
-                nodes.append({"id": id, "labels": ["Table"], "properties": properties})
+                nodes.append({"id": id, "labels": ["Table", "DatasetPart"], "properties": properties})
                 addEdge(edges, source, id, "contain")
             else:  # relational db
                 properties = {
@@ -101,7 +101,7 @@ def Croissant2PGjson(data: dict) -> dict:
                     "encodingFormat": dist.get("encodingFormat"),
                     "sha256": dist.get("sha256")
                 }
-                nodes.append({"id": id, "labels": ["RelationalSet"], "properties": properties})
+                nodes.append({"id": id, "labels": ["RelationalDatabase", "Dataset"], "properties": properties})
                 addEdge(edges, id, collectionID, "belong")
 
     # print(json.dumps(nodes, indent=2))
@@ -132,7 +132,7 @@ def Croissant2PGjson(data: dict) -> dict:
                     "keywords": field.get("keywords"),
                     "summary": field.get("summary")
                 }
-                nodes.append({"id": id, "labels": ["PDF"], "properties": properties})
+                nodes.append({"id": id, "labels": ["PDF", "DatasetPart"], "properties": properties})
             else:  # coulumn of table or csv
                 properties = {
                     "type": field.get("@type"),
@@ -142,7 +142,7 @@ def Croissant2PGjson(data: dict) -> dict:
                     "column": field.get("source", {}).get("extract", {}).get("column"),
                     "sample": field.get("sample")
                 }
-                nodes.append({"id": id, "labels": ["Column"], "properties": properties})
+                nodes.append({"id": id, "labels": ["Column", "DatasetPart"], "properties": properties})
 
             addEdge(edges, source_id, id, "contain")
 

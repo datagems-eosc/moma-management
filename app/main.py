@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from typing import Any, Dict
 from app.converters import Croissant2PGjson
-from app.manager import pgjson2Neo4j, retrieveMetadata
+from app.manager import pgjson2Neo4j, retrieveMetadata, retrieveCollection
 import json
 
 app = FastAPI(title="MoMa API")
@@ -29,6 +29,18 @@ async def retrieveMoMaMetadata(id: str):
         metadata = retrieveMetadata(id)
         return {
            "metadata": metadata
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@app.get("/retrieveMoMaCollection")
+async def retrieveMoMaCollection(id: str):
+    try:
+        metadata = retrieveCollection(id)
+
+        return {
+            "metadata": metadata
         }
 
     except Exception as e:
