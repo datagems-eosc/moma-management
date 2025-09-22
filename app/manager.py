@@ -108,15 +108,15 @@ def retrieveMetadata(nodeId: str) -> dict:
 
 
 #Retrieve a Collection node and all transitively connected nodes that has label Dataset or DatasetPart
-def retrieveCollection(nodeId: str) -> dict:
+def retrieveDataset(nodeId: str) -> dict:
     try:
         driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
         query = """
-            MATCH (n:Collection {id: $nodeId})
-            // Find all paths from the collection to any node with Dataset or DatasetPart
+            MATCH (n:Dataset {id: $nodeId})
+            // Find all paths from the collection to any node with Data or DataPart
             OPTIONAL MATCH path = (n)-[*]-(m)
-            WHERE m:Dataset OR m:DatasetPart
+            WHERE m:Data OR m:DataPart
             WITH n, collect(DISTINCT m) AS reachableNodes, collect(DISTINCT relationships(path)) AS paths
             RETURN {
                 id: n.id,
@@ -160,11 +160,11 @@ def retrieveCollection(nodeId: str) -> dict:
         logging.error(f"Neo4j retrieve failed: {e}")
         return {"error": str(e)}
 
-def retrieveAllCollections() -> dict:
+def retrieveAllDatasets() -> dict:
     try:
         driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
         query = """
-            MATCH (c:Collection)
+            MATCH (c:Dataset)
             RETURN c.id AS id, labels(c) AS labels, properties(c) AS properties
         """
         with driver.session() as session:
@@ -184,11 +184,11 @@ def retrieveAllCollections() -> dict:
         logging.error(f"Neo4j retrieve failed: {e}")
         return {"error": str(e)}
 
-def retrieveCollectionsOrderedBy(orderBy: str) -> dict:
+def retrieveDatasetsOrderedBy(orderBy: str) -> dict:
     try:
         driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
         query = f"""
-            MATCH (c:Collection)
+            MATCH (c:Dataset)
             RETURN c.id AS id, labels(c) AS labels, properties(c) AS properties
             ORDER BY c.{orderBy} DESC
         """
@@ -211,14 +211,14 @@ def retrieveCollectionsOrderedBy(orderBy: str) -> dict:
         return {"error": str(e)}
 
 
-#Retrieve all Collection nodes that are transitively connected to at least one node with the given targetLabel.
-def retrieveCollectionsByType(targetLabel: str) -> dict:
+#Retrieve all Datasets nodes that are transitively connected to at least one node with the given targetLabel.
+def retrieveDatasetsByType(targetLabel: str) -> dict:
     try:
         driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
         # Inject targetLabel carefully (validate input before using in prod!)
         query = f"""
-            MATCH (c:Collection)-[*]-(m:{targetLabel})
+            MATCH (c:Dataset)-[*]-(m:{targetLabel})
             RETURN DISTINCT {{
                 id: c.id,
                 labels: labels(c),

@@ -71,7 +71,7 @@ Ingest profiling data into the MoMa property graph database.
 - Converts it to **PG-JSON** based on the **MoMa structure**
 - Stores the data into **Neo4j**
 - Returns:
-	- {"status": "success"} – if the data was ingested successfully
+	- {"status": "success", "metadata": PG-JSON} – if the data was ingested successfully
 	- {"status": "An error occurred: <message>"} – if an error occurred during processing
 
 
@@ -89,66 +89,71 @@ Retrieve the metadata of a MoMa node from the MoMa property graph.
 **Details:**  
 - Accepts a UUID of a MoMa node
 - Returns: PG-JSON containing metadata of the requested MoMa node
+	- {"metadata": PG-JSON} – returned if the process executes successfully
 
 **Usage:**
 ```bash
 GET /getMoMaObject?id=<your_id>
 ```
 
-### 3. `/getCollection` (GET)
+### 3. `/getDataset` (GET)
 
 **Purpose:**  
-Retrieve the metadata of a Collection node and all nodes transitively connected to it that belong to this Collection.
+Retrieve the metadata of a Dataset node and all nodes (data) transitively connected to it that belong to this Dataset.
 
 **Details:**  
-- Accepts a Collection UUID
-- Returns: PG-JSON containing metadata of the requested Collection and all nodes transitively connected to it
+- Accepts a Dataset UUID
+- Returns: PG-JSON containing metadata of the requested Dataset and all nodes transitively connected to it
+	- {"metadata": PG-JSON} – returned if the process executes successfully
 
 **Usage:**
 ```bash
-GET /getCollection?id=<your_id>
+GET /getDataset?id=<your_id>
 ```
 
-### 4. `/listCollections` (GET)
+### 4. `/listDatasets` (GET)
 
 **Purpose:**  
-Retrieve the metadata of the Collections stored in the MoMA property graph.
+Retrieve the metadata of the Datasets stored in the MoMA property graph.
 
 **Details:**  
-- Returns: PG-JSON containing metadata of the Collections stored in the MoMA
-
+- Returns: PG-JSON containing metadata of the Datasets stored in the MoMA
+	- {"metadata": PG-JSON} – returned if the process executes successfully
+	
 **Usage:**
 ```bash
-GET /listCollections
+GET /listDatasets
 ```
 
-### 5. `/listCollectionsOrderedBy` (GET)
+### 5. `/listDatasetsOrderedBy` (GET)
 
 **Purpose:**  
-Retrieve the metadata of the Collections stored in the MoMA property graph, ordered by a specific property
+Retrieve the metadata of the Datasets stored in the MoMA property graph, ordered by a specific property
 
 **Details:**  
-- Accepts a property of Collection label. Accepted properties: [“datePublished”]
+- Accepts a property of Dataset label. Accepted properties: [“datePublished”]
 - Returns: PG-JSON containing metadata of the Collections, ordered by the specified property in the parameter
+	- {"metadata": PG-JSON} – returned if the process executes successfully
 	- {"metadata": "status - wrong parameter"} – returned if the parameter is wrong
 
 **Usage:**
 ```bash
-GET /listCollectionsOrderedBy?orderBy=<your_id>
+GET /listDatasetsOrderedBy?orderBy=<your_id>
 ```
 
-### 6. `/listCollectionsByType` (GET)
+### 6. `/listDatasetsByType` (GET)
 
 **Purpose:**  
-Retrieve the metadata of Collection nodes that contain a specific type of dataset.
+Retrieve the metadata of Dataset nodes that contain a specific type of dataset.
 
 **Details:**  
 - Accepts a type of a dataset. Accepted Types: ["PDF", "RelationalDatabase", "CSV", "ImageSet", "TextSet", "Table"]
-- Returns: PG-JSON containing metadata of the Collections, containing this dataset type.
+- Returns: PG-JSON containing metadata of the Datasets, containing this data type.
+	- {"metadata": PG-JSON} – returned if the process executes successfully
 	- {"metadata": "status - wrong parameter"} – returned if the parameter is wrong
 
 **Usage:**
 ```bash
-GET /listCollectionsByType?type=<your_id>
+GET /listDatasetsByType?type=<your_id>
 ```
 

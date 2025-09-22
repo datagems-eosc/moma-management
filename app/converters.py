@@ -27,8 +27,8 @@ def Croissant2PGjson(data: dict) -> dict:
     }
 
     # print("metadata_df: ", metadata_df.to_json(orient="records", indent=1))
-    nodes.append({"id": data.get("@id"), "labels": ["Collection"], "properties": metadata})
-    collectionID = data.get("@id")
+    nodes.append({"id": data.get("@id"), "labels": ["Dataset"], "properties": metadata})
+    datasetID = data.get("@id")
 
     # Extract distribution (fileSets and fileObjects)
     for dist in data.get("distribution", []):
@@ -46,8 +46,8 @@ def Croissant2PGjson(data: dict) -> dict:
                 "encodingFormat": dist.get("encodingFormat"),
                 "includes": dist.get("includes")
             }
-            nodes.append({"id": id, "labels": ["TextSet", "Dataset"], "properties": properties})
-            addEdge(edges, id, collectionID, "belong")
+            nodes.append({"id": id, "labels": ["TextSet", "Data"], "properties": properties})
+            addEdge(edges, id, datasetID, "belong")
 
         elif encoding == "image/jpg":
             #print(f"Image File: {dist.get('name')} with ID: {dist.get('@id')}")
@@ -60,8 +60,8 @@ def Croissant2PGjson(data: dict) -> dict:
                 "encodingFormat": dist.get("encodingFormat"),
                 "includes": dist.get("includes")
             }
-            nodes.append({"id": id, "labels": ["ImageSet", "Dataset"], "properties": properties})
-            addEdge(edges, id, collectionID, "belong")
+            nodes.append({"id": id, "labels": ["ImageSet", "Data"], "properties": properties})
+            addEdge(edges, id, datasetID, "belong")
 
         elif encoding == "text/csv":
             #print(f"CSV File: {dist.get('name')} with ID: {dist.get('@id')}")
@@ -74,8 +74,8 @@ def Croissant2PGjson(data: dict) -> dict:
                 "encodingFormat": dist.get("encodingFormat"),
                 "sha256": dist.get("sha256")
             }
-            nodes.append({"id": id, "labels": ["CSV", "DatasetPart"], "properties": properties})
-            addEdge(edges, id, collectionID, "belong")
+            nodes.append({"id": id, "labels": ["CSV", "DataPart"], "properties": properties})
+            addEdge(edges, id, datasetID, "belong")
 
         elif encoding == "text/sql":
             #print(f"SQL File: {dist.get('name')} with ID: {dist.get('@id')}")
@@ -89,7 +89,7 @@ def Croissant2PGjson(data: dict) -> dict:
                     "encodingFormat": dist.get("encodingFormat"),
                 }
                 source = dist.get("containedIn", {}).get("@id", {})
-                nodes.append({"id": id, "labels": ["Table", "DatasetPart"], "properties": properties})
+                nodes.append({"id": id, "labels": ["Table", "DataPart"], "properties": properties})
                 addEdge(edges, source, id, "contain")
             else:  # relational db
                 properties = {
@@ -101,8 +101,8 @@ def Croissant2PGjson(data: dict) -> dict:
                     "encodingFormat": dist.get("encodingFormat"),
                     "sha256": dist.get("sha256")
                 }
-                nodes.append({"id": id, "labels": ["RelationalDatabase", "Dataset"], "properties": properties})
-                addEdge(edges, id, collectionID, "belong")
+                nodes.append({"id": id, "labels": ["RelationalDatabase", "Data"], "properties": properties})
+                addEdge(edges, id, datasetID, "belong")
 
     # print(json.dumps(nodes, indent=2))
     # print(json.dumps(edge, indent=2))
@@ -132,7 +132,7 @@ def Croissant2PGjson(data: dict) -> dict:
                     "keywords": field.get("keywords"),
                     "summary": field.get("summary")
                 }
-                nodes.append({"id": id, "labels": ["PDF", "DatasetPart"], "properties": properties})
+                nodes.append({"id": id, "labels": ["PDF", "DataPart"], "properties": properties})
             else:  # coulumn of table or csv
                 properties = {
                     "type": field.get("@type"),
@@ -142,7 +142,7 @@ def Croissant2PGjson(data: dict) -> dict:
                     "column": field.get("source", {}).get("extract", {}).get("column"),
                     "sample": field.get("sample")
                 }
-                nodes.append({"id": id, "labels": ["Column", "DatasetPart"], "properties": properties})
+                nodes.append({"id": id, "labels": ["Column", "DataPart"], "properties": properties})
 
             addEdge(edges, source_id, id, "contain")
 
