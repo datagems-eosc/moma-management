@@ -113,7 +113,7 @@ Retrieve the metadata of Dataset nodes and all nodes (data) transitively connect
 - types (List[str], optional): Filter datasets connected to nodes with these labels. Special values are "FileObject" and "FileSet", which essentially encapsulate multiple types based on MoMa types. Default [].
 	- types: ["TextSet", "ImageSet", "CSV", "Table", "RelationalDatabase", "PDF", "Column", "FileObject", "FileSet"]
 - orderBy (List[str], optional): List of Dataset properties to sort results. Default [].
-	- orderBy: ["type", "name", "archivedAt", "description", "conformsTo", "citeAs", "license", "url", "version", "headline",  "keywords",  "fieldOfScience",  "inLanguage", "country", "datePublished", "access", "uploadedBy"]
+	- orderBy: ["id", "type", "name", "archivedAt", "description", "conformsTo", "citeAs", "license", "url", "version", "headline",  "keywords",  "fieldOfScience",  "inLanguage", "country", "datePublished", "access", "uploadedBy"]
 - publishedDateFrom (date, optional): Minimum published date (YYYY-MM-DD). Default None.
 - publishedDateTo (date, optional): Maximum published date (YYYY-MM-DD). Default None.
 - direction (int, optional):  Traversal direction. Determines the sort order of the values in the orderBy parameter: 1 for ascending (increasing), -1 for descending (decreasing). Default is 1.
