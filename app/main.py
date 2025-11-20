@@ -1,7 +1,9 @@
 from fastapi import FastAPI, HTTPException
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 from app.converters import Croissant2PGjson
-from app.manager import pgjson2Neo4j, retrieveMetadata, retrieveDataset, retrieveAllDatasets, retrieveDatasetsOrderedBy, retrieveDatasetsByType
+from datetime import date
+from fastapi import Query
+from app.manager import pgjson2Neo4j, retrieveMetadata, retrieveDataset, retrieveAllDatasets, retrieveDatasetsOrderedBy, retrieveDatasetsByType, deleteDatasetsByIds
 import json
 
 app = FastAPI(title="MoMa API")
@@ -24,6 +26,17 @@ async def ingestProfile2MoMa(input_data: Dict[str, Any]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
+@app.get("/deleteDatasets")
+async def deleteDatasets(ids: List[str] = Query(default=[])):
+    try:
+        metadata = deleteDatasetsByIds(ids)
+        return {
+           "metadata": metadata
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
 @app.get("/getMoMaObject")
 async def getMoMaObject(id: str):
     try:
@@ -36,9 +49,27 @@ async def getMoMaObject(id: str):
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 @app.get("/getDataset")
-async def getDataset(id: str):
+async def getDataset(
+    nodeIds: List[str] = Query(default=[]),
+    properties: List[str] = Query(default=[]),
+    types: List[str] = Query(default=[]),
+    orderBy: List[str] = Query(default=[]),
+    direction: int = 1,
+    publishedDateFrom: Optional[date] = None,
+    publishedDateTo: Optional[date] = None,
+    status: str = "ready"
+):
     try:
-        metadata = retrieveDataset(id)
+        metadata = retrieveDataset(
+            nodeIds=nodeIds or [],
+            properties=properties or [],
+            types=types or [],
+            orderBy=orderBy or [],
+            direction=direction,
+            publishedDateFrom=publishedDateFrom,
+            publishedDateTo=publishedDateTo,
+            status=status
+        )
 
         return {
             "metadata": metadata

@@ -64,7 +64,7 @@ The FastAPI app reads Neo4j credentials and connection info from environment var
 ### 1. `/ingestProfile2MoMa` (POST)
 
 **Purpose:**  
-Ingest profiling data into the MoMa property graph database.
+Ingest profiling data into the MoMa property graph stored in the Neo4j database.
 
 **Details:**  
 - Accepts input JSON in the **Croissant** format.
@@ -84,7 +84,7 @@ Content-Type: application/json
 ### 2. `/getMoMaObject` (GET)
 
 **Purpose:**  
-Retrieve the metadata of a MoMa node from the MoMa property graph.
+Retrieve the metadata of a MoMa node from the MoMa property graph stored in the Neo4j database.
 
 **Details:**  
 - Accepts a UUID of a MoMa node
@@ -99,22 +99,58 @@ GET /getMoMaObject?id=<your_id>
 ### 3. `/getDataset` (GET)
 
 **Purpose:**  
-Retrieve the metadata of a Dataset node and all nodes (data) transitively connected to it that belong to this Dataset.
+Retrieve the metadata of Dataset nodes and all nodes (data) transitively connected to them that belong to each Dataset based on filtering criteria.
 
 **Details:**  
-- Accepts a Dataset UUID
-- Returns: PG-JSON containing metadata of the requested Dataset and all nodes transitively connected to it
+- Accepts filtering parameters such as nodeIds, properties, types, orderBy, published date range, direction, and status of a dataset.
+- Returns a JSON containing metadata of the requested Dataset(s) and and all nodes transitively connected to it according to the criteria defined by the values of the parameters.
 	- {"metadata": PG-JSON} – returned if the process executes successfully
+
+**Parameters:**
+- nodeIds (List[str], optional): Filter datasets by their UUIDs. Defaults to an empty list [], which returns all datasets in the repository.
+- properties (List[str], optional): List of Dataset properties to include. Special values "distribution" and "recordSet" include connected nodes. Default [], which includes all properties.
+	- propetries: ["type", "name", "archivedAt", "description", "conformsTo", "citeAs", "license", "url", "version", "headline",  "keywords",  "fieldOfScience",  "inLanguage", "country", "datePublished", "access", "uploadedBy", "distribution", "recordSet"]
+- types (List[str], optional): Filter datasets connected to nodes with these labels. Special values are "FileObject" and "FileSet", which essentially encapsulate multiple types based on MoMa types. Default [].
+	- types: ["TextSet", "ImageSet", "CSV", "Table", "RelationalDatabase", "PDF", "Column", "FileObject", "FileSet"]
+- orderBy (List[str], optional): List of Dataset properties to sort results. Default [].
+	- orderBy: ["type", "name", "archivedAt", "description", "conformsTo", "citeAs", "license", "url", "version", "headline",  "keywords",  "fieldOfScience",  "inLanguage", "country", "datePublished", "access", "uploadedBy"]
+- publishedDateFrom (date, optional): Minimum published date (YYYY-MM-DD). Default None.
+- publishedDateTo (date, optional): Maximum published date (YYYY-MM-DD). Default None.
+- direction (int, optional):  Traversal direction. Determines the sort order of the values in the orderBy parameter: 1 for ascending (increasing), -1 for descending (decreasing). Default is 1.
+- status (str, optional): Dataset status to filter on. Default "ready".
 
 **Usage:**
 ```bash
-GET /getDataset?id=<your_id>
+# Get specific datasets with filters
+GET /getDataset?nodeIds=123&nodeIds=456&properties=url&properties=country&types=RelationalDatabase&orderBy=name&direction=1&publishedDateFrom=2025-01-01&publishedDateTo=2025-11-20&status=ready
+
+# Get all datasets without filters
+GET /getDataset
 ```
 
-### 4. `/listDatasets` (GET)
+### 4. `/deleteDatasets` (GET)
 
 **Purpose:**  
-Retrieve the metadata of the Datasets stored in the MoMA property graph.
+Delete all Dataset nodes specified in the list of UUIDs provided in the ids parameter, along with all nodes transitively connected to them. If the list is empty, all Dataset nodes in the repository will be deleted.
+
+**Details:**  
+- Accepts a list of Dataset UUIDs to delete. If the list is empty, all Dataset nodes in the repository will be deleted.
+- Returns: JSON containing metadata about the deletion process, such as the number of nodes deleted.
+	- { "metadata": {"status": "all" | "selected", "deletedNodes": <number_of_deleted_nodes> } }
+	
+**Usage:**
+```bash
+# Delete specific datasets
+GET /deleteDataset?ids=123&ids=456
+
+# Delete all datasets
+GET /deleteDataset
+```
+
+### 5. `/listDatasets` (GET)
+
+**Purpose:**  
+Retrieve the metadata of the Datasets stored in the MoMa property graph in the Neo4
 
 **Details:**  
 - Returns: PG-JSON containing metadata of the Datasets stored in the MoMA
@@ -125,10 +161,10 @@ Retrieve the metadata of the Datasets stored in the MoMA property graph.
 GET /listDatasets
 ```
 
-### 5. `/listDatasetsOrderedBy` (GET)
+### 6. `/listDatasetsOrderedBy` (GET)
 
 **Purpose:**  
-Retrieve the metadata of the Datasets stored in the MoMA property graph, ordered by a specific property
+Retrieve the metadata of the Datasets stored into the MoMa graph in Neo4j, ordered by a specific property
 
 **Details:**  
 - Accepts a property of Dataset label. Accepted properties: [“datePublished”]
@@ -141,13 +177,13 @@ Retrieve the metadata of the Datasets stored in the MoMA property graph, ordered
 GET /listDatasetsOrderedBy?orderBy=<your_id>
 ```
 
-### 6. `/listDatasetsByType` (GET)
+### 7. `/listDatasetsByType` (GET)
 
 **Purpose:**  
-Retrieve the metadata of Dataset nodes that contain a specific type of dataset.
+Retrieve the metadata of Dataset nodes that contain a specific type of data.
 
 **Details:**  
-- Accepts a type of a dataset. Accepted Types: ["PDF", "RelationalDatabase", "CSV", "ImageSet", "TextSet", "Table"]
+- Accepts a data type. Accepted Types: ["PDF", "RelationalDatabase", "CSV", "ImageSet", "TextSet", "Table"]
 - Returns: PG-JSON containing metadata of the Datasets, containing this data type.
 	- {"metadata": PG-JSON} – returned if the process executes successfully
 	- {"metadata": "status - wrong parameter"} – returned if the parameter is wrong

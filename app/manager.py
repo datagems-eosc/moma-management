@@ -1,4 +1,6 @@
 import os
+from typing import List
+from datetime import date
 from neo4j import GraphDatabase
 import logging
 
@@ -72,6 +74,37 @@ def pgjson2Neo4j(pg_json: dict) -> str:
         logging.error(f"Neo4j upload failed: {e}")
         return f"Error: {str(e)}"
 
+def deleteDatasetsByIds(datasetIds: list[str]) -> dict:
+    try:
+        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        query = """
+                MATCH (d:Dataset)
+                WHERE $datasetIds = [] OR d.id IN $datasetIds
+                OPTIONAL MATCH p = (d)-[*]-(m)
+                WHERE m:Data OR m:DataPart
+                FOREACH (x IN nodes(p) | DETACH DELETE x)
+                DETACH DELETE d
+                RETURN count(*) AS deletedNodes
+               """
+
+        with driver.session() as session:
+            result = session.run(query, datasetIds=datasetIds)
+            record = result.single()
+
+        driver.close()
+
+        return {
+            "status": "all" if not datasetIds else "selected",
+            "deletedNodes": record["deletedNodes"]
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "deletedDatasets": 0
+        }
+
+
 def retrieveMetadata(nodeId: str) -> dict:
     try:
         driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
@@ -108,20 +141,58 @@ def retrieveMetadata(nodeId: str) -> dict:
 
 
 #Retrieve a Collection node and all transitively connected nodes that has label Dataset or DatasetPart
-def retrieveDataset(nodeId: str) -> dict:
+def retrieveDataset(nodeIds: List[str], properties: List[str], types: List[str], orderBy: List[str], direction: int, publishedDateFrom: date, publishedDateTo: date,  status: str) -> dict:
     try:
         driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
+        order = "DESC" if direction == -1 else "ASC"
         query = """
-            MATCH (n:Dataset {id: $nodeId})
-            // Find all paths from the collection to any node with Data or DataPart
+            MATCH (n:Dataset)
+            WHERE ($nodeIds = [] OR n.id IN $nodeIds)
+            AND n.status = $status
+            AND ($publishedDateFrom IS NULL OR n.datePublished >= $publishedDateFrom)
+            AND ($publishedDateTo IS NULL OR n.datePublished <= $publishedDateTo)
+            
+            // Find all paths from the Dataset to any node with label Data or DataPart
             OPTIONAL MATCH path = (n)-[*]-(m)
             WHERE m:Data OR m:DataPart
-            WITH n, collect(DISTINCT m) AS reachableNodes, collect(DISTINCT relationships(path)) AS paths
+
+            // Collect all m nodes and relationships
+            WITH n, collect(DISTINCT m) AS allM, collect(DISTINCT relationships(path)) AS paths
+
+            // Keep n only if $types is empty OR at least one m matches $types
+            WHERE size($types) = 0 OR size([r IN allM WHERE ANY(t IN labels(r) WHERE t IN $types)]) > 0
+
+            // Prepare reachableNodes for return (only include distribution / recordSet if present)
+            WITH n,
+            CASE WHEN ("distribution" IN $properties OR "recordSet" IN $properties)
+                THEN [r IN allM WHERE 
+                    ("distribution" IN $properties AND (r:FileObject OR r:FileSet)) OR
+                    ("recordSet" IN $properties AND r:RecordSet)
+                ]
+                ELSE []
+            END AS reachableNodes,
+            paths
+
+            // Prepare sort keys
+            WITH n, reachableNodes, paths,
+                [key IN $orderBy | n[key]] AS sortKeys
+            ORDER BY sortKeys {_ORDER_}
+            
+            // Compute properties map safely
+            WITH n, reachableNodes, paths,
+            apoc.map.fromPairs(
+                [key IN (CASE WHEN size($properties)=0 THEN keys(n) ELSE $properties END)
+                WHERE n[key] IS NOT NULL
+                | [key, n[key]]
+                ]
+            ) AS nodeProperties
+                
+
             RETURN {
                 id: n.id,
                 labels: labels(n),
-                properties: properties(n)
+                properties: nodeProperties
             } AS nodeInfo,
             [node IN reachableNodes | {
                 id: node.id,
@@ -135,23 +206,40 @@ def retrieveDataset(nodeId: str) -> dict:
                 properties: properties(r)
             }]) AS edges
         """
+        query = query.replace("{_ORDER_}", order)
+
         with driver.session() as session:
-            record = session.run(query, nodeId=nodeId).single()
+            records = session.run(
+                query,
+                nodeIds=nodeIds or [],
+                properties=properties or [],
+                publishedDateFrom=publishedDateFrom,
+                publishedDateTo=publishedDateTo,
+                types=types or [],
+                orderBy=orderBy or [],
+                status=status
+            ).data()
+
         driver.close()
 
-        if record:
-            # main collection node
+        # Final merged output
+        resultNodes = []
+        resultEdges = []
+        for record in records:
+            # SAFE parsing version
             nodeMetadata = record["nodeInfo"]
-            # reachable nodes (datasets/datasetParts)
             reachableNodes = [n for n in record["nodes"] if n.get("id") is not None]
-            # edges from all paths
             edges = [e for e in record["edges"] if e.get("type") is not None]
 
+            resultNodes.append(nodeMetadata)
+            resultNodes.extend(reachableNodes)
+            resultEdges.extend(edges)
+
             result = {
-                "nodes": [nodeMetadata] + reachableNodes,
-                "edges": edges
+                "nodes": resultNodes,
+                "edges": resultEdges
             }
-        else:
+        if not records:
             result = {"nodes": [], "edges": []}
 
         return result
