@@ -154,8 +154,7 @@ def retrieveDataset(nodeIds: List[str], properties: List[str], types: List[str],
             AND ($publishedDateTo IS NULL OR n.datePublished <= $publishedDateTo)
             
             // Find all paths from the Dataset to any node with label Data or DataPart
-            OPTIONAL MATCH path = (n)-[*]-(m)
-            WHERE m:Data OR m:DataPart
+            OPTIONAL MATCH path = (n)-[*]-(m:Data|DataPart)
 
             // Collect all m nodes and relationships
             WITH n, collect(DISTINCT m) AS allM, collect(DISTINCT relationships(path)) AS paths
@@ -172,23 +171,26 @@ def retrieveDataset(nodeIds: List[str], properties: List[str], types: List[str],
                 ]
                 ELSE []
             END AS reachableNodes,
-            paths
+            paths AS originalPaths
+
+            WITH n, reachableNodes,
+                CASE WHEN size(reachableNodes) = 0
+                    THEN []   // no reachableNodes -> no edges
+                    ELSE originalPaths
+                END AS paths
 
             // Prepare sort keys
             WITH n, reachableNodes, paths,
                 [key IN $orderBy | n[key]] AS sortKeys
             ORDER BY sortKeys {_ORDER_}
             
-            // Compute properties map safely
+            // Compute properties map 
             WITH n, reachableNodes, paths,
-            apoc.map.fromPairs(
-                [key IN (CASE WHEN size($properties)=0 THEN keys(n) ELSE $properties END)
+            [ key IN (CASE WHEN size($properties)=0 THEN keys(n) ELSE $properties END)
                 WHERE n[key] IS NOT NULL
-                | [key, n[key]]
-                ]
-            ) AS nodeProperties
-                
-
+                | { key: key, value: n[key] }
+            ] AS nodeProperties
+            
             RETURN {
                 id: n.id,
                 labels: labels(n),
@@ -230,6 +232,12 @@ def retrieveDataset(nodeIds: List[str], properties: List[str], types: List[str],
             nodeMetadata = record["nodeInfo"]
             reachableNodes = [n for n in record["nodes"] if n.get("id") is not None]
             edges = [e for e in record["edges"] if e.get("type") is not None]
+
+            # Convert dynamic key/value list -> real dict
+            prop_list = nodeMetadata.get("properties", [])
+            nodeMetadata["properties"] = {
+                item["key"]: item["value"] for item in prop_list
+            }
 
             resultNodes.append(nodeMetadata)
             resultNodes.extend(reachableNodes)
