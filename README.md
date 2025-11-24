@@ -162,22 +162,8 @@ Delete all Dataset nodes specified in the list of UUIDs provided in the ids para
 **Usage:**
 ```bash
 # Delete specific datasets
-GET /deleteDataset?ids=123&ids=456
+GET /deleteDatasets?ids=123&ids=456
 
 # Delete all datasets
-GET /deleteDataset
-```
-
-### 6. `/listDatasets` (GET)
-
-**Purpose:**  
-Retrieve the metadata of the Datasets stored in the MoMa property graph in the Neo4
-
-**Details:**  
-- Returns: PG-JSON containing metadata of the Datasets stored in the MoMA
-	- {"metadata": PG-JSON} – returned if the process executes successfully
-	
-**Usage:**
-```bash
-GET /listDatasets
+GET /deleteDatasets
 ```

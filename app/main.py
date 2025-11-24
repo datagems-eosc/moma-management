@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 from app.converters import Croissant2PGjson
 from datetime import date
 from fastapi import Query
-from app.manager import pgjson2Neo4j, retrieveMetadata, retrieveDatasets, retrieveAllDatasets, updateNodeProperties, deleteDatasetsByIds
+from app.manager import pgjson2Neo4j, retrieveMetadata, retrieveDatasets, updateNodeProperties, deleteDatasetsByIds
 import json
 
 app = FastAPI(title="MoMa API")
@@ -77,18 +77,6 @@ async def getDatasets(
             publishedDateTo=publishedDateTo,
             status=status
         )
-
-        return {
-            "metadata": metadata
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-
-@app.get("/listDatasets")
-async def listDatasets():
-    try:
-        metadata = retrieveAllDatasets()
 
         return {
             "metadata": metadata
