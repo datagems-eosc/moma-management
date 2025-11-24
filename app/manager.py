@@ -94,8 +94,8 @@ def deleteDatasetsByIds(datasetIds: list[str]) -> dict:
         driver.close()
 
         return {
-            "status": "all" if not datasetIds else "selected",
-            "deletedNodes": record["deletedNodes"]
+            "status": "success",
+            "deletedDatasets": record["deletedNodes"]
         }
 
     except Exception as e:
@@ -141,7 +141,7 @@ def retrieveMetadata(nodeId: str) -> dict:
 
 
 #Retrieve a Collection node and all transitively connected nodes that has label Dataset or DatasetPart
-def retrieveDataset(nodeIds: List[str], properties: List[str], types: List[str], orderBy: List[str], direction: int, publishedDateFrom: date, publishedDateTo: date,  status: str) -> dict:
+def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str], orderBy: List[str], direction: int, publishedDateFrom: date, publishedDateTo: date,  status: str) -> dict:
     try:
         driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
@@ -279,6 +279,49 @@ def retrieveAllDatasets() -> dict:
     except Exception as e:
         logging.error(f"Neo4j retrieve failed: {e}")
         return {"error": str(e)}
+
+from neo4j import GraphDatabase
+
+def updateNodeProperties(pg_json: dict):
+    try:
+        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+
+        nodes = pg_json.get("nodes", [])
+
+        batch = []
+        for node in nodes:
+            node_id = node.get("id")  # or node.get("@id") depending on your input
+            if not node_id:
+                continue
+
+            props = node.get("properties", {})
+            batch.append({
+                "id": node_id,
+                "properties": props
+            })
+
+        cypher_query = """
+                UNWIND $batch AS row
+                MATCH (n { id: row.id })
+                SET n += row.properties
+                RETURN count(n) AS updated
+                """
+
+        with driver.session() as session:
+            result = session.run(cypher_query, {"batch": batch})
+            record = result.single()
+
+        driver.close()
+
+        return {
+            "status": "success",
+            "updated": record["updated"]
+        }
+
+    except Exception as e:
+        logging.error(f"Neo4j retrieve failed: {e}")
+        return {"error": str(e), "updated": "0"}
+
 
 def retrieveDatasetsOrderedBy(orderBy: str) -> dict:
     try:

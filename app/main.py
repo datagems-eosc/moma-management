@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 from app.converters import Croissant2PGjson
 from datetime import date
 from fastapi import Query
-from app.manager import pgjson2Neo4j, retrieveMetadata, retrieveDataset, retrieveAllDatasets, retrieveDatasetsOrderedBy, retrieveDatasetsByType, deleteDatasetsByIds
+from app.manager import pgjson2Neo4j, retrieveMetadata, retrieveDatasets, retrieveAllDatasets, updateNodeProperties, deleteDatasetsByIds
 import json
 
 app = FastAPI(title="MoMa API")
@@ -26,13 +26,20 @@ async def ingestProfile2MoMa(input_data: Dict[str, Any]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
+@app.post("/updateNodes")
+async def updateNodes(pg_json: Dict[str, Any]):
+    try:
+        metadata = updateNodeProperties(pg_json=pg_json)
+        return metadata
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
 @app.get("/deleteDatasets")
 async def deleteDatasets(ids: List[str] = Query(default=[])):
     try:
         metadata = deleteDatasetsByIds(ids)
-        return {
-           "metadata": metadata
-        }
+        return metadata
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
@@ -48,8 +55,8 @@ async def getMoMaObject(id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-@app.get("/getDataset")
-async def getDataset(
+@app.get("/getDatasets")
+async def getDatasets(
     nodeIds: List[str] = Query(default=[]),
     properties: List[str] = Query(default=[]),
     types: List[str] = Query(default=[]),
@@ -60,7 +67,7 @@ async def getDataset(
     status: str = "ready"
 ):
     try:
-        metadata = retrieveDataset(
+        metadata = retrieveDatasets(
             nodeIds=nodeIds or [],
             properties=properties or [],
             types=types or [],
@@ -86,40 +93,6 @@ async def listDatasets():
         return {
             "metadata": metadata
         }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-
-@app.get("/listDatasetsOrderedBy")
-async def listDatasetsOrderedBy(orderBy: str):
-    try:
-        properties = ["datePublished"]
-        if orderBy in properties:
-            metadata = retrieveDatasetsOrderedBy(orderBy)
-            return {
-                "metadata": metadata
-            }
-        else:
-            return {
-                "metadata": "status - wrong parameter"
-            }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-
-@app.get("/listDatasetsByType")
-async def listDatasetsByType(type: str):
-    try:
-        types = ["PDF", "RelationalDatabase", "CSV", "ImageSet", "TextSet", "Table"]
-        if type in types:
-            metadata = retrieveDatasetsByType(type)
-            return {
-                "metadata": metadata
-            }
-        else:
-            return {
-                "metadata": "status - wrong parameter"
-            }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")

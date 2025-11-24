@@ -40,7 +40,7 @@ def Croissant2PGjson(data: dict) -> dict:
         if encoding == "application/pdf" or encoding == "application/docx" or encoding == "application/pptx" or encoding == "application/x-ipynb+json":
             #print(f"PDF FileSet: {dist.get('name')} with ID: {dist.get('@id')}")
             properties = {
-                "type": dist.get("@type", ""),
+                "@type": dist.get("@type", ""),
                 "name": dist.get("name", ""),
                 "description": dist.get("description", ""),
                 "contentSize": dist.get("contentSize", ""),
@@ -54,7 +54,7 @@ def Croissant2PGjson(data: dict) -> dict:
         elif encoding == "image/jpg":
             #print(f"Image File: {dist.get('name')} with ID: {dist.get('@id')}")
             properties = {
-                "type": dist.get("@type", ""),
+                "@type": dist.get("@type", ""),
                 "name": dist.get("name", ""),
                 "description": dist.get("description", ""),
                 "contentSize": dist.get("contentSize", ""),
@@ -68,7 +68,7 @@ def Croissant2PGjson(data: dict) -> dict:
         elif encoding == "text/csv":
             #print(f"CSV File: {dist.get('name')} with ID: {dist.get('@id')}")
             properties = {
-                "type": dist.get("@type", ""),
+                "@type": dist.get("@type", ""),
                 "name": dist.get("name", ""),
                 "description": dist.get("description", ""),
                 "contentSize": dist.get("contentSize", ""),
@@ -84,7 +84,7 @@ def Croissant2PGjson(data: dict) -> dict:
             # table
             if "containedIn" in dist:
                 properties = {
-                    "type": dist.get("@type", ""),
+                    "@type": dist.get("@type", ""),
                     "name": dist.get("name", ""),
                     "description": dist.get("description", ""),
                     "containedIn": dist.get("containedIn").get("@id", ""),
@@ -95,7 +95,7 @@ def Croissant2PGjson(data: dict) -> dict:
                 addEdge(edges, source, id, "contain")
             else:  # relational db
                 properties = {
-                    "type": dist.get("@type", ""),
+                    "@type": dist.get("@type", ""),
                     "name": dist.get("name", ""),
                     "description": dist.get("description", ""),
                     "contentSize": dist.get("contentSize", ""),
@@ -128,7 +128,7 @@ def Croissant2PGjson(data: dict) -> dict:
             if not source_id:  # pdf file
                 source_id = field.get("source", {}).get("fileSet", {}).get("@id")
                 properties = {
-                    "type": field.get("@type", ""),
+                    "@type": field.get("@type", ""),
                     "name": field.get("name", ""),
                     "file_size_bytes": field.get("file_size_bytes", ""),
                     "keywords": field.get("keywords", ""),
@@ -137,7 +137,7 @@ def Croissant2PGjson(data: dict) -> dict:
                 nodes.append({"id": id, "labels": ["PDF", "DataPart", "RecordSet"], "properties": properties})
             else:  # coulumn of table or csv
                 properties = {
-                    "type": field.get("@type", ""),
+                    "@type": field.get("@type", ""),
                     "name": field.get("name", ""),
                     "description": field.get("description", ""),
                     "dataType": field.get("dataType", ""),

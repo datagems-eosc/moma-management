@@ -81,7 +81,26 @@ POST /ingestProfile2MoMa
 Content-Type: application/json
 ```
 
-### 2. `/getMoMaObject` (GET)
+### 2. `/updateNodes` (POST)
+
+**Purpose:**  
+Update property values on existing nodes in the MoMa property graph stored in the Neo4j database.
+
+**Details:**  
+- Accepts input JSON in the **PG-JSON** format.
+- Matches the node by its id and updates the listed properties with the values provided.
+- Returns:
+	- {"status": "success", "updated": "<number_of_updated_nodes>"} – if the data was updated successfully
+	- {"error": "An error occurred: <message>", "updated": "0"} – if an error occurred during processing
+
+
+**Usage:**
+```bash
+POST /ingestProfile2MoMa
+Content-Type: application/json
+```
+
+### 3. `/getMoMaObject` (GET)
 
 **Purpose:**  
 Retrieve the metadata of a MoMa node from the MoMa property graph stored in the Neo4j database.
@@ -90,13 +109,14 @@ Retrieve the metadata of a MoMa node from the MoMa property graph stored in the 
 - Accepts a UUID of a MoMa node
 - Returns: PG-JSON containing metadata of the requested MoMa node
 	- {"metadata": PG-JSON} – returned if the process executes successfully
+	- {"metadata": {"error": "<message>"}} – if an error occurred during processing
 
 **Usage:**
 ```bash
 GET /getMoMaObject?id=<your_id>
 ```
 
-### 3. `/getDataset` (GET)
+### 4. `/getDatasets` (GET)
 
 **Purpose:**  
 Retrieve the metadata of Dataset nodes and all nodes (data) transitively connected to them that belong to each Dataset based on filtering criteria.
@@ -122,13 +142,13 @@ Retrieve the metadata of Dataset nodes and all nodes (data) transitively connect
 **Usage:**
 ```bash
 # Get specific datasets with filters
-GET /getDataset?nodeIds=123&nodeIds=456&properties=url&properties=country&types=RelationalDatabase&orderBy=name&direction=1&publishedDateFrom=2025-01-01&publishedDateTo=2025-11-20&status=ready
+GET /getDatasets?nodeIds=123&nodeIds=456&properties=url&properties=country&types=RelationalDatabase&orderBy=name&direction=1&publishedDateFrom=2025-01-01&publishedDateTo=2025-11-20&status=ready
 
 # Get all datasets without filters
-GET /getDataset
+GET /getDatasets
 ```
 
-### 4. `/deleteDatasets` (GET)
+### 5. `/deleteDatasets` (GET)
 
 **Purpose:**  
 Delete all Dataset nodes specified in the list of UUIDs provided in the ids parameter, along with all nodes transitively connected to them. If the list is empty, all Dataset nodes in the repository will be deleted.
@@ -136,7 +156,8 @@ Delete all Dataset nodes specified in the list of UUIDs provided in the ids para
 **Details:**  
 - Accepts a list of Dataset UUIDs to delete. If the list is empty, all Dataset nodes in the repository will be deleted.
 - Returns: JSON containing metadata about the deletion process, such as the number of nodes deleted.
-	- { "metadata": {"status": "all" | "selected", "deletedNodes": <number_of_deleted_nodes> } }
+	- {"status": "success", "deletedDatasets": <number_of_deleted_nodes> } – returned if the process executes successfully
+	- {"error": "An error occurred: <message>", "deletedDatasets": "0"} – if an error occurred during processing
 	
 **Usage:**
 ```bash
@@ -147,7 +168,7 @@ GET /deleteDataset?ids=123&ids=456
 GET /deleteDataset
 ```
 
-### 5. `/listDatasets` (GET)
+### 6. `/listDatasets` (GET)
 
 **Purpose:**  
 Retrieve the metadata of the Datasets stored in the MoMa property graph in the Neo4
@@ -160,36 +181,3 @@ Retrieve the metadata of the Datasets stored in the MoMa property graph in the N
 ```bash
 GET /listDatasets
 ```
-
-### 6. `/listDatasetsOrderedBy` (GET)
-
-**Purpose:**  
-Retrieve the metadata of the Datasets stored into the MoMa graph in Neo4j, ordered by a specific property
-
-**Details:**  
-- Accepts a property of Dataset label. Accepted properties: [“datePublished”]
-- Returns: PG-JSON containing metadata of the Collections, ordered by the specified property in the parameter
-	- {"metadata": PG-JSON} – returned if the process executes successfully
-	- {"metadata": "status - wrong parameter"} – returned if the parameter is wrong
-
-**Usage:**
-```bash
-GET /listDatasetsOrderedBy?orderBy=<your_id>
-```
-
-### 7. `/listDatasetsByType` (GET)
-
-**Purpose:**  
-Retrieve the metadata of Dataset nodes that contain a specific type of data.
-
-**Details:**  
-- Accepts a data type. Accepted Types: ["PDF", "RelationalDatabase", "CSV", "ImageSet", "TextSet", "Table"]
-- Returns: PG-JSON containing metadata of the Datasets, containing this data type.
-	- {"metadata": PG-JSON} – returned if the process executes successfully
-	- {"metadata": "status - wrong parameter"} – returned if the parameter is wrong
-
-**Usage:**
-```bash
-GET /listDatasetsByType?type=<your_id>
-```
-
