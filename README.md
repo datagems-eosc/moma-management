@@ -87,13 +87,13 @@ Content-Type: application/json
 Update property values on existing nodes in the MoMa property graph stored in the Neo4j database.
 
 **Details:**  
-- Accepts input JSON in the **PG-JSON** format.
-- Matches the node by its id and updates the listed properties with the values provided.
+- Accepts input JSON in the **PG-JSON** format. Specifically, it matches the nodes contained in the JSON by its ID and updates only the listed properties with the provided values. It has the following form:
+	- {"nodes": [{"id":"", "properties": {"property_name":"property_value}}]}
 - Returns:
 	- {"status": "success", "updated": "<number_of_updated_nodes>"} – if the data was updated successfully
 	- {"error": "An error occurred: <message>", "updated": "0"} – if an error occurred during processing
 
-
+}
 **Usage:**
 ```bash
 POST /ingestProfile2MoMa
