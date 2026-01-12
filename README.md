@@ -81,26 +81,63 @@ POST /ingestProfile2MoMa
 Content-Type: application/json
 ```
 
-### 2. `/updateNodes` (POST)
+### 2. `/addMoMaNodes` (POST)
+
+**Purpose:**  
+Add MoMa nodes to the MoMa property graph stored in the Neo4j database.
+
+**Details:**  
+- Accepts input JSON in the **PG-JSON** format based on the **MoMa nodes** containing only MoMa nodes information.
+- Stores the data into **Neo4j**
+- Returns:
+	- {"status": "success"} – if the MoMa nodes were added successfully
+	- {"status": "An error occurred: <message>"} – if an error occurred during processing
+
+**Usage:**
+```bash
+POST /addMoMaNodes
+Content-Type: application/json
+```
+
+### 3. `/addMoMaEdjes` (POST)
+
+**Purpose:**  
+Add MoMa edges to the MoMa property graph stored in the Neo4j database.
+
+**Details:**  
+- Accepts input JSON in the **PG-JSON** format based on the **MoMa structure** containing only MoMa edges information.
+- Stores the data into **Neo4j**
+- Returns:
+	- {"status": "success"} – if the MoMa edges were added successfully
+	- {"status": "An error occurred: <message>"} – if an error occurred during processing
+
+
+**Usage:**
+```bash
+POST /addMoMaEdjes
+Content-Type: application/json
+```
+
+### 4. `/updateNodes` (POST)
 
 **Purpose:**  
 Update property values on existing nodes in the MoMa property graph stored in the Neo4j database.
 
 **Details:**  
-- Accepts input JSON in the **PG-JSON** format. Specifically, it matches the nodes contained in the JSON by its ID and updates only the listed properties with the provided values. It has the following form:
+- Accepts input JSON in the **PG-JSON** format. Specifically, it matches the nodes contained in the JSON by its id and updates only the listed properties with the provided values. JSON has the following form:
 	- {"nodes": [{"id":"", "properties": {"property_name":"property_value}}]}
 - Returns:
 	- {"status": "success", "updated": "<number_of_updated_nodes>"} – if the data was updated successfully
 	- {"error": "An error occurred: <message>", "updated": "0"} – if an error occurred during processing
 
-}
+
 **Usage:**
 ```bash
 POST /ingestProfile2MoMa
 Content-Type: application/json
 ```
 
-### 3. `/getMoMaObject` (GET)
+### 5. `/getMoMaObject` (GET)
 
 **Purpose:**  
 Retrieve the metadata of a MoMa node from the MoMa property graph stored in the Neo4j database.
@@ -116,7 +153,7 @@ Retrieve the metadata of a MoMa node from the MoMa property graph stored in the 
 GET /getMoMaObject?id=<your_id>
 ```
 
-### 4. `/getDatasets` (GET)
+### 6. `/getDatasets` (GET)
 
 **Purpose:**  
 Retrieve the metadata of Dataset nodes and all nodes (data) transitively connected to them that belong to each Dataset based on filtering criteria.
@@ -148,7 +185,7 @@ GET /getDatasets?nodeIds=123&nodeIds=456&properties=url&properties=country&types
 GET /getDatasets
 ```
 
-### 5. `/deleteDatasets` (GET)
+### 7. `/deleteDatasets` (GET)
 
 **Purpose:**  
 Delete all Dataset nodes specified in the list of UUIDs provided in the ids parameter, along with all nodes transitively connected to them. If the list is empty, all Dataset nodes in the repository will be deleted.

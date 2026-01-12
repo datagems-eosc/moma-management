@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 from app.converters import Croissant2PGjson
 from datetime import date
 from fastapi import Query
-from app.manager import pgjson2Neo4j, retrieveMetadata, retrieveDatasets, updateNodeProperties, deleteDatasetsByIds
+from app.manager import pgjson2Neo4j, retrieveMetadata, retrieveDatasets, updateNodeProperties, deleteDatasetsByIds, upload_nodes, upload_edges
 import json
 
 app = FastAPI(title="MoMa API")
@@ -25,6 +25,24 @@ async def ingestProfile2MoMa(input_data: Dict[str, Any]):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+@app.post("/addMoMaNodes")
+def addMoMaNodes(pg_json: dict):
+    neo4j_result = upload_nodes(pg_json)
+    return {
+        "status": neo4j_result
+    }
+@app.post("/addMoMaEdjes")
+def addMoMaEdjes(pg_json: dict):
+    neo4j_result = upload_edges(pg_json)
+    return {
+        "status": neo4j_result
+    }
+@app.post("/addMoMaGraph")
+def addMoMaGraph(pg_json: dict):
+    neo4j_result = pgjson2Neo4j(pg_json)
+    return {
+        "status": neo4j_result
+    }
 
 @app.post("/updateNodes")
 async def updateNodes(pg_json: Dict[str, Any]):

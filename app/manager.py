@@ -60,6 +60,47 @@ def upload_all_edges(tx, nodes):
         parameters.update(props)
         tx.run(query, parameters)
 
+def upload_nodes(pg_json: dict) -> str:
+    if "nodes" not in pg_json:
+        return "Error: PG-JSON must contain 'nodes'"
+
+    driver = GraphDatabase.driver(
+        NEO4J_URI,
+        auth=(NEO4J_USER, NEO4J_PASSWORD)
+    )
+    try:
+        with driver.session() as session:
+            session.execute_write(upload_all_nodes, pg_json)
+
+        return "success"
+
+    except Exception as e:
+        logging.error(f"Neo4j node upload failed: {e}")
+        return f"Error: {str(e)}"
+
+    finally:
+        driver.close()
+
+def upload_edges(pg_json: dict) -> str:
+    if "edges" not in pg_json:
+        return "Error: PG-JSON must contain 'edges'"
+
+    driver = GraphDatabase.driver(
+        NEO4J_URI,
+        auth=(NEO4J_USER, NEO4J_PASSWORD)
+    )
+    try:
+        with driver.session() as session:
+            session.execute_write(upload_all_edges, pg_json)
+
+        return "success"
+
+    except Exception as e:
+        logging.error(f"Neo4j edge upload failed: {e}")
+        return f"Error: {str(e)}"
+
+    finally:
+        driver.close()
 
 def pgjson2Neo4j(pg_json: dict) -> str:
     try:
