@@ -25,18 +25,21 @@ async def ingestProfile2MoMa(input_data: Dict[str, Any]):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
 @app.post("/addMoMaNodes")
 def addMoMaNodes(pg_json: dict):
     neo4j_result = upload_nodes(pg_json)
     return {
         "status": neo4j_result
     }
+
 @app.post("/addMoMaEdjes")
 def addMoMaEdjes(pg_json: dict):
     neo4j_result = upload_edges(pg_json)
     return {
         "status": neo4j_result
     }
+
 @app.post("/addMoMaGraph")
 def addMoMaGraph(pg_json: dict):
     neo4j_result = pgjson2Neo4j(pg_json)
