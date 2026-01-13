@@ -26,8 +26,8 @@ async def ingestProfile2MoMa(input_data: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 @app.post("/ingestLightProfiling")
-async def ingestLightProfiling(pg_json: dict):
-    pg_json = lightProfiling2PGjson(pg_json)
+async def ingestLightProfiling(input_data: dict):
+    pg_json = lightProfiling2PGjson(input_data)
     neo4j_result = pgjson2Neo4j(pg_json)
     return {
         "status": neo4j_result,
@@ -35,14 +35,27 @@ async def ingestLightProfiling(pg_json: dict):
     }
 
 @app.post("/ingestHeavyProfiling")
-async def ingestHeavyProfiling(pg_json: dict):
-    pg_json = heavyProfiling2PGjson(pg_json)
+async def ingestHeavyProfiling(input_data: dict):
+    pg_json = heavyProfiling2PGjson(input_data)
     neo4j_result = pgjson2Neo4j(pg_json)
     return {
         "status": neo4j_result,
         "metadata": pg_json
     }
 
+@app.get("/getLightProfiling2PGjson")
+async def getLightProfiling2PGjson(input_data: dict):
+    pg_json = lightProfiling2PGjson(input_data)
+    return {
+        "metadata": pg_json
+    }
+
+@app.get("/getHeavyProfiling2PGjson")
+async def getHeavyProfiling2PGjson(input_data: dict):
+    pg_json = heavyProfiling2PGjson(input_data)
+    return {
+        "metadata": pg_json
+    }
 
 @app.post("/addMoMaNodes")
 async def addMoMaNodes(pg_json: dict):
