@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from typing import Any, Dict, List, Optional
-from app.converters import Croissant2PGjson
+from app.converters import Croissant2PGjson, heavyProfiling2PGjson, lightProfiling2PGjson
 from datetime import date
 from fastapi import Query
 from app.manager import pgjson2Neo4j, retrieveMetadata, retrieveDatasets, updateNodeProperties, deleteDatasetsByIds, upload_nodes, upload_edges
@@ -17,7 +17,6 @@ async def ingestProfile2MoMa(input_data: Dict[str, Any]):
     try:
         pg_json = Croissant2PGjson(input_data)
         neo4j_result = pgjson2Neo4j(pg_json)
-
         return {
             "status": neo4j_result,
             "metadata": pg_json
@@ -26,22 +25,41 @@ async def ingestProfile2MoMa(input_data: Dict[str, Any]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
+@app.post("/ingestLightProfiling")
+async def ingestLightProfiling(pg_json: dict):
+    pg_json = lightProfiling2PGjson(pg_json)
+    neo4j_result = pgjson2Neo4j(pg_json)
+    return {
+        "status": neo4j_result,
+        "metadata": pg_json
+    }
+
+@app.post("/ingestHeavyProfiling")
+async def ingestHeavyProfiling(pg_json: dict):
+    pg_json = heavyProfiling2PGjson(pg_json)
+    neo4j_result = pgjson2Neo4j(pg_json)
+    return {
+        "status": neo4j_result,
+        "metadata": pg_json
+    }
+
+
 @app.post("/addMoMaNodes")
-def addMoMaNodes(pg_json: dict):
+async def addMoMaNodes(pg_json: dict):
     neo4j_result = upload_nodes(pg_json)
     return {
         "status": neo4j_result
     }
 
 @app.post("/addMoMaEdjes")
-def addMoMaEdjes(pg_json: dict):
+async def addMoMaEdjes(pg_json: dict):
     neo4j_result = upload_edges(pg_json)
     return {
         "status": neo4j_result
     }
 
 @app.post("/addMoMaGraph")
-def addMoMaGraph(pg_json: dict):
+async def addMoMaGraph(pg_json: dict):
     neo4j_result = pgjson2Neo4j(pg_json)
     return {
         "status": neo4j_result

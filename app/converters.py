@@ -10,145 +10,208 @@ def Croissant2PGjson(data: dict) -> dict:
     edges = []
     nodes = []
 
+    dataset_id = data.get("@id")
     # Extract Dataset metadata
     metadata = {
-        "name": data.get("name", ""),
-        "archivedAt": data.get("archivedAt", ""),
-        "description": data.get("description", ""),
-        "conformsTo": data.get("conformsTo", ""),
-        "license": data.get("license", ""),
-        "url": data.get("url", ""),
-        "version": data.get("version", ""),
-        "headline": data.get("headline", ""),
-        "keywords": data.get("keywords", ""),
-        "fieldOfScience": data.get("fieldOfScience", ""),
-        "inLanguage": data.get("inLanguage", ""),
-        "country": data.get("country", ""),
-        "datePublished": data.get("datePublished", ""),
-        "status": data.get("status", "")
+        "name": data.get("name"),
+        "archivedAt": data.get("archivedAt"),
+        "description": data.get("description"),
+        "conformsTo": data.get("conformsTo"),
+        "license": data.get("license"),
+        "url": data.get("url"),
+        "version": data.get("version"),
+        "headline": data.get("headline"),
+        "keywords": data.get("keywords"),
+        "fieldOfScience": data.get("fieldOfScience"),
+        "inLanguage": data.get("inLanguage"),
+        "country": data.get("country"),
+        "datePublished": data.get("datePublished"),
+        "status": data.get("status")
     }
+    # remove nulls
+    metadata = {k: v for k, v in metadata.items() if v is not None}
 
-    # print("metadata_df: ", metadata_df.to_json(orient="records", indent=1))
-    nodes.append({"id": data.get("@id"), "labels": ["Dataset"], "properties": metadata})
-    datasetID = data.get("@id")
+    nodes.append({
+        "id": dataset_id,
+        "labels": ["Dataset"],
+        "properties": metadata
+    })
 
-    # Extract distribution (fileSets and fileObjects)
+    # --- Light profiling (distribution) ---
+    light_graph = lightProfiling2PGjson(data)
+    nodes.extend(light_graph.get("nodes", []))
+    edges.extend(light_graph.get("edges", []))
+
+    # --- Heavy profiling (recordSet) ---
+    heavy_graph = heavyProfiling2PGjson(data)
+    nodes.extend(heavy_graph.get("nodes", []))
+    edges.extend(heavy_graph.get("edges", []))
+
+    graph = {"nodes": nodes, "edges": edges}
+    return graph
+
+def lightProfiling2PGjson(data: dict) -> dict:
+    nodes = []
+    edges = []
+
+    # Dataset root (ID only)
+    dataset_id = data.get("@id")
+    if not dataset_id:
+        return {"nodes": [], "edges": []}
+
+    # Distribution only
     for dist in data.get("distribution", []):
-        # properties = []
-        id = dist.get("@id")
+        dist_id = dist.get("@id")
+        if not dist_id:
+            continue
+
         encoding = dist.get("encodingFormat", "").lower()
-        if encoding == "application/pdf" or encoding == "application/docx" or encoding == "application/pptx" or encoding == "application/x-ipynb+json":
-            #print(f"PDF FileSet: {dist.get('name')} with ID: {dist.get('@id')}")
-            properties = {
-                "@type": dist.get("@type", ""),
-                "name": dist.get("name", ""),
-                "description": dist.get("description", ""),
-                "contentSize": dist.get("contentSize", ""),
-                "contentUrl": dist.get("contentUrl", ""),
-                "encodingFormat": dist.get("encodingFormat", ""),
-                "includes": dist.get("includes", "")
-            }
-            nodes.append({"id": id, "labels": ["TextSet", "Data", "FileSet"], "properties": properties})
-            addEdge(edges, datasetID, id, "distribution")
 
+        # Base properties for all
+        properties = {
+            "type": dist.get("@type", ""),
+            "name": dist.get("name", ""),
+            "description": dist.get("description", ""),
+            "contentSize": dist.get("contentSize", ""),
+            "contentUrl": dist.get("contentUrl", ""),
+            "encodingFormat": dist.get("encodingFormat", ""),
+        }
+
+        # ---------- Text Set (PDF, DOCX, PPTX) ----------
+        if encoding in {
+            "application/pdf",
+            "application/docx",
+            "application/pptx",
+            "application/x-ipynb+json"
+        }:
+            labels = ["TextSet", "Data", "FileSet"]
+            # includes exists ONLY for FileSet
+            if "includes" in dist:
+                properties["includes"] = dist.get("includes")
+
+        # ---------- Image Set ----------
         elif encoding == "image/jpg":
-            #print(f"Image File: {dist.get('name')} with ID: {dist.get('@id')}")
-            properties = {
-                "@type": dist.get("@type", ""),
-                "name": dist.get("name", ""),
-                "description": dist.get("description", ""),
-                "contentSize": dist.get("contentSize", ""),
-                "contentUrl": dist.get("contentUrl", ""),
-                "encodingFormat": dist.get("encodingFormat", ""),
-                "includes": dist.get("includes", "")
-            }
-            nodes.append({"id": id, "labels": ["ImageSet", "Data", "FileSet"], "properties": properties})
-            addEdge(edges, datasetID, id, "distribution")
+            labels = ["ImageSet", "Data", "FileSet"]
+            if "includes" in dist:
+                properties["includes"] = dist.get("includes")
 
+        # ---------- CSV ----------
         elif encoding == "text/csv":
-            #print(f"CSV File: {dist.get('name')} with ID: {dist.get('@id')}")
-            properties = {
-                "@type": dist.get("@type", ""),
-                "name": dist.get("name", ""),
-                "description": dist.get("description", ""),
-                "contentSize": dist.get("contentSize", ""),
-                "contentUrl": dist.get("contentUrl", ""),
-                "encodingFormat": dist.get("encodingFormat", ""),
-                "sha256": dist.get("sha256", "")
-            }
-            nodes.append({"id": id, "labels": ["CSV", "DataPart", "FileObject"], "properties": properties})
-            addEdge(edges, datasetID, id, "distribution")
+            labels = ["CSV", "DataPart", "FileObject"]
+            properties["sha256"] = dist.get("sha256", "")
 
+        # ---------- SQL ----------
         elif encoding == "text/sql":
-            #print(f"SQL File: {dist.get('name')} with ID: {dist.get('@id')}")
-            # table
             if "containedIn" in dist:
-                properties = {
-                    "@type": dist.get("@type", ""),
-                    "name": dist.get("name", ""),
-                    "description": dist.get("description", ""),
-                    "containedIn": dist.get("containedIn").get("@id", ""),
-                    "encodingFormat": dist.get("encodingFormat", ""),
-                }
+                # Table
+                labels = ["Table", "DataPart", "FileObject"]
                 source = dist.get("containedIn", {}).get("@id", {})
-                nodes.append({"id": id, "labels": ["Table", "DataPart", "FileObject"], "properties": properties})
-                addEdge(edges, source, id, "contain")
-            else:  # relational db
-                properties = {
-                    "@type": dist.get("@type", ""),
-                    "name": dist.get("name", ""),
-                    "description": dist.get("description", ""),
-                    "contentSize": dist.get("contentSize", ""),
-                    "contentUrl": dist.get("contentUrl", ""),
-                    "encodingFormat": dist.get("encodingFormat", ""),
-                    "sha256": dist.get("sha256", "")
-                }
-                nodes.append({"id": id, "labels": ["RelationalDatabase", "Data", "FileObject"], "properties": properties})
-                addEdge(edges, datasetID, id, "distribution")
+                addEdge(edges, dist_id, source, "containedIn")
+            else:
+                # Relational database
+                labels = ["RelationalDatabase", "Data", "DatabaseConnection"]
 
-    # print(json.dumps(nodes, indent=2))
-    # print(json.dumps(edge, indent=2))
+        # ---------- Fallback ----------
+        else:
+            labels = ["Distribution"]
 
-    # Extract recordSet
-    record_sets = []
+        # remove nulls
+        properties = {k: v for k, v in properties.items() if v is not None}
+        # Add node
+        nodes.append({
+            "id": dist_id,
+            "labels": labels,
+            "properties": properties
+        })
+
+        # Dataset -> Distribution edge
+        addEdge(edges, dataset_id, dist_id, "distribution")
+
+    graph = {"nodes": nodes, "edges": edges}
+    return graph
+
+
+def heavyProfiling2PGjson(data: dict) -> dict:
+    nodes = []
+    edges = []
+
+    # Process recordSet
     for record in data.get("recordSet", []):
-
-        # record_sets.append({
-        #     "record_id": record["@id"],
-        #     "name": record["name"],
-        #     "description": record["description"]
-        # })
-        # print("name:", record["name"])
+        # RecordSet Node
+        record_id = record.get("@id", "")
+        if not record_id:
+            continue
+        record_properties = {
+            "type": record.get("@type", ""),
+            "name": record.get("name", ""),
+            "description": record.get("description", ""),
+            "examples": record.get("examples", "")
+        }
+        nodes.append({
+            "id": record_id,
+            "labels": ["RecordSet"],
+            "properties": record_properties
+        })
 
         for field in record.get("field", []):
-            # properties = []
-            id = field.get("@id")
-            #print(id)
+            field_id = field.get("@id")
+            if not field_id:
+                continue
+
+            # Determine the source of the field
             source_id = field.get("source", {}).get("fileObject", {}).get("@id")
-            if not source_id:  # pdf file
+            if not source_id:  # PDF file
                 source_id = field.get("source", {}).get("fileSet", {}).get("@id")
-                properties = {
-                    "@type": field.get("@type", ""),
+                props_raw = {
+                    "type": field.get("@type", ""),
                     "name": field.get("name", ""),
                     "file_size_bytes": field.get("file_size_bytes", ""),
                     "keywords": field.get("keywords", ""),
                     "summary": field.get("summary", "")
                 }
-                nodes.append({"id": id, "labels": ["PDF", "DataPart", "RecordSet"], "properties": properties})
-            else:  # coulumn of table or csv
-                properties = {
-                    "@type": field.get("@type", ""),
-                    "name": field.get("name", ""),
-                    "description": field.get("description", ""),
-                    "dataType": field.get("dataType", ""),
-                    "column": field.get("source", {}).get("extract", {}).get("column", ""),
-                    "sample": field.get("sample", "")
+                properties = {k: v for k, v in props_raw.items() if v is not None}
+                labels = ["PDF", "DataPart", "Field"]
+            else:  # Column from CSV or SQL table
+                props_raw = {
+                    "type": field.get("@type"),
+                    "name": field.get("name"),
+                    "description": field.get("description"),
+                    "dataType": field.get("dataType"),
+                    "column": field.get("source", {}).get("extract", {}).get("column"),
+                    "sample": field.get("sample")
                 }
-                nodes.append({"id": id, "labels": ["Column", "DataPart", "RecordSet"], "properties": properties})
+                properties = {k: v for k, v in props_raw.items() if v is not None}
+                labels = ["Column", "DataPart", "Field"]
 
-            addEdge(edges, source_id, id, "contain")
+            # Add field node
+            nodes.append({
+                "id": field_id,
+                "labels": labels,
+                "properties": properties
+            })
+
+            # ---------- Statistics ONLY for columns ----------
+            stats = field.get("statistics")
+            if stats:
+                # Keep only non-null properties
+                properties_stats = {k: v for k, v in stats.items() if v is not None}
+
+                # Only create the node if there is at least one non-null property
+                # todo: change stats_id
+                if properties_stats:
+                    stats_id = f"{field_id}::statistics"
+                    nodes.append({
+                        "id": stats_id,
+                        "labels": ["Statistics"],
+                        "properties": properties_stats
+                    })
+                    addEdge(edges, field_id, stats_id, "hasStatistics")
+
+            # Add edge from source -> field and record -> field
+            if source_id:
+                addEdge(edges, field_id, source_id, "containedIn")
+            if record_id:
+                addEdge(edges, record_id, field_id, "has")
 
     graph = {"nodes": nodes, "edges": edges}
-    #print(json.dumps(graph, indent=2))
-
     return graph
