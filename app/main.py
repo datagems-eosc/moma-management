@@ -1,9 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from typing import Any, Dict, List, Optional
-from app.converters import Croissant2PGjson, heavyProfiling2PGjson, lightProfiling2PGjson
 from datetime import date
 from fastapi import Query
+from app.converters import Croissant2PGjson, heavyProfiling2PGjson, lightProfiling2PGjson
 from app.manager import pgjson2Neo4j, retrieveMetadata, retrieveDatasets, updateNodeProperties, deleteDatasetsByIds, upload_nodes, upload_edges
+from app.schema import PGSchema
 import json
 
 app = FastAPI(title="MoMa API")
@@ -43,14 +44,14 @@ async def ingestHeavyProfiling(input_data: dict):
         "metadata": pg_json
     }
 
-@app.get("/getLightProfiling2PGjson")
+@app.post("/getLightProfiling2PGjson")
 async def getLightProfiling2PGjson(input_data: dict):
     pg_json = lightProfiling2PGjson(input_data)
     return {
         "metadata": pg_json
     }
 
-@app.get("/getHeavyProfiling2PGjson")
+@app.post("/getHeavyProfiling2PGjson")
 async def getHeavyProfiling2PGjson(input_data: dict):
     pg_json = heavyProfiling2PGjson(input_data)
     return {
@@ -76,6 +77,16 @@ async def addMoMaGraph(pg_json: dict):
     neo4j_result = pgjson2Neo4j(pg_json)
     return {
         "status": neo4j_result
+    }
+@app.post("/validatePGjson")
+async def validatePGjson(pg_json: dict):
+    # strict = True
+    schema = PGSchema()
+    report = schema.validate(pg_json)
+    return {
+        # "strict": strict,
+        "is_valid": report["is_valid"],
+        "report": report
     }
 
 @app.post("/updateNodes")

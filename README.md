@@ -81,7 +81,84 @@ POST /ingestProfile2MoMa
 Content-Type: application/json
 ```
 
-### 2. `/addMoMaNodes` (POST)
+
+### 2. `/ingestLightProfiling` (POST)
+
+**Purpose:**  
+Ingest light profiling data into the MoMa property graph stored in the Neo4j database.
+
+**Details:**  
+- Accepts input JSON in the **Croissant** format, containing the light profiling data (distribution part).
+- The JSON must contain the dataset part, which includes only the dataset type and identifier ("@type": "sc:Dataset" and "@id": "<dataset-id>").
+- Converts it to **PG-JSON** based on the **MoMa structure**
+- Stores the data into **Neo4j**
+- Returns:
+	- {"status": "success", "metadata": PG-JSON} – if the data was ingested successfully
+	- {"status": "An error occurred: <message>"} – if an error occurred during processing
+
+
+**Usage:**
+```bash
+POST /ingestLightProfiling
+Content-Type: application/json
+```
+
+### 3. `/ingestHeavyProfiling` (POST)
+
+**Purpose:**  
+Ingest heavy profiling data into the MoMa property graph stored in the Neo4j database.
+
+**Details:**  
+- Accepts input JSON in the **Croissant** format, containing the heavy profiling data (recordSet part).
+- Converts it to **PG-JSON** based on the **MoMa structure**
+- Stores the data into **Neo4j**
+- Returns:
+	- {"status": "success", "metadata": PG-JSON} – if the data was ingested successfully
+	- {"status": "An error occurred: <message>"} – if an error occurred during processing
+
+
+**Usage:**
+```bash
+POST /ingestHeavyProfiling
+Content-Type: application/json
+```
+
+### 4. `/getLightProfiling2PGjson` (POST)
+
+**Purpose:**  
+The service receives light profiling data in Croissant format and returns it as PG-JSON formatted according to the MoMa schema.
+
+**Details:**  
+- Accepts input JSON in the **Croissant** format, containing the light profiling data (distribution part), including only the dataset type and identifier ("@type": "sc:Dataset" and "@id": "<dataset-id>").
+- Converts it to **PG-JSON** based on the **MoMa structure**
+- Returns light profiling in PG-JSON based on MoMa schema:
+	- {"metadata": PG-JSON} 
+
+**Usage:**
+```bash
+POST /getLightProfiling2PGjson
+Content-Type: application/json
+```
+
+### 4. `/getHeavyProfiling2PGjson` (POST)
+
+**Purpose:**  
+The service receives heavy profiling data in Croissant format and returns it as PG-JSON formatted according to the MoMa schema.
+
+**Details:**  
+- Accepts input JSON in the **Croissant** format, containing the heavy profiling data (RecordSet part).
+- Converts it to **PG-JSON** based on the **MoMa structure**
+- Returns heavy profiling in PG-JSON based on MoMa schema:
+	- {"metadata": PG-JSON} 
+
+**Usage:**
+```bash
+POST /getHeavyProfiling2PGjson
+Content-Type: application/json
+```
+
+
+### 5. `/addMoMaNodes` (POST)
 
 **Purpose:**  
 Add MoMa nodes to the MoMa property graph stored in the Neo4j database.
@@ -99,7 +176,7 @@ POST /addMoMaNodes
 Content-Type: application/json
 ```
 
-### 3. `/addMoMaEdjes` (POST)
+### 6. `/addMoMaEdjes` (POST)
 
 **Purpose:**  
 Add MoMa edges to the MoMa property graph stored in the Neo4j database.
@@ -112,13 +189,34 @@ Add MoMa edges to the MoMa property graph stored in the Neo4j database.
 	- {"status": "An error occurred: <message>"} – if an error occurred during processing
 
 
+### 7. `/validatePGjson` (POST)
+
+**Purpose:**  
+Validate a Property Graph JSON (PG-JSON) against the MoMa graph schema to ensure that all nodes use valid labels and valid label combinations. 
+
+**Details:**  
+- Accepts input JSON in the **PG-JSON** format and supports strict validation (invalid nodes cause failure).
+- Validates:
+	- That every node has at least one label
+	- That all node labels belong to the allowed MoMa label set
+	- That each node's label combination matches at least one valid MoMa node type
+- Returns:
+	- The service always returns a JSON object with the following structure:
+	{
+		"is_valid": true/false,
+ 	 	"total_nodes": <number>,
+  		"invalid_nodes": [],
+  		"unknown_labels": [],
+  		"nodes_without_labels": []
+	}
+
 **Usage:**
 ```bash
-POST /addMoMaEdjes
+POST /validatePGjson
 Content-Type: application/json
 ```
 
-### 4. `/updateNodes` (POST)
+### 8. `/updateNodes` (POST)
 
 **Purpose:**  
 Update property values on existing nodes in the MoMa property graph stored in the Neo4j database.
@@ -137,7 +235,7 @@ POST /ingestProfile2MoMa
 Content-Type: application/json
 ```
 
-### 5. `/getMoMaObject` (GET)
+### 9. `/getMoMaObject` (GET)
 
 **Purpose:**  
 Retrieve the metadata of a MoMa node from the MoMa property graph stored in the Neo4j database.
@@ -153,7 +251,7 @@ Retrieve the metadata of a MoMa node from the MoMa property graph stored in the 
 GET /getMoMaObject?id=<your_id>
 ```
 
-### 6. `/getDatasets` (GET)
+### 10. `/getDatasets` (GET)
 
 **Purpose:**  
 Retrieve the metadata of Dataset nodes and all nodes (data) transitively connected to them that belong to each Dataset based on filtering criteria.
@@ -185,7 +283,7 @@ GET /getDatasets?nodeIds=123&nodeIds=456&properties=url&properties=country&types
 GET /getDatasets
 ```
 
-### 7. `/deleteDatasets` (GET)
+### 11. `/deleteDatasets` (GET)
 
 **Purpose:**  
 Delete all Dataset nodes specified in the list of UUIDs provided in the ids parameter, along with all nodes transitively connected to them. If the list is empty, all Dataset nodes in the repository will be deleted.
