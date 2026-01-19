@@ -272,12 +272,11 @@ Retrieve the metadata of Dataset nodes and all nodes (data) transitively connect
 - publishedDateFrom (date, optional): Minimum published date (YYYY-MM-DD). Default None.
 - publishedDateTo (date, optional): Maximum published date (YYYY-MM-DD). Default None.
 - direction (int, optional):  Traversal direction. Determines the sort order of the values in the orderBy parameter: 1 for ascending (increasing), -1 for descending (decreasing). Default is 1.
-- status (str, optional): Dataset status to filter on. Default "ready".
 
 **Usage:**
 ```bash
 # Get specific datasets with filters
-GET /getDatasets?nodeIds=123&nodeIds=456&properties=url&properties=country&types=RelationalDatabase&orderBy=name&direction=1&publishedDateFrom=2025-01-01&publishedDateTo=2025-11-20&status=ready
+GET /getDatasets?nodeIds=123&nodeIds=456&properties=url&properties=country&types=RelationalDatabase&orderBy=name&direction=1&publishedDateFrom=2025-01-01&publishedDateTo=2025-11-20
 
 # Get all datasets without filters
 GET /getDatasets

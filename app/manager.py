@@ -181,121 +181,145 @@ def retrieveMetadata(nodeId: str) -> dict:
         return f"Error: {str(e)}"
 
 
-#Retrieve a Collection node and all transitively connected nodes that has label Dataset or DatasetPart
-def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str], orderBy: List[str], direction: int, publishedDateFrom: date, publishedDateTo: date,  status: str) -> dict:
+#Retrieve a Dataset nodes and all transitively connected nodes that has label Dataset or datasetPart based on the filtering criteria (parameters)
+def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str], orderBy: List[str], direction: int, publishedDateFrom: date, publishedDateTo: date) -> dict:
+    driver = None
     try:
-        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        driver = GraphDatabase.driver(
+            NEO4J_URI,
+            auth=(NEO4J_USER, NEO4J_PASSWORD)
+        )
 
         order = "DESC" if direction == -1 else "ASC"
-        query = """
-            MATCH (n:Dataset)
-            WHERE ($nodeIds = [] OR n.id IN $nodeIds)
-            AND n.status = $status
-            AND ($publishedDateFrom IS NULL OR n.datePublished >= $publishedDateFrom)
-            AND ($publishedDateTo IS NULL OR n.datePublished <= $publishedDateTo)
-            
-            // Find all paths from the Dataset to any node with label Data or DataPart
-            OPTIONAL MATCH path = (n)-[*]-(m:Data|DataPart)
+        order_clause = (
+            ", ".join([f"n.`{k}` {order}" for k in orderBy])
+            if orderBy else ""
+        )
 
-            // Collect all m nodes and relationships
-            WITH n, collect(DISTINCT m) AS allM, collect(DISTINCT relationships(path)) AS paths
+        query = f"""
+                MATCH (n:Dataset)
+                WHERE ($nodeIds = [] OR n.id IN $nodeIds)
+                  AND ($publishedDateFrom IS NULL OR n.datePublished >= $publishedDateFrom)
+                  AND ($publishedDateTo IS NULL OR n.datePublished <= $publishedDateTo)
 
-            // Keep n only if $types is empty OR at least one m matches $types
-            WHERE size($types) = 0 OR size([r IN allM WHERE ANY(t IN labels(r) WHERE t IN $types)]) > 0
+                OPTIONAL MATCH (n)-[r*1..3]-(m)
+                WHERE m:DataPart OR m:FileObject OR m:FileSet
 
-            // Prepare reachableNodes for return (only include distribution / recordSet if present)
-            WITH n,
-            CASE WHEN ("distribution" IN $properties OR "recordSet" IN $properties)
-                THEN [r IN allM WHERE 
-                    ("distribution" IN $properties AND (r:FileObject OR r:FileSet)) OR
-                    ("recordSet" IN $properties AND r:RecordSet)
-                ]
-                ELSE []
-            END AS reachableNodes,
-            paths AS originalPaths
+                RETURN n, m, r
+                {f"ORDER BY {order_clause}" if order_clause else ""}
+            """
 
-            WITH n, reachableNodes,
-                CASE WHEN size(reachableNodes) = 0
-                    THEN []   // no reachableNodes -> no edges
-                    ELSE originalPaths
-                END AS paths
+        # ----  Preferred Sets ----
+        allowed_labels = {"DataPart", "Data"}
+        distribution_labels = {"FileObject", "FileSet"}
+        recordset_labels = {"Field"}
 
-            // Prepare sort keys
-            WITH n, reachableNodes, paths,
-                [key IN $orderBy | n[key]] AS sortKeys
-            ORDER BY sortKeys {_ORDER_}
-            
-            // Compute properties map 
-            WITH n, reachableNodes, paths,
-            [ key IN (CASE WHEN size($properties)=0 THEN keys(n) ELSE $properties END)
-                WHERE n[key] IS NOT NULL
-                | { key: key, value: n[key] }
-            ] AS nodeProperties
-            
-            RETURN {
-                id: n.id,
-                labels: labels(n),
-                properties: nodeProperties
-            } AS nodeInfo,
-            [node IN reachableNodes | {
-                id: node.id,
-                labels: labels(node),
-                properties: properties(node)
-            }] AS nodes,
-            reduce(acc=[], rels IN paths | acc + [r IN rels | {
-                start: startNode(r).id,
-                end: endNode(r).id,
-                type: type(r),
-                properties: properties(r)
-            }]) AS edges
-        """
-        query = query.replace("{_ORDER_}", order)
+        properties_set = set(properties or [])
+        types_set = set(types or [])
 
         with driver.session() as session:
-            records = session.run(
+            result = session.run(
                 query,
                 nodeIds=nodeIds or [],
-                properties=properties or [],
                 publishedDateFrom=publishedDateFrom,
-                publishedDateTo=publishedDateTo,
-                types=types or [],
-                orderBy=orderBy or [],
-                status=status
-            ).data()
+                publishedDateTo=publishedDateTo
+            )
 
-        driver.close()
+            #  Phase 1: COLLECT
+            dataset_nodes = {}
+            dataset_to_connected = {}
+            dataset_to_edges = {}
 
-        # Final merged output
-        resultNodes = []
-        resultEdges = []
-        for record in records:
-            # SAFE parsing version
-            nodeMetadata = record["nodeInfo"]
-            reachableNodes = [n for n in record["nodes"] if n.get("id") is not None]
-            edges = [e for e in record["edges"] if e.get("type") is not None]
+            for record in result:
+                n = record["n"]
+                m = record["m"]
+                rels = record["r"] or []
 
-            # Convert dynamic key/value list -> real dict
-            prop_list = nodeMetadata.get("properties", [])
-            nodeMetadata["properties"] = {
-                item["key"]: item["value"] for item in prop_list
+                dataset_id = n["id"]
+                dataset_nodes[dataset_id] = n
+
+                dataset_to_connected.setdefault(dataset_id, [])
+                dataset_to_edges.setdefault(dataset_id, [])
+
+                if m:
+                    dataset_to_connected[dataset_id].append(m)
+
+                for rel in rels:
+                    dataset_to_edges[dataset_id].append({
+                        "start": rel.start_node["id"],
+                        "end": rel.end_node["id"],
+                        "type": rel.type,
+                        "properties": dict(rel)
+                    })
+
+            #  Phase 2: FILTER & EMIT
+            nodes_dict = {}
+            edges = []
+
+            for dataset_id, connected_nodes in dataset_to_connected.items():
+
+                # ---- STRICT types filter (Dataset-level) ----
+                if types_set:
+                    if not any(types_set & set(m_node.labels) for m_node in connected_nodes):
+                        continue  # Dataset excluded
+
+                # ---- Add Dataset node ----
+                n = dataset_nodes[dataset_id]
+                nodes_dict[dataset_id] = {
+                    "id": n["id"],
+                    "labels": list(n.labels),
+                    "properties": {
+                        k: v for k, v in dict(n).items()
+                        if not properties_set or k in properties_set
+                    }
+                }
+
+                # ----  Distribution / RecordSet filtering ----
+                for m_node in connected_nodes:
+                    node_labels = set(m_node.labels)
+
+                    # Only allowed labels
+                    if not node_labels & allowed_labels:
+                        continue
+
+                    if properties_set:
+                        if (
+                                ("distribution" in properties_set and node_labels & distribution_labels)
+                                or ("recordSet" in properties_set and node_labels & recordset_labels)
+                        ):
+                            mid = m_node["id"]
+                            if mid not in nodes_dict:
+                                nodes_dict[mid] = {
+                                    "id": mid,
+                                    "labels": list(m_node.labels),
+                                    "properties": dict(m_node)
+                                }
+                    else:
+                        mid = m_node["id"]
+                        if mid not in nodes_dict:
+                            nodes_dict[mid] = {
+                                "id": mid,
+                                "labels": list(m_node.labels),
+                                "properties": dict(m_node)
+                            }
+
+                for e in dataset_to_edges[dataset_id]:
+                    if e["start"] in nodes_dict and e["end"] in nodes_dict:
+                        edges.append(e)
+
+            return {
+                "nodes": list(nodes_dict.values()),
+                "edges": edges
             }
-
-            resultNodes.append(nodeMetadata)
-            resultNodes.extend(reachableNodes)
-            resultEdges.extend(edges)
-
-            result = {
-                "nodes": resultNodes,
-                "edges": resultEdges
-            }
-        if not records:
-            result = {"nodes": [], "edges": []}
-
-        return result
 
     except Exception as e:
         logging.error(f"Neo4j retrieve failed: {e}")
         return {"error": str(e)}
+
+    finally:
+        if driver:
+            driver.close()
+
 
 def retrieveAllDatasets() -> dict:
     try:
