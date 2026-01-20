@@ -41,8 +41,8 @@ def upload_all_nodes(tx, data):
 def upload_all_edges(tx, nodes):
     # Upload edges
     for edge in nodes["edges"]:
-        from_id = edge["start"]
-        to_id = edge["end"]
+        from_id = edge["from"]
+        to_id = edge["to"]
         labels = ":".join(edge["labels"])
         props = clean_keys(edge.get("properties", {}))
 
@@ -246,9 +246,9 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
 
                 for rel in rels:
                     dataset_to_edges[dataset_id].append({
-                        "start": rel.start_node["id"],
-                        "end": rel.end_node["id"],
-                        "type": rel.type,
+                        "from": rel.start_node["id"],
+                        "to": rel.end_node["id"],
+                        "labels": [rel.type],
                         "properties": dict(rel)
                     })
 
@@ -304,7 +304,7 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
                             }
 
                 for e in dataset_to_edges[dataset_id]:
-                    if e["start"] in nodes_dict and e["end"] in nodes_dict:
+                    if e["from"] in nodes_dict and e["to"] in nodes_dict:
                         edges.append(e)
 
             return {
