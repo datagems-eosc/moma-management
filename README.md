@@ -333,7 +333,7 @@ Retrieve the metadata of Dataset nodes and all nodes (data) transitively connect
 - properties (List[str], optional): List of Dataset properties to include. Special values "distribution" and "recordSet" include connected nodes. Default [], which includes all properties.
 	- propetries: ["type", "name", "archivedAt", "description", "conformsTo", "citeAs", "license", "url", "version", "headline",  "keywords",  "fieldOfScience",  "inLanguage", "country", "datePublished", "access", "uploadedBy", "distribution", "recordSet"]
 - types (List[str], optional): Filter datasets connected to nodes with these labels. Special values are "FileObject" and "FileSet", which essentially encapsulate multiple types based on MoMa types. Default [].
-	- types: ["TextSet", "ImageSet", "CSV", "Table", "RelationalDatabase", "PDF", "Column", "FileObject", "FileSet"]
+	- types: ["TextSet", "ImageSet", "CSV", "Table", "RelationalDatabase", "PDF", "Column"]
 - orderBy (List[str], optional): List of Dataset properties to sort results. Default [].
 	- orderBy: ["id", "type", "name", "archivedAt", "description", "conformsTo", "citeAs", "license", "url", "version", "headline",  "keywords",  "fieldOfScience",  "inLanguage", "country", "datePublished", "access", "uploadedBy"]
 - publishedDateFrom (date, optional): Minimum published date (YYYY-MM-DD). Default None.
