@@ -28,7 +28,7 @@ def upload_all_nodes(tx, data):
     # Upload nodes
     for node in data["nodes"]:
         node_id = node["id"]
-        labels = ":".join(node["labels"])
+        labels = ":".join(l.replace(":", "__") for l in node["labels"])
         props = clean_keys(node["properties"])
         props["id"] = node_id
 
@@ -197,22 +197,22 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
         )
 
         query = f"""
-                MATCH (n:Dataset)
+                MATCH (n:sc__Dataset)
                 WHERE ($nodeIds = [] OR n.id IN $nodeIds)
                   AND ($publishedDateFrom IS NULL OR n.datePublished >= $publishedDateFrom)
                   AND ($publishedDateTo IS NULL OR n.datePublished <= $publishedDateTo)
 
-                OPTIONAL MATCH (n)-[r*1..3]-(m)
-                WHERE m:DataPart OR m:FileObject OR m:FileSet
+                OPTIONAL MATCH (n)-[r*1..4]-(m)
+                WHERE m:cr__FileObject OR m:cr__FileSet OR m:cr__Field OR m:Statistics OR m:cr__RecordSet
 
                 RETURN n, m, r
                 {f"ORDER BY {order_clause}" if order_clause else ""}
             """
 
         # ----  Preferred Sets ----
-        allowed_labels = {"DataPart", "Data"}
-        distribution_labels = {"FileObject", "FileSet"}
-        recordset_labels = {"Field"}
+        # allowed_labels = {"DataPart", "Data"}
+        distribution_labels = {"cr__FileObject", "cr__FileSet"}
+        recordset_labels = {"cr__Field", "cr__RecordSet", "Statistics"}
 
         properties_set = set(properties or [])
         types_set = set(types or [])
@@ -267,7 +267,7 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
                 n = dataset_nodes[dataset_id]
                 nodes_dict[dataset_id] = {
                     "id": n["id"],
-                    "labels": list(n.labels),
+                    "labels": [label.replace("__", ":") for label in n.labels],
                     "properties": {
                         k: v for k, v in dict(n).items()
                         if not properties_set or k in properties_set
@@ -279,8 +279,8 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
                     node_labels = set(m_node.labels)
 
                     # Only allowed labels
-                    if not node_labels & allowed_labels:
-                        continue
+                   # if not node_labels & allowed_labels:
+                   #     continue
 
                     if properties_set:
                         if (
@@ -291,7 +291,7 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
                             if mid not in nodes_dict:
                                 nodes_dict[mid] = {
                                     "id": mid,
-                                    "labels": list(m_node.labels),
+                                    "labels": [label.replace("__", ":") for label in m_node.labels],
                                     "properties": dict(m_node)
                                 }
                     else:
@@ -299,7 +299,7 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
                         if mid not in nodes_dict:
                             nodes_dict[mid] = {
                                 "id": mid,
-                                "labels": list(m_node.labels),
+                                "labels": [label.replace("__", ":") for label in m_node.labels],
                                 "properties": dict(m_node)
                             }
 
@@ -440,5 +440,3 @@ def retrieveDatasetsByType(targetLabel: str) -> dict:
     except Exception as e:
         logging.error(f"Neo4j retrieve failed: {e}")
         return {"error": str(e)}
-
-

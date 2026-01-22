@@ -1,7 +1,7 @@
 def addEdge(edges, start, end, label):
     edges.append({
-        "start": start,
-        "end": end,
+        "from": start,
+        "to": end,
         "labels": [label],
         "properties": {}
     })
@@ -13,6 +13,7 @@ def Croissant2PGjson(data: dict) -> dict:
     dataset_id = data.get("@id")
     # Extract Dataset metadata
     metadata = {
+        "type": data.get("@type"),
         "name": data.get("name"),
         "archivedAt": data.get("archivedAt"),
         "description": data.get("description"),
@@ -30,10 +31,10 @@ def Croissant2PGjson(data: dict) -> dict:
     }
     # remove nulls
     metadata = {k: v for k, v in metadata.items() if v is not None}
-
+    # Dataset node
     nodes.append({
         "id": dataset_id,
-        "labels": ["Dataset"],
+        "labels": [data.get("@type")],
         "properties": metadata
     })
 
@@ -66,6 +67,7 @@ def lightProfiling2PGjson(data: dict) -> dict:
             continue
 
         encoding = dist.get("encodingFormat", "").lower()
+        safeType = dist.get("@type", "")
 
         # Base properties for all
         properties = {
@@ -84,32 +86,32 @@ def lightProfiling2PGjson(data: dict) -> dict:
             "application/pptx",
             "application/x-ipynb+json"
         }:
-            labels = ["TextSet", "Data", "FileSet"]
+            labels = ["TextSet", "Data", safeType]
             # includes exists ONLY for FileSet
             if "includes" in dist:
                 properties["includes"] = dist.get("includes")
 
         # ---------- Image Set ----------
         elif encoding == "image/jpg":
-            labels = ["ImageSet", "Data", "FileSet"]
+            labels = ["ImageSet", "Data", safeType]
             if "includes" in dist:
                 properties["includes"] = dist.get("includes")
 
         # ---------- CSV ----------
         elif encoding == "text/csv":
-            labels = ["CSV", "DataPart", "FileObject"]
+            labels = ["CSV", safeType]
             properties["sha256"] = dist.get("sha256", "")
 
         # ---------- SQL ----------
         elif encoding == "text/sql":
             if "containedIn" in dist:
                 # Table
-                labels = ["Table", "DataPart", "FileObject"]
+                labels = ["Table", safeType]
                 source = dist.get("containedIn", {}).get("@id", {})
                 addEdge(edges, dist_id, source, "containedIn")
             else:
                 # Relational database
-                labels = ["RelationalDatabase", "Data", "DatabaseConnection"]
+                labels = ["RelationalDatabase", "Data", safeType]
 
         # ---------- Fallback ----------
         else:
@@ -141,15 +143,18 @@ def heavyProfiling2PGjson(data: dict) -> dict:
         record_id = record.get("@id", "")
         if not record_id:
             continue
+
+        safeType = record.get("@type", "")
         record_properties = {
             "type": record.get("@type", ""),
             "name": record.get("name", ""),
             "description": record.get("description", ""),
             "examples": record.get("examples", "")
         }
+        # RecordSet node
         nodes.append({
             "id": record_id,
-            "labels": ["RecordSet"],
+            "labels": [safeType],
             "properties": record_properties
         })
 
@@ -162,6 +167,7 @@ def heavyProfiling2PGjson(data: dict) -> dict:
             source_id = field.get("source", {}).get("fileObject", {}).get("@id")
             if not source_id:  # PDF file
                 source_id = field.get("source", {}).get("fileSet", {}).get("@id")
+                safeType = field.get("@type", "")
                 props_raw = {
                     "type": field.get("@type", ""),
                     "name": field.get("name", ""),
@@ -170,8 +176,9 @@ def heavyProfiling2PGjson(data: dict) -> dict:
                     "summary": field.get("summary", "")
                 }
                 properties = {k: v for k, v in props_raw.items() if v is not None}
-                labels = ["PDF", "DataPart", "Field"]
+                labels = ["PDF", safeType]
             else:  # Column from CSV or SQL table
+                safeType = field.get("@type", "")
                 props_raw = {
                     "type": field.get("@type"),
                     "name": field.get("name"),
@@ -181,7 +188,7 @@ def heavyProfiling2PGjson(data: dict) -> dict:
                     "sample": field.get("sample")
                 }
                 properties = {k: v for k, v in props_raw.items() if v is not None}
-                labels = ["Column", "DataPart", "Field"]
+                labels = ["Column", safeType]
 
             # Add field node
             nodes.append({

@@ -64,7 +64,7 @@ The FastAPI app reads Neo4j credentials and connection info from environment var
 ### 1. `/ingestProfile2MoMa` (POST)
 
 **Purpose:**  
-Ingest profiling data into the MoMa property graph stored in the Neo4j database.
+Ingest the entire profiling (basic, light, heavy) or only the basic part to the MoMa repository.
 
 **Details:**  
 - Accepts input JSON in the **Croissant** format.
@@ -89,7 +89,7 @@ Ingest light profiling data into the MoMa property graph stored in the Neo4j dat
 
 **Details:**  
 - Accepts input JSON in the **Croissant** format, containing the light profiling data (distribution part).
-- The JSON must contain the dataset part, which includes only the dataset type and identifier ("@type": "sc:Dataset" and "@id": "<dataset-id>").
+- The JSON must contain the dataset part, which includes only the dataset type and identifier ("@type": "sc:Dataset" and "@id": "<dataset-id>"). Additionally, the corresponding Dataset node must already exist in the repository.
 - Converts it to **PG-JSON** based on the **MoMa structure**
 - Stores the data into **Neo4j**
 - Returns:
@@ -123,7 +123,7 @@ POST /ingestHeavyProfiling
 Content-Type: application/json
 ```
 
-### 4. `/getLightProfiling2PGjson` (POST)
+### 4. `/convertLightProfiling2PGjson` (POST)
 
 **Purpose:**  
 The service receives light profiling data in Croissant format and returns it as PG-JSON formatted according to the MoMa schema.
@@ -136,11 +136,11 @@ The service receives light profiling data in Croissant format and returns it as 
 
 **Usage:**
 ```bash
-POST /getLightProfiling2PGjson
+POST /convertLightProfiling2PGjson
 Content-Type: application/json
 ```
 
-### 4. `/getHeavyProfiling2PGjson` (POST)
+### 5. `/convertHeavyProfiling2PGjson` (POST)
 
 **Purpose:**  
 The service receives heavy profiling data in Croissant format and returns it as PG-JSON formatted according to the MoMa schema.
@@ -153,12 +153,12 @@ The service receives heavy profiling data in Croissant format and returns it as 
 
 **Usage:**
 ```bash
-POST /getHeavyProfiling2PGjson
+POST /convertHeavyProfiling2PGjson
 Content-Type: application/json
 ```
 
 
-### 5. `/addMoMaNodes` (POST)
+### 6. `/addMoMaNodes` (POST)
 
 **Purpose:**  
 Add MoMa nodes to the MoMa property graph stored in the Neo4j database.
@@ -166,9 +166,20 @@ Add MoMa nodes to the MoMa property graph stored in the Neo4j database.
 **Details:**  
 - Accepts input JSON in the **PG-JSON** format based on the **MoMa nodes** containing only MoMa nodes information.
 - Stores the data into **Neo4j**
+- For the definition of valid node types and allowed label combinations, refer to the /validatePGjson service.
 - Returns:
-	- {"status": "success"} – if the MoMa nodes were added successfully
-	- {"status": "An error occurred: <message>"} – if an error occurred during processing
+	- The service always returns a validation report about the labeling of the nodes. The upload behavior depends on the validation result:
+	```python
+	{"status": "success/error", 
+	"report": {
+    	"is_valid": true/false,
+    	"total_nodes": number,
+    	"invalid_nodes": [],
+    	"unknown_labels": [],
+    	"nodes_without_labels": [] 
+		}
+	}
+	```
 
 **Usage:**
 ```bash
@@ -176,7 +187,8 @@ POST /addMoMaNodes
 Content-Type: application/json
 ```
 
-### 6. `/addMoMaEdjes` (POST)
+
+### 7. `/addMoMaEdjes` (POST)
 
 **Purpose:**  
 Add MoMa edges to the MoMa property graph stored in the Neo4j database.
@@ -188,8 +200,44 @@ Add MoMa edges to the MoMa property graph stored in the Neo4j database.
 	- {"status": "success"} – if the MoMa edges were added successfully
 	- {"status": "An error occurred: <message>"} – if an error occurred during processing
 
+**Usage:**
+```bash
+POST /addMoMaEdjes
+Content-Type: application/json
+```
 
-### 7. `/validatePGjson` (POST)
+
+### 8. `/addMoMaGraph` (POST)
+
+**Purpose:**  
+Add MoMa graph to the MoMa stored in the Neo4j database.
+
+**Details:**  
+- Accepts input JSON in the **PG-JSON** format containing  **MoMa nodes** and the relationships (**edges**) between them.
+- Stores the data into **Neo4j**
+- For the definition of valid node types and allowed label combinations, refer to the /validatePGjson service.
+- Returns:
+	- The service always returns a validation report about the labeling of the nodes. The upload behavior depends on the validation result:
+	```python
+	{"status": "success/error", 
+	"report": {
+    	"is_valid": true/false,
+    	"total_nodes": number,
+    	"invalid_nodes": [],
+    	"unknown_labels": [],
+    	"nodes_without_labels": [] 
+		}
+	}
+	```
+
+**Usage:**
+```bash
+POST /addMoMaGraph
+Content-Type: application/json
+```
+
+
+### 9. `/validatePGjson` (POST)
 
 **Purpose:**  
 Validate a Property Graph JSON (PG-JSON) against the MoMa graph schema to ensure that all nodes use valid labels and valid label combinations. 
@@ -200,6 +248,25 @@ Validate a Property Graph JSON (PG-JSON) against the MoMa graph schema to ensure
 	- That every node has at least one label
 	- That all node labels belong to the allowed MoMa label set
 	- That each node's label combination matches at least one valid MoMa node type
+- Each MoMa node type is defined by a specific set of labels. A node is considered valid if its labels exactly match one of the following combinations:
+ 	```python
+	 VALID_NODE_TYPES = {
+    	"Dataset": {"sc:Dataset"},
+    	"RecordSet": {"cr:RecordSet"},
+    	"RelationalDatabase": {"RelationalDatabase", "dg:DatabaseConnection", "Data"},
+    	"TextSet": {"TextSet", "Data", "cr:FileSet"},
+    	"ImageSet": {"ImageSet", "Data", "cr:FileSet"},
+    	"Table": {"Table", "cr:FileObject"},
+    	"CSV": {"CSV", "cr:FileObject"},
+    	"PDF": {"PDF", "cr:Field"},
+    	"Column": {"Column", "cr:Field"},
+    	"Statistics": {"Statistics"},
+    	"User": {"User"},
+    	"Task": {"Task"},
+    	"Analytical_Pattern": {"Analytical_Pattern"},
+    	"Operator": {"Operator"}
+	}
+	```
 - Returns:
 	- The service always returns a JSON object with the following structure:
 	{
@@ -216,7 +283,7 @@ POST /validatePGjson
 Content-Type: application/json
 ```
 
-### 8. `/updateNodes` (POST)
+### 10. `/updateNodes` (POST)
 
 **Purpose:**  
 Update property values on existing nodes in the MoMa property graph stored in the Neo4j database.
@@ -235,7 +302,7 @@ POST /ingestProfile2MoMa
 Content-Type: application/json
 ```
 
-### 9. `/getMoMaObject` (GET)
+### 11. `/getMoMaObject` (GET)
 
 **Purpose:**  
 Retrieve the metadata of a MoMa node from the MoMa property graph stored in the Neo4j database.
@@ -251,7 +318,7 @@ Retrieve the metadata of a MoMa node from the MoMa property graph stored in the 
 GET /getMoMaObject?id=<your_id>
 ```
 
-### 10. `/getDatasets` (GET)
+### 12. `/getDatasets` (GET)
 
 **Purpose:**  
 Retrieve the metadata of Dataset nodes and all nodes (data) transitively connected to them that belong to each Dataset based on filtering criteria.
@@ -280,24 +347,4 @@ GET /getDatasets?nodeIds=123&nodeIds=456&properties=url&properties=country&types
 
 # Get all datasets without filters
 GET /getDatasets
-```
-
-### 11. `/deleteDatasets` (GET)
-
-**Purpose:**  
-Delete all Dataset nodes specified in the list of UUIDs provided in the ids parameter, along with all nodes transitively connected to them. If the list is empty, all Dataset nodes in the repository will be deleted.
-
-**Details:**  
-- Accepts a list of Dataset UUIDs to delete. If the list is empty, all Dataset nodes in the repository will be deleted.
-- Returns: JSON containing metadata about the deletion process, such as the number of nodes deleted.
-	- {"status": "success", "deletedDatasets": <number_of_deleted_nodes> } – returned if the process executes successfully
-	- {"error": "An error occurred: <message>", "deletedDatasets": "0"} – if an error occurred during processing
-	
-**Usage:**
-```bash
-# Delete specific datasets
-GET /deleteDatasets?ids=123&ids=456
-
-# Delete all datasets
-GET /deleteDatasets
 ```
