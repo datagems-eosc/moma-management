@@ -151,7 +151,8 @@ async def getDatasets(
     orderBy: List[str] = Query(default=[]),
     direction: int = 1,
     publishedDateFrom: Optional[date] = None,
-    publishedDateTo: Optional[date] = None
+    publishedDateTo: Optional[date] = None,
+    status: Optional[str] = None
 ):
     try:
         metadata = retrieveDatasets(
@@ -161,7 +162,8 @@ async def getDatasets(
             orderBy=orderBy or [],
             direction=direction,
             publishedDateFrom=publishedDateFrom,
-            publishedDateTo=publishedDateTo
+            publishedDateTo=publishedDateTo,
+            status=status
         )
 
         return {
