@@ -59,21 +59,26 @@ async def convertHeavyProfiling2PGjson(input_data: dict):
     }
 
 @app.post("/addMoMaNodes")
-async def addMoMaNodes(pg_json: dict):
-    schema = PGSchema()
-    report = schema.validate(pg_json)
+async def addMoMaNodes(pg_json: dict, validation: Optional[bool] = Query(True)):
+    report = None
 
-    # If not valid, return report and message
-    if not report["is_valid"]:
-        return {
-            "status": "error: PG-JSON validation failed",
-            "report": report
-        }
-    # If valid, proceed to upload to Neo4j
+    # validation (only if check is true)
+    if validation:
+        schema = PGSchema()
+        report = schema.validate(pg_json)
+
+        if not report["is_valid"]:
+            return {
+                "status": "error: PG-JSON validation failed",
+                "report": report
+            }
+
+    # upload Neo4J
     neo4j_result = upload_nodes(pg_json)
+
     return {
         "status": neo4j_result,
-        "report": report
+        "report": report if validation else "validation skipped"
     }
 
 @app.post("/addMoMaEdjes")
@@ -121,7 +126,7 @@ async def updateNodes(pg_json: Dict[str, Any]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-"""
+
 @app.get("/deleteDatasets")
 async def deleteDatasets(ids: List[str] = Query(default=[])):
     try:
@@ -130,7 +135,7 @@ async def deleteDatasets(ids: List[str] = Query(default=[])):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-"""
+
 
 @app.get("/getMoMaObject")
 async def getMoMaObject(id: str):

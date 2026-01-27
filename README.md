@@ -149,7 +149,8 @@ The service receives heavy profiling data in Croissant format and returns it as 
 - Accepts input JSON in the **Croissant** format, containing the heavy profiling data (RecordSet part).
 - Converts it to **PG-JSON** based on the **MoMa structure**
 - Returns heavy profiling in PG-JSON based on MoMa schema:
-	- {"metadata": PG-JSON} 
+	- {"metadata": PG-JSON}
+
 
 **Usage:**
 ```bash
@@ -181,9 +182,12 @@ Add MoMa nodes to the MoMa property graph stored in the Neo4j database.
 	}
 	```
 
+**Parameters:**
+-validation (boolean, optional): Determines whether the PG-JSON input should be validated before uploading to Neo4j. Default True.
+
 **Usage:**
 ```bash
-POST /addMoMaNodes
+POST /addMoMaNodes?validation=False
 Content-Type: application/json
 ```
 
@@ -339,12 +343,33 @@ Retrieve the metadata of Dataset nodes and all nodes (data) transitively connect
 - publishedDateFrom (date, optional): Minimum published date (YYYY-MM-DD). Default None.
 - publishedDateTo (date, optional): Maximum published date (YYYY-MM-DD). Default None.
 - direction (int, optional):  Traversal direction. Determines the sort order of the values in the orderBy parameter: 1 for ascending (increasing), -1 for descending (decreasing). Default is 1.
+- status (str, optional): Filter datasets based on their status. Default None.
 
 **Usage:**
 ```bash
 # Get specific datasets with filters
-GET /getDatasets?nodeIds=123&nodeIds=456&properties=url&properties=country&types=RelationalDatabase&orderBy=name&direction=1&publishedDateFrom=2025-01-01&publishedDateTo=2025-11-20
+GET /getDatasets?nodeIds=123&nodeIds=456&properties=url&properties=country&types=RelationalDatabase&orderBy=name&direction=1&publishedDateFrom=2025-01-01&publishedDateTo=2025-11-20&status=ready
 
 # Get all datasets without filters
 GET /getDatasets
+```
+
+### 13. `/deleteDatasets` (GET)
+
+**Purpose:**  
+Delete all Dataset nodes specified in the list of UUIDs provided in the ids parameter, along with all nodes transitively connected to them. If the list is empty, all Dataset nodes in the repository will be deleted.
+
+**Details:**  
+- Accepts a list of Dataset UUIDs to delete. If the list is empty, all Dataset nodes in the repository will be deleted.
+- Returns: JSON containing metadata about the deletion process, such as the number of nodes deleted.
+	- {"status": "success", "deletedRows": <number_of_deleted_rows> } – returned if the process executes successfully
+	- {"error": "An error occurred: <message>", "deletedRows": "0"} – if an error occurred during processing
+	
+**Usage:**
+```bash
+# Delete specific datasets
+GET /deleteDatasets?ids=123&ids=456
+
+# Delete all datasets
+GET /deleteDatasets
 ```

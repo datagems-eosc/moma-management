@@ -119,13 +119,13 @@ def deleteDatasetsByIds(datasetIds: list[str]) -> dict:
     try:
         driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
         query = """
-                MATCH (d:Dataset)
+                MATCH (d:sc__Dataset)
                 WHERE $datasetIds = [] OR d.id IN $datasetIds
-                OPTIONAL MATCH p = (d)-[*]-(m)
-                WHERE m:Data OR m:DataPart
+                OPTIONAL MATCH p = (d)-[r*1..4]-(m)
+                WHERE m:Data OR m:cr__FileObject OR m:cr__FileSet OR m:cr__Field OR m:dg__DatabaseConnection OR m:cr__RecordSet OR m:Statistics
                 FOREACH (x IN nodes(p) | DETACH DELETE x)
                 DETACH DELETE d
-                RETURN count(*) AS deletedNodes
+                RETURN count(*) AS deletedRows
                """
 
         with driver.session() as session:
@@ -136,7 +136,7 @@ def deleteDatasetsByIds(datasetIds: list[str]) -> dict:
 
         return {
             "status": "success",
-            "deletedDatasets": record["deletedNodes"]
+            "deletedRows": record["deletedRows"]
         }
 
     except Exception as e:
