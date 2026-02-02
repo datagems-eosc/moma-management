@@ -16,7 +16,7 @@ NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "datagems")
 def clean_keys(props):
     cleaned = {}
     for k, v in props.items():
-        new_key = k.strip().replace(" ", "_")
+        new_key = k.strip().replace(" ", "_").replace(":", "__")
         if isinstance(v, list):
             cleaned[new_key] = v if len(v) > 0 else None
         else:
@@ -43,7 +43,7 @@ def upload_all_edges(tx, nodes):
     for edge in nodes["edges"]:
         from_id = edge["from"]
         to_id = edge["to"]
-        labels = ":".join(edge["labels"])
+        labels = ":".join(label.replace("/", "___") for label in edge["labels"])
         props = clean_keys(edge.get("properties", {}))
 
         prop_keys = ", ".join(f"{k}: ${k}" for k in props.keys()) if props else ""
@@ -305,8 +305,17 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
                                 "properties": dict(m_node)
                             }
 
+                # todo: deduplicate edges
                 for e in dataset_to_edges[dataset_id]:
                     if e["from"] in nodes_dict and e["to"] in nodes_dict:
+                        if "labels" in e:
+                            if isinstance(e["labels"], list):
+                                e["labels"] = [
+                                    lbl.replace("___", "/") if isinstance(lbl, str) else lbl
+                                    for lbl in e["labels"]
+                                ]
+                            elif isinstance(e["labels"], str):
+                                e["labels"] = e["labels"].replace("___", "/")
                         edges.append(e)
 
             return {

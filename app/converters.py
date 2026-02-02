@@ -99,14 +99,14 @@ def lightProfiling2PGjson(data: dict) -> dict:
 
         # ---------- CSV ----------
         elif encoding == "text/csv":
-            labels = ["CSV", safeType]
+            labels = ["CSV", "Data", safeType]
             properties["sha256"] = dist.get("sha256", "")
 
         # ---------- SQL ----------
         elif encoding == "text/sql":
             if "containedIn" in dist:
                 # Table
-                labels = ["Table", safeType]
+                labels = ["Table", "Data", safeType]
                 source = dist.get("containedIn", {}).get("@id", {})
                 addEdge(edges, dist_id, source, "containedIn")
             else:
@@ -137,6 +137,11 @@ def heavyProfiling2PGjson(data: dict) -> dict:
     nodes = []
     edges = []
 
+    # Dataset root (ID only)
+    dataset_id = data.get("@id")
+    if not dataset_id:
+        return {"nodes": [], "edges": []}
+
     # Process recordSet
     for record in data.get("recordSet", []):
         # RecordSet Node
@@ -144,7 +149,8 @@ def heavyProfiling2PGjson(data: dict) -> dict:
         if not record_id:
             continue
 
-        safeType = record.get("@type", "")
+        # cr:RecordSet
+        record_type = record.get("@type", "")
         record_properties = {
             "type": record.get("@type", ""),
             "name": record.get("name", ""),
@@ -154,7 +160,7 @@ def heavyProfiling2PGjson(data: dict) -> dict:
         # RecordSet node
         nodes.append({
             "id": record_id,
-            "labels": [safeType],
+            "labels": [record_type],
             "properties": record_properties
         })
 
@@ -166,8 +172,9 @@ def heavyProfiling2PGjson(data: dict) -> dict:
             # Determine the source of the field
             source_id = field.get("source", {}).get("fileObject", {}).get("@id")
             if not source_id:  # PDF file
+                edge_type = "source/fileSet"
                 source_id = field.get("source", {}).get("fileSet", {}).get("@id")
-                safeType = field.get("@type", "")
+                safeType = field.get("@type", "")  # cr:Field
                 props_raw = {
                     "type": field.get("@type", ""),
                     "name": field.get("name", ""),
@@ -178,6 +185,7 @@ def heavyProfiling2PGjson(data: dict) -> dict:
                 properties = {k: v for k, v in props_raw.items() if v is not None}
                 labels = ["PDF", safeType]
             else:  # Column from CSV or SQL table
+                edge_type = "source/fileObject"
                 safeType = field.get("@type", "")
                 props_raw = {
                     "type": field.get("@type"),
@@ -200,25 +208,33 @@ def heavyProfiling2PGjson(data: dict) -> dict:
             # ---------- Statistics ONLY for columns ----------
             stats = field.get("statistics")
             if stats:
-                # Keep only non-null properties
-                properties_stats = {k: v for k, v in stats.items() if v is not None}
+                stats_id = stats.get("@id")
+                stats_type = stats.get("@type")
+
+                # Keep only non-null properties excluding @id and @type
+                properties_stats = {
+                    k: v
+                    for k, v in stats.items()
+                    if v is not None and k not in ("@id", "@type")
+                }
 
                 # Only create the node if there is at least one non-null property
-                # todo: change stats_id
                 if properties_stats:
-                    stats_id = f"{field_id}::statistics"
                     nodes.append({
                         "id": stats_id,
-                        "labels": ["Statistics"],
+                        "labels": ["Statistics", stats_type],
                         "properties": properties_stats
                     })
-                    addEdge(edges, field_id, stats_id, "hasStatistics")
+                    addEdge(edges, field_id, stats_id, "statistics")
 
             # Add edge from source -> field and record -> field
             if source_id:
-                addEdge(edges, field_id, source_id, "containedIn")
+                addEdge(edges, field_id, source_id, edge_type)
             if record_id:
-                addEdge(edges, record_id, field_id, "has")
+                # recordSet --field--> Field
+                addEdge(edges, record_id, field_id, "field")
+                # Dataset --recordSet--> RecordSet
+                addEdge(edges, dataset_id, record_id, "recordSet")
 
     graph = {"nodes": nodes, "edges": edges}
     return graph

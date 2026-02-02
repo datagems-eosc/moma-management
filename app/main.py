@@ -44,6 +44,13 @@ async def ingestHeavyProfiling(input_data: dict):
         "metadata": pg_json
     }
 
+@app.post("/convertProfiling2PGjson")
+async def convertProfiling2PGjson(input_data: dict):
+    pg_json = Croissant2PGjson(input_data)
+    return {
+        "metadata": pg_json
+    }
+
 @app.post("/convertLightProfiling2PGjson")
 async def convertLightProfiling2PGjson(input_data: dict):
     pg_json = lightProfiling2PGjson(input_data)
