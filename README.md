@@ -350,17 +350,19 @@ Retrieve the metadata of Dataset nodes and all nodes (data) transitively connect
 	- {"metadata": PG-JSON} – returned if the process executes successfully
 
 **Parameters:**
+```
 - nodeIds (List[str], optional): Filter datasets by their UUIDs. Defaults to an empty list [], which returns all datasets in the repository.
 - properties (List[str], optional): List of Dataset properties to include. Special values "distribution" and "recordSet" include connected nodes. Default [], which includes all properties.
-	- propetries: ["type", "name", "archivedAt", "description", "conformsTo", "citeAs", "license", "url", "version", "headline",  "keywords",  "fieldOfScience",  "inLanguage", "country", "datePublished", "access", "uploadedBy", "distribution", "recordSet"]
-- types (List[str], optional): Filter datasets connected to nodes with these labels. Special values are "FileObject" and "FileSet", which essentially encapsulate multiple types based on MoMa types. Default [].
-	- types: ["TextSet", "ImageSet", "CSV", "Table", "RelationalDatabase", "PDF", "Column"]
+	 values: ["type", "name", "sc:archivedAt", "description", "conformsTo", "citeAs", "license", "url", "dg:doi", "version", "dg:headline",  "dg:keywords",  "dg:fieldOfScience",  "inLanguage", "country", "datePublished", "dg:access", "dg:uploadedBy", "dg:status", "distribution", "recordSet"]
+- types (List[str], optional): Filter datasets containing particular node labels.  Default [], which includes all possible labels.
+	 values: ["cr:FileObject", "cr:FileSet", "cr:Field", "TextSet", "ImageSet", "CSV", "Table", "RelationalDatabase", "PDF", "Column"]
 - orderBy (List[str], optional): List of Dataset properties to sort results. Default [].
-	- orderBy: ["id", "type", "name", "archivedAt", "description", "conformsTo", "citeAs", "license", "url", "version", "headline",  "keywords",  "fieldOfScience",  "inLanguage", "country", "datePublished", "access", "uploadedBy"]
+	 values: ["id", "type", "name", "archivedAt", "description", "conformsTo", "citeAs", "license", "url", "version", "headline",  "keywords",  "fieldOfScience",  "inLanguage", "country", "datePublished", "access", "uploadedBy"]
 - publishedDateFrom (date, optional): Minimum published date (YYYY-MM-DD). Default None.
 - publishedDateTo (date, optional): Maximum published date (YYYY-MM-DD). Default None.
 - direction (int, optional):  Traversal direction. Determines the sort order of the values in the orderBy parameter: 1 for ascending (increasing), -1 for descending (decreasing). Default is 1.
 - status (str, optional): Filter datasets based on their status. Default None.
+```
 
 **Usage:**
 ```bash

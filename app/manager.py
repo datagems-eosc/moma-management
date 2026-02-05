@@ -215,7 +215,9 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
         distribution_labels = {"cr__FileObject", "cr__FileSet"}
         recordset_labels = {"cr__Field", "cr__RecordSet", "Statistics"}
 
+        properties = [p.replace(":", "__") for p in properties]
         properties_set = set(properties or [])
+        types = [t.replace(":", "__") for t in types]
         types_set = set(types or [])
 
         with driver.session() as session:
@@ -271,39 +273,35 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
                     "id": n["id"],
                     "labels": [label.replace("__", ":") for label in n.labels],
                     "properties": {
-                        k: v for k, v in dict(n).items()
+                        k.replace("__", ":"): v
+                        for k, v in dict(n).items()
                         if not properties_set or k in properties_set
                     }
                 }
 
-                # ----  Distribution / RecordSet filtering ----
+                # ---- Distribution / RecordSet filtering ----
                 for m_node in connected_nodes:
                     node_labels = set(m_node.labels)
+                    mid = m_node["id"]
 
-                    # Only allowed labels
-                   # if not node_labels & allowed_labels:
-                   #     continue
-
+                    # Filter nodes only if properties_set is defined
                     if properties_set:
-                        if (
-                                ("distribution" in properties_set and node_labels & distribution_labels)
-                                or ("recordSet" in properties_set and node_labels & recordset_labels)
-                        ):
-                            mid = m_node["id"]
-                            if mid not in nodes_dict:
-                                nodes_dict[mid] = {
-                                    "id": mid,
-                                    "labels": [label.replace("__", ":") for label in m_node.labels],
-                                    "properties": dict(m_node)
-                                }
-                    else:
-                        mid = m_node["id"]
-                        if mid not in nodes_dict:
-                            nodes_dict[mid] = {
-                                "id": mid,
-                                "labels": [label.replace("__", ":") for label in m_node.labels],
-                                "properties": dict(m_node)
+                        is_distribution = "distribution" in properties_set and node_labels & distribution_labels
+                        is_recordset = "recordSet" in properties_set and node_labels & recordset_labels
+
+                        if not (is_distribution or is_recordset):
+                            continue  # skip this node if it doesn't match filters
+
+                    # Add node if not already present
+                    if mid not in nodes_dict:
+                        nodes_dict[mid] = {
+                            "id": mid,
+                            "labels": [label.replace("__", ":") for label in m_node.labels],
+                            "properties": {
+                                k.replace("__", ":"): v
+                                for k, v in dict(m_node).items()
                             }
+                        }
 
                 # todo: deduplicate edges
                 for e in dataset_to_edges[dataset_id]:
