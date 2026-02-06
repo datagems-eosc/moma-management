@@ -9,6 +9,7 @@ class PGSchema:
         "cr:FileObject",
         "dg:DatabaseConnection",
         "RelationalDatabase",
+        "dg:ColumnStatistics",
         "TextSet",
         "ImageSet",
         "CSV",
