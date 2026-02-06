@@ -201,7 +201,7 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
                 WHERE ($nodeIds = [] OR n.id IN $nodeIds)
                   AND ($publishedDateFrom IS NULL OR n.datePublished >= $publishedDateFrom)
                   AND ($publishedDateTo IS NULL OR n.datePublished <= $publishedDateTo)
-                  AND ($status IS NULL OR n.status = $status)
+                  AND ($status IS NULL OR n.dg__status = $status)
 
                 OPTIONAL MATCH (n)-[r*1..4]-(m)
                 WHERE m:cr__FileObject OR m:cr__FileSet OR m:cr__Field OR m:Statistics OR m:cr__RecordSet
