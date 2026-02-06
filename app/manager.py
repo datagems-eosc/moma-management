@@ -369,6 +369,10 @@ def updateNodeProperties(pg_json: dict):
                 continue
 
             props = node.get("properties", {})
+            props = {
+                k.replace(":", "__"): v
+                for k, v in props.items()
+            }
             batch.append({
                 "id": node_id,
                 "properties": props
