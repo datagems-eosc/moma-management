@@ -259,6 +259,7 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
             #  Phase 2: FILTER & EMIT
             nodes_dict = {}
             edges = []
+            edge_seen = set()
 
             for dataset_id, connected_nodes in dataset_to_connected.items():
 
@@ -303,9 +304,10 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
                             }
                         }
 
-                # todo: deduplicate edges
+                # deduplicate edges
                 for e in dataset_to_edges[dataset_id]:
                     if e["from"] in nodes_dict and e["to"] in nodes_dict:
+                        # normalize labels
                         if "labels" in e:
                             if isinstance(e["labels"], list):
                                 e["labels"] = [
@@ -314,7 +316,17 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
                                 ]
                             elif isinstance(e["labels"], str):
                                 e["labels"] = e["labels"].replace("___", "/")
-                        edges.append(e)
+
+                        # ---- unique edge key ----
+                        key = (
+                            e["from"],
+                            e["to"],
+                            tuple(sorted(e["labels"])),
+                            frozenset(e["properties"].items())
+                        )
+                        if key not in edge_seen:
+                            edge_seen.add(key)
+                            edges.append(e)
 
             return {
                 "nodes": list(nodes_dict.values()),
