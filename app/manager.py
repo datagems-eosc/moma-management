@@ -182,7 +182,7 @@ def retrieveMetadata(nodeId: str) -> dict:
 
 
 #Retrieve a Dataset nodes and all transitively connected nodes that has label Dataset or datasetPart based on the filtering criteria (parameters)
-def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str], orderBy: List[str], direction: int, publishedDateFrom: date, publishedDateTo: date, status: str) -> dict:
+def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str], orderBy: List[str], direction: int, publishedDateFrom: str, publishedDateTo: str, status: str) -> dict:
     driver = None
     try:
         driver = GraphDatabase.driver(
@@ -199,8 +199,8 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
         query = f"""
                 MATCH (n:sc__Dataset)
                 WHERE ($nodeIds = [] OR n.id IN $nodeIds)
-                  AND ($publishedDateFrom IS NULL OR n.datePublished >= $publishedDateFrom)
-                  AND ($publishedDateTo IS NULL OR n.datePublished <= $publishedDateTo)
+                  AND ($publishedDateFrom IS NULL OR date(n.datePublished) >= date($publishedDateFrom))
+                  AND ($publishedDateTo IS NULL OR date(n.datePublished) <= date($publishedDateTo))
                   AND ($status IS NULL OR n.dg__status = $status)
 
                 OPTIONAL MATCH (n)-[r*1..4]-(m)

@@ -162,8 +162,8 @@ async def getDatasets(
     types: List[str] = Query(default=[]),
     orderBy: List[str] = Query(default=[]),
     direction: int = 1,
-    publishedDateFrom: Optional[date] = None,
-    publishedDateTo: Optional[date] = None,
+    publishedDateFrom: Optional[str] = None,
+    publishedDateTo: Optional[str] = None,
     status: Optional[str] = None
 ):
     try:
