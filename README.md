@@ -371,7 +371,7 @@ Retrieve the metadata of Dataset nodes and all nodes (data) transitively connect
 **Usage:**
 ```bash
 # Get specific datasets with filters
-GET /getDatasets?nodeIds=123&nodeIds=456&properties=url&properties=country&types=RelationalDatabase&mimeTypes=text/csv&orderBy=name&direction=1&publishedDateFrom=2025-01-01&publishedDateTo=2025-11-20&status=ready
+GET /getDatasets?nodeIds=123&nodeIds=456&properties=url&properties=country&types=RelationalDatabase&mimeTypes=text/csv&orderBy=name&direction=1&publishedDateFrom=2025-01-01&publishedDateTo=2025-11-20&status=ready&offset=0&count=10
 
 # Get all datasets without filters
 GET /getDatasets
