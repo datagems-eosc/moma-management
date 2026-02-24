@@ -181,8 +181,20 @@ def retrieveMetadata(nodeId: str) -> dict:
         return f"Error: {str(e)}"
 
 
-#Retrieve a Dataset nodes and all transitively connected nodes that has label Dataset or datasetPart based on the filtering criteria (parameters)
-def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str], orderBy: List[str], direction: int, publishedDateFrom: str, publishedDateTo: str, status: str) -> dict:
+# Retrieve a Dataset nodes and all transitively connected nodes that has label Dataset or datasetPart based on the filtering criteria (parameters)
+def retrieveDatasets(
+    nodeIds: List[str],
+    properties: List[str],
+    types: List[str],
+    orderBy: List[str],
+    direction: int,
+    publishedDateFrom: str,
+    publishedDateTo: str,
+    status: str,
+    offset: int = 0,
+    count: int = 25
+) -> dict:
+
     driver = None
     try:
         driver = GraphDatabase.driver(
@@ -190,28 +202,58 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
             auth=(NEO4J_USER, NEO4J_PASSWORD)
         )
 
+        skip = max(offset, 0)
+        limit = count
+
         order = "DESC" if direction == -1 else "ASC"
         order_clause = (
             ", ".join([f"n.`{k}` {order}" for k in orderBy])
-            if orderBy else ""
+            if orderBy else "n.id ASC"
         )
 
-        query = f"""
-                MATCH (n:sc__Dataset)
-                WHERE ($nodeIds = [] OR n.id IN $nodeIds)
-                  AND ($publishedDateFrom IS NULL OR date(n.datePublished) >= date($publishedDateFrom))
-                  AND ($publishedDateTo IS NULL OR date(n.datePublished) <= date($publishedDateTo))
-                  AND ($status IS NULL OR n.dg__status = $status)
+        # -----------------------------
+        # Query 1: COUNT THE # of records
+        # -----------------------------
+        count_query = """
+        MATCH (n:sc__Dataset)
+        WHERE ($nodeIds = [] OR n.id IN $nodeIds)
+          AND ($publishedDateFrom IS NULL OR date(n.datePublished) >= date($publishedDateFrom))
+          AND ($publishedDateTo IS NULL OR date(n.datePublished) <= date($publishedDateTo))
+          AND ($status IS NULL OR n.dg__status = $status)
+        RETURN count(n) AS total
+        """
 
-                OPTIONAL MATCH (n)-[r*1..4]-(m)
-                WHERE m:cr__FileObject OR m:cr__FileSet OR m:cr__Field OR m:Statistics OR m:cr__RecordSet
+        # -----------------------------
+        # Query 2: Get the IDs of the datasets that match the criteria with pagination
+        # -----------------------------
+        dataset_id_query = f"""
+        MATCH (n:sc__Dataset)
+        WHERE ($nodeIds = [] OR n.id IN $nodeIds)
+          AND ($publishedDateFrom IS NULL OR date(n.datePublished) >= date($publishedDateFrom))
+          AND ($publishedDateTo IS NULL OR date(n.datePublished) <= date($publishedDateTo))
+          AND ($status IS NULL OR n.dg__status = $status)
+        RETURN n.id AS id
+        ORDER BY {order_clause}
+        SKIP $skip
+        LIMIT $limit
+        """
 
-                RETURN n, m, r
-                {f"ORDER BY {order_clause}" if order_clause else ""}
-            """
+        # -----------------------------
+        # Query 3: For matched datasets, retrieve the whole properties
+        # -----------------------------
+        expand_query = """
+        MATCH (n:sc__Dataset)
+        WHERE n.id IN $datasetIds
+        OPTIONAL MATCH (n)-[r*1..4]-(m)
+        WHERE m:cr__FileObject
+           OR m:cr__FileSet
+           OR m:cr__Field
+           OR m:Statistics
+           OR m:cr__RecordSet
+        RETURN n, m, r
+        """
 
-        # ----  Preferred Sets ----
-        # allowed_labels = {"DataPart", "Data"}
+        # ---- Preferred Sets ----
         distribution_labels = {"cr__FileObject", "cr__FileSet"}
         recordset_labels = {"cr__Field", "cr__RecordSet", "Statistics"}
 
@@ -221,15 +263,50 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
         types_set = set(types or [])
 
         with driver.session() as session:
-            result = session.run(
-                query,
+
+            # ---- total count ----
+            total_query = session.run(
+                count_query,
                 nodeIds=nodeIds or [],
                 publishedDateFrom=publishedDateFrom,
                 publishedDateTo=publishedDateTo,
                 status=status
+            ).single()
+            assert total_query is not None, "Count query failed to return a result"
+            total = total_query["total"]
+
+            # ---- paginated dataset ids ----
+            dataset_ids = [
+                r["id"]
+                for r in session.run(
+                    dataset_id_query,
+                    nodeIds=nodeIds or [],
+                    publishedDateFrom=publishedDateFrom,
+                    publishedDateTo=publishedDateTo,
+                    status=status,
+                    skip=skip,
+                    limit=limit
+                )
+            ]
+
+            if not dataset_ids:
+                return {
+                    "nodes": [],
+                    "edges": [],
+                    "offset": offset,
+                    "count": count,
+                    "total": total,
+                }
+
+            # ---- expand graphs ----
+            result = session.run(
+                expand_query,
+                datasetIds=dataset_ids
             )
 
-            #  Phase 1: COLLECT
+            # -----------------------------
+            # Phase 1: COLLECT
+            # -----------------------------
             dataset_nodes = {}
             dataset_to_connected = {}
             dataset_to_edges = {}
@@ -256,23 +333,25 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
                         "properties": dict(rel)
                     })
 
-            #  Phase 2: FILTER & EMIT
+            # -----------------------------
+            # Phase 2: FILTER & EMIT
+            # -----------------------------
             nodes_dict = {}
             edges = []
             edge_seen = set()
 
             for dataset_id, connected_nodes in dataset_to_connected.items():
 
-                # ---- STRICT types filter (Dataset-level) ----
+                # ---- strict type filter ----
                 if types_set:
-                    if not any(types_set & set(m_node.labels) for m_node in connected_nodes):
-                        continue  # Dataset excluded
+                    if not any(types_set & set(m.labels) for m in connected_nodes):
+                        continue
 
-                # ---- Add Dataset node ----
+                # ---- dataset node ----
                 n = dataset_nodes[dataset_id]
                 nodes_dict[dataset_id] = {
                     "id": n["id"],
-                    "labels": [label.replace("__", ":") for label in n.labels],
+                    "labels": [l.replace("__", ":") for l in n.labels],
                     "properties": {
                         k.replace("__", ":"): v
                         for k, v in dict(n).items()
@@ -280,44 +359,30 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
                     }
                 }
 
-                # ---- Distribution / RecordSet filtering ----
-                for m_node in connected_nodes:
-                    node_labels = set(m_node.labels)
-                    mid = m_node["id"]
+                # ---- connected nodes ----
+                for m in connected_nodes:
+                    node_labels = set(m.labels)
+                    mid = m["id"]
 
-                    # Filter nodes only if properties_set is defined
                     if properties_set:
                         is_distribution = "distribution" in properties_set and node_labels & distribution_labels
                         is_recordset = "recordSet" in properties_set and node_labels & recordset_labels
-
                         if not (is_distribution or is_recordset):
-                            continue  # skip this node if it doesn't match filters
+                            continue
 
-                    # Add node if not already present
                     if mid not in nodes_dict:
                         nodes_dict[mid] = {
                             "id": mid,
-                            "labels": [label.replace("__", ":") for label in m_node.labels],
+                            "labels": [l.replace("__", ":") for l in m.labels],
                             "properties": {
                                 k.replace("__", ":"): v
-                                for k, v in dict(m_node).items()
+                                for k, v in dict(m).items()
                             }
                         }
 
-                # deduplicate edges
+                # ---- edges ----
                 for e in dataset_to_edges[dataset_id]:
                     if e["from"] in nodes_dict and e["to"] in nodes_dict:
-                        # normalize labels
-                        if "labels" in e:
-                            if isinstance(e["labels"], list):
-                                e["labels"] = [
-                                    lbl.replace("___", "/") if isinstance(lbl, str) else lbl
-                                    for lbl in e["labels"]
-                                ]
-                            elif isinstance(e["labels"], str):
-                                e["labels"] = e["labels"].replace("___", "/")
-
-                        # ---- unique edge key ----
                         key = (
                             e["from"],
                             e["to"],
@@ -330,7 +395,10 @@ def retrieveDatasets(nodeIds: List[str], properties: List[str], types: List[str]
 
             return {
                 "nodes": list(nodes_dict.values()),
-                "edges": edges
+                "edges": edges,
+                "offset": offset,
+                "count": count,
+                "total": total,
             }
 
     except Exception as e:

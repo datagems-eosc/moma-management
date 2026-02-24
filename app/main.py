@@ -164,7 +164,9 @@ async def getDatasets(
     direction: int = 1,
     publishedDateFrom: Optional[str] = None,
     publishedDateTo: Optional[str] = None,
-    status: Optional[str] = None
+    status: Optional[str] = None,
+    offset: int = Query(default=0, ge=0),
+    count: int = Query(default=25, ge=1, le=100)
 ):
     try:
         metadata = retrieveDatasets(
@@ -175,15 +177,24 @@ async def getDatasets(
             direction=direction,
             publishedDateFrom=publishedDateFrom,
             publishedDateTo=publishedDateTo,
-            status=status
+            status=status,
+            offset=offset,
+            count=count
         )
 
         return {
-            "metadata": metadata
+            "metadata": {
+                "nodes": metadata.get("nodes", []),
+                "edges": metadata.get("edges", []),
+            },
+            "offset": metadata.get("offset", offset),
+            "count": metadata.get("count", count),
+            "total": metadata.get("total"),
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"An error occurred: {str(e)}")
 
 
 #uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
