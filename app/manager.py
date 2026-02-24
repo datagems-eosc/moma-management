@@ -13,6 +13,21 @@ NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "datagems")
 
+#  mineType to standard types(labels)
+MIME_TYPE_MAPPING = {
+    "application/vnd.ms-excel": "EXCEL",
+    "application/x-ipynb+json": "JSONSet",
+    "application/docx": "DOCXSet",
+    "application/pptx": "PPTXSet",
+    "application/pdf": "PDFSet",
+    "image/jpeg": "JPEGSet",
+    "image/png": "PNGSet",
+    "text/csv": "CSV",
+    "text/sql": "Table",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "Sheet",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "DocumentSet"
+}
+
 def clean_keys(props):
     cleaned = {}
     for k, v in props.items():
@@ -186,6 +201,7 @@ def retrieveDatasets(
     nodeIds: List[str],
     properties: List[str],
     types: List[str],
+    mimeTypes: List[str],
     orderBy: List[str],
     direction: int,
     publishedDateFrom: str,
@@ -211,6 +227,13 @@ def retrieveDatasets(
             if orderBy else "n.id ASC"
         )
 
+        # Map mineTypes to standard types(labels)
+        mapped_types = [MIME_TYPE_MAPPING.get(mt, mt) for mt in mimeTypes]
+        # Normalize types
+        normalized_types = [t.replace(":", "__") for t in (types or [])]
+        # Merge both lists
+        types = normalized_types + mapped_types
+
         # -----------------------------
         # Query 1: COUNT THE # of records
         # -----------------------------
@@ -220,7 +243,16 @@ def retrieveDatasets(
           AND ($publishedDateFrom IS NULL OR date(n.datePublished) >= date($publishedDateFrom))
           AND ($publishedDateTo IS NULL OR date(n.datePublished) <= date($publishedDateTo))
           AND ($status IS NULL OR n.dg__status = $status)
-        RETURN count(n) AS total
+        MATCH (n)-[*1..4]-(m)
+            WHERE 
+            ( m:cr__FileObject 
+            OR m:cr__FileSet 
+            OR m:cr__Field 
+            OR m:Statistics 
+            OR m:cr__RecordSet
+            )
+            AND ($types = [] OR ANY(t IN $types WHERE t IN labels(m)))
+            RETURN count(DISTINCT n.id) AS total
         """
 
         # -----------------------------
@@ -259,7 +291,7 @@ def retrieveDatasets(
 
         properties = [p.replace(":", "__") for p in properties]
         properties_set = set(properties or [])
-        types = [t.replace(":", "__") for t in types]
+        #types = [t.replace(":", "__") for t in types]
         types_set = set(types or [])
 
         with driver.session() as session:
@@ -270,10 +302,11 @@ def retrieveDatasets(
                 nodeIds=nodeIds or [],
                 publishedDateFrom=publishedDateFrom,
                 publishedDateTo=publishedDateTo,
-                status=status
+                status=status,
+                types=types
             ).single()
             assert total_query is not None, "Count query failed to return a result"
-            total = total_query["total"]
+            total = total_query["total"] if total_query and total_query["total"] is not None else 0
 
             # ---- paginated dataset ids ----
             dataset_ids = [

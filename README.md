@@ -313,7 +313,7 @@ Update property values on existing nodes in the MoMa property graph stored in th
 - Accepts input JSON in the **PG-JSON** format. Specifically, it matches the nodes contained in the JSON by its id and updates only the listed properties with the provided values. JSON has the following form:
 	- {"nodes": [{"id":"", "properties": {"property_name":"property_value}}]}
 - Returns:
-	- {"status": "success", "updated": "<number_of_updated_nodes>"} – if the data was updated successfully
+	- {"status": "success", "updated": NUMBER_OF_UPDATED_NODES} – if the data was updated successfully
 	- {"error": "An error occurred: <message>", "updated": "0"} – if an error occurred during processing
 
 
@@ -332,7 +332,7 @@ Retrieve the metadata of a MoMa node from the MoMa property graph stored in the 
 - Accepts a UUID of a MoMa node
 - Returns: PG-JSON containing metadata of the requested MoMa node
 	- {"metadata": PG-JSON} – returned if the process executes successfully
-	- {"metadata": {"error": "<message>"}} – if an error occurred during processing
+	- {"metadata": {"error": MESSAGE}} – if an error occurred during processing
 
 **Usage:**
 ```bash
@@ -347,7 +347,7 @@ Retrieve the metadata of Dataset nodes and all nodes (data) transitively connect
 **Details:**  
 - Accepts filtering parameters such as nodeIds, properties, types, orderBy, published date range, direction, and status of a dataset.
 - Returns a JSON containing metadata of the requested Dataset(s) and and all nodes transitively connected to it according to the criteria defined by the values of the parameters.
-	- {"metadata": PG-JSON} – returned if the process executes successfully
+	- {"metadata": PG-JSON,  "offset": NUMBER,  "count": NUMBER, "total": NUMBER_OF_DATASETS} – returned if the process executes successfully
 
 **Parameters:**
 ```
@@ -356,18 +356,22 @@ Retrieve the metadata of Dataset nodes and all nodes (data) transitively connect
 	 values: ["type", "name", "sc:archivedAt", "description", "conformsTo", "citeAs", "license", "url", "dg:doi", "version", "dg:headline",  "dg:keywords",  "dg:fieldOfScience",  "inLanguage", "country", "datePublished", "dg:access", "dg:uploadedBy", "dg:status", "distribution", "recordSet"]
 - types (List[str], optional): Filter datasets containing particular node labels.  Default [], which includes all possible labels.
 	 values: ["cr:FileObject", "cr:FileSet", "cr:Field", "TextSet", "ImageSet", "CSV", "Table", "RelationalDatabase", "PDF", "Column"]
+-mimeTypes(List[str], optional):Filter datasets containing particular mimeTypes.  Default [], which includes all possible mimeTypes.
+	values: ["application/vnd.ms-excel", "application/x-ipynb+json", "application/docx", "application/pptx", "application/pdf", "image/jpeg", "image/png", "text/csv", "text/sql", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
 - orderBy (List[str], optional): List of Dataset properties to sort results. Default [].
-	 values: ["id", "type", "name", "archivedAt", "description", "conformsTo", "citeAs", "license", "url", "version", "headline",  "keywords",  "fieldOfScience",  "inLanguage", "country", "datePublished", "access", "uploadedBy"]
+	 values: ["id", "name", "archivedAt", "description", "conformsTo", "citeAs", "license", "url", "version", "headline",  "keywords",  "fieldOfScience",  "inLanguage", "country", "datePublished", "access", "uploadedBy"]
 - publishedDateFrom (date, optional): Minimum published date (YYYY-MM-DD). Default None.
 - publishedDateTo (date, optional): Maximum published date (YYYY-MM-DD). Default None.
 - direction (int, optional):  Traversal direction. Determines the sort order of the values in the orderBy parameter: 1 for ascending (increasing), -1 for descending (decreasing). Default is 1.
 - status (str, optional): Filter datasets based on their status. Default None.
+- offset (int, optional, default=0):  Number of datasets to skip before returning results.
+- count(int, optional, default=25): Maximum number of datasets to return (pagination limit, between 1 and 100).
 ```
 
 **Usage:**
 ```bash
 # Get specific datasets with filters
-GET /getDatasets?nodeIds=123&nodeIds=456&properties=url&properties=country&types=RelationalDatabase&orderBy=name&direction=1&publishedDateFrom=2025-01-01&publishedDateTo=2025-11-20&status=ready
+GET /getDatasets?nodeIds=123&nodeIds=456&properties=url&properties=country&types=RelationalDatabase&mimeTypes=text/csv&orderBy=name&direction=1&publishedDateFrom=2025-01-01&publishedDateTo=2025-11-20&status=ready
 
 # Get all datasets without filters
 GET /getDatasets
@@ -381,7 +385,7 @@ Delete all Dataset nodes specified in the list of UUIDs provided in the ids para
 **Details:**  
 - Accepts a list of Dataset UUIDs to delete. If the list is empty, all Dataset nodes in the repository will be deleted.
 - Returns: JSON containing metadata about the deletion process, such as the number of nodes deleted.
-	- {"status": "success", "deletedRows": <number_of_deleted_rows> } – returned if the process executes successfully
+	- {"status": "success", "deletedRows": NUMBER_OF_DELETED_ROWS} – returned if the process executes successfully
 	- {"error": "An error occurred: <message>", "deletedRows": "0"} – if an error occurred during processing
 	
 **Usage:**

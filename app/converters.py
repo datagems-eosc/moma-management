@@ -83,21 +83,48 @@ def lightProfiling2PGjson(data: dict) -> dict:
             "encodingFormat": dist.get("encodingFormat", ""),
         }
 
-        # ---------- Text Set (PDF, DOCX, PPTX) ----------
-        if encoding in {
-            "application/pdf",
-            "application/docx",
-            "application/pptx",
-            "application/x-ipynb+json"
-        }:
-            labels = ["TextSet", "Data", safeType]
+        # ---------- PDF Set ----------
+        if encoding == "application/pdf":
+            labels = ["PDFSet", "Data", safeType]
             # includes exists ONLY for FileSet
             if "includes" in dist:
                 properties["includes"] = dist.get("includes")
-
-        # ---------- Image Set ----------
-        elif encoding == "image/jpg":
-            labels = ["ImageSet", "Data", safeType]
+        # ---------- docx Set ----------
+        if encoding == "application/docx":
+            labels = ["DOCXSet", "Data", safeType]
+            # includes exists ONLY for FileSet
+            if "includes" in dist:
+                properties["includes"] = dist.get("includes")
+        # ---------- pptx Set ----------
+        if encoding == "application/pptx":
+            labels = ["PPTXSet", "Data", safeType]
+            # includes exists ONLY for FileSet
+            if "includes" in dist:
+                properties["includes"] = dist.get("includes")
+        # ---------- pptx Set ----------
+        if encoding == "application/x-ipynb+json":
+            labels = ["JSONSet", "Data", safeType]
+            # includes exists ONLY for FileSet
+            if "includes" in dist:
+                properties["includes"] = dist.get("includes")
+        # ---------- presentation Set ----------
+        elif encoding == "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+            labels = ["PresentationSet", "Data", safeType]
+            if "includes" in dist:
+                properties["includes"] = dist.get("includes")
+        # ---------- document Set ----------
+        elif encoding == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+            labels = ["DocumentSet", "Data", safeType]
+            if "includes" in dist:
+                properties["includes"] = dist.get("includes")
+        # ---------- jpeg Set ----------
+        elif encoding == "image/jpeg":
+            labels = ["JPEGSet", "Data", safeType]
+            if "includes" in dist:
+                properties["includes"] = dist.get("includes")
+        # ---------- png Set ----------
+        elif encoding == "image/png":
+            labels = ["PNGSet", "Data", safeType]
             if "includes" in dist:
                 properties["includes"] = dist.get("includes")
 
@@ -111,11 +138,24 @@ def lightProfiling2PGjson(data: dict) -> dict:
             if "containedIn" in dist:
                 # Table
                 labels = ["Table", "Data", safeType]
+                properties["sha256"] = dist.get("sha256", "")
                 source = dist.get("containedIn", {}).get("@id", {})
                 addEdge(edges, dist_id, source, "containedIn")
             else:
                 # Relational database
                 labels = ["RelationalDatabase", "Data", safeType]
+
+        # ---------- excel ----------
+        elif encoding == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+            if "containedIn" in dist:
+                # Sheet
+                labels = ["Sheet", "Data", safeType]
+                properties["sha256"] = dist.get("sha256", "")
+                source = dist.get("containedIn", {}).get("@id", {})
+                addEdge(edges, dist_id, source, "containedIn")
+            else:
+                # EXCEL file
+                labels = ["EXCEL", "Data", safeType]
 
         # ---------- Fallback ----------
         else:
@@ -197,7 +237,7 @@ def heavyProfiling2PGjson(data: dict) -> dict:
                     "description": field.get("description"),
                     "dataType": field.get("dataType"),
                     "column": field.get("source", {}).get("extract", {}).get("column"),
-                    "sample": field.get("sample")
+                    "sample": [v for v in (field.get("sample") or []) if v is not None]
                 }
                 properties = {k: v for k, v in props_raw.items() if v is not None}
                 labels = ["Column", safeType]
