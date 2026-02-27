@@ -78,59 +78,75 @@ def lightProfiling2PGjson(data: dict) -> dict:
             "type": dist.get("@type", ""),
             "name": dist.get("name", ""),
             "description": dist.get("description", ""),
-            "contentSize": dist.get("contentSize", ""),
-            "contentUrl": dist.get("contentUrl", ""),
             "encodingFormat": dist.get("encodingFormat", ""),
         }
 
         # ---------- PDF Set ----------
         if encoding == "application/pdf":
             labels = ["PDFSet", "Data", safeType]
+            properties["contentSize"] = dist.get("contentSize")
+            properties["contentUrl"] = dist.get("contentUrl")
             # includes exists ONLY for FileSet
             if "includes" in dist:
                 properties["includes"] = dist.get("includes")
         # ---------- docx Set ----------
-        if encoding == "application/docx":
+        elif encoding == "application/docx":
             labels = ["DOCXSet", "Data", safeType]
+            properties["contentSize"] = dist.get("contentSize")
+            properties["contentUrl"] = dist.get("contentUrl")
             # includes exists ONLY for FileSet
             if "includes" in dist:
                 properties["includes"] = dist.get("includes")
         # ---------- pptx Set ----------
-        if encoding == "application/pptx":
+        elif encoding == "application/pptx":
             labels = ["PPTXSet", "Data", safeType]
+            properties["contentSize"] = dist.get("contentSize")
+            properties["contentUrl"] = dist.get("contentUrl")
             # includes exists ONLY for FileSet
             if "includes" in dist:
                 properties["includes"] = dist.get("includes")
         # ---------- pptx Set ----------
-        if encoding == "application/x-ipynb+json":
+        elif encoding == "application/x-ipynb+json":
             labels = ["JSONSet", "Data", safeType]
+            properties["contentSize"] = dist.get("contentSize")
+            properties["contentUrl"] = dist.get("contentUrl")
             # includes exists ONLY for FileSet
             if "includes" in dist:
                 properties["includes"] = dist.get("includes")
         # ---------- presentation Set ----------
         elif encoding == "application/vnd.openxmlformats-officedocument.presentationml.presentation":
             labels = ["PresentationSet", "Data", safeType]
+            properties["contentSize"] = dist.get("contentSize")
+            properties["contentUrl"] = dist.get("contentUrl")
             if "includes" in dist:
                 properties["includes"] = dist.get("includes")
         # ---------- document Set ----------
         elif encoding == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
             labels = ["DocumentSet", "Data", safeType]
+            properties["contentSize"] = dist.get("contentSize")
+            properties["contentUrl"] = dist.get("contentUrl")
             if "includes" in dist:
                 properties["includes"] = dist.get("includes")
         # ---------- jpeg Set ----------
         elif encoding == "image/jpeg":
             labels = ["JPEGSet", "Data", safeType]
+            properties["contentSize"] = dist.get("contentSize")
+            properties["contentUrl"] = dist.get("contentUrl")
             if "includes" in dist:
                 properties["includes"] = dist.get("includes")
         # ---------- png Set ----------
         elif encoding == "image/png":
             labels = ["PNGSet", "Data", safeType]
+            properties["contentSize"] = dist.get("contentSize")
+            properties["contentUrl"] = dist.get("contentUrl")
             if "includes" in dist:
                 properties["includes"] = dist.get("includes")
 
         # ---------- CSV ----------
         elif encoding == "text/csv":
             labels = ["CSV", "Data", safeType]
+            properties["contentSize"] = dist.get("contentSize")
+            properties["contentUrl"] = dist.get("contentUrl")
             properties["sha256"] = dist.get("sha256", "")
 
         # ---------- SQL ----------
@@ -138,6 +154,8 @@ def lightProfiling2PGjson(data: dict) -> dict:
             if "containedIn" in dist:
                 # Table
                 labels = ["Table", "Data", safeType]
+                properties["contentSize"] = dist.get("contentSize")
+                properties["contentUrl"] = dist.get("contentUrl")
                 properties["sha256"] = dist.get("sha256", "")
                 source = dist.get("containedIn", {}).get("@id", {})
                 addEdge(edges, dist_id, source, "containedIn")
@@ -150,16 +168,18 @@ def lightProfiling2PGjson(data: dict) -> dict:
             if "containedIn" in dist:
                 # Sheet
                 labels = ["Sheet", "Data", safeType]
-                properties["sha256"] = dist.get("sha256", "")
                 source = dist.get("containedIn", {}).get("@id", {})
                 addEdge(edges, dist_id, source, "containedIn")
             else:
                 # EXCEL file
+                properties["contentSize"] = dist.get("contentSize")
+                properties["contentUrl"] = dist.get("contentUrl")
+                properties["sha256"] = dist.get("sha256", "")
                 labels = ["EXCEL", "Data", safeType]
 
         # ---------- Fallback ----------
         else:
-            labels = ["Distribution"]
+            labels = ["UNKNOWN"]
 
         # remove nulls
         properties = {k: v for k, v in properties.items() if v is not None}
@@ -271,7 +291,7 @@ def heavyProfiling2PGjson(data: dict) -> dict:
                     })
                     addEdge(edges, field_id, stats_id, "statistics")
 
-            # Add edge from source -> field and record -> field
+            # Add edge from field -> source/fileSet -> fileObject
             if source_id:
                 addEdge(edges, field_id, source_id, edge_type)
             if record_id:
