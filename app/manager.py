@@ -337,6 +337,7 @@ def retrieveDatasets(
                     publishedDateFrom=publishedDateFrom,
                     publishedDateTo=publishedDateTo,
                     status=status,
+                    types=types,
                     skip=skip,
                     limit=limit
                 )
