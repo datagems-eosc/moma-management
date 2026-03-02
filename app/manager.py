@@ -1,13 +1,14 @@
-import os
-from typing import List
-from datetime import date
-from neo4j import GraphDatabase
 import logging
+import os
+from datetime import date
+from typing import List
+
+from neo4j import GraphDatabase
 
 # credentials for Neo4j
-#NEO4J_URI = "bolt://localhost:7687"
-#NEO4J_USER = "neo4j"
-#NEO4J_PASSWORD = "datagems"
+# NEO4J_URI = "bolt://localhost:7687"
+# NEO4J_USER = "neo4j"
+# NEO4J_PASSWORD = "datagems"
 
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
@@ -27,6 +28,7 @@ MIME_TYPE_MAPPING = {
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "Sheet",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "DocumentSet"
 }
+
 
 def clean_keys(props):
     cleaned = {}
@@ -58,10 +60,12 @@ def upload_all_edges(tx, nodes):
     for edge in nodes["edges"]:
         from_id = edge["from"]
         to_id = edge["to"]
-        labels = ":".join(label.replace("/", "___") for label in edge["labels"])
+        labels = ":".join(label.replace("/", "___")
+                          for label in edge["labels"])
         props = clean_keys(edge.get("properties", {}))
 
-        prop_keys = ", ".join(f"{k}: ${k}" for k in props.keys()) if props else ""
+        prop_keys = ", ".join(
+            f"{k}: ${k}" for k in props.keys()) if props else ""
 
         query = f"""
                 MATCH (a {{id: $from_id}})
@@ -74,6 +78,7 @@ def upload_all_edges(tx, nodes):
         parameters = {"from_id": from_id, "to_id": to_id}
         parameters.update(props)
         tx.run(query, parameters)
+
 
 def upload_nodes(pg_json: dict) -> str:
     if "nodes" not in pg_json:
@@ -96,6 +101,7 @@ def upload_nodes(pg_json: dict) -> str:
     finally:
         driver.close()
 
+
 def upload_edges(pg_json: dict) -> str:
     if "edges" not in pg_json:
         return "Error: PG-JSON must contain 'edges'"
@@ -117,9 +123,11 @@ def upload_edges(pg_json: dict) -> str:
     finally:
         driver.close()
 
+
 def pgjson2Neo4j(pg_json: dict) -> str:
     try:
-        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        driver = GraphDatabase.driver(
+            NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
         with driver.session() as session:
             session.execute_write(upload_all_nodes, pg_json)
             session.execute_write(upload_all_edges, pg_json)
@@ -130,9 +138,11 @@ def pgjson2Neo4j(pg_json: dict) -> str:
         logging.error(f"Neo4j upload failed: {e}")
         return f"Error: {str(e)}"
 
+
 def deleteDatasetsByIds(datasetIds: list[str]) -> dict:
     try:
-        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        driver = GraphDatabase.driver(
+            NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
         query = """
                 MATCH (d:sc__Dataset)
                 WHERE $datasetIds = [] OR d.id IN $datasetIds
@@ -163,7 +173,8 @@ def deleteDatasetsByIds(datasetIds: list[str]) -> dict:
 
 def retrieveMetadata(nodeId: str) -> dict:
     try:
-        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        driver = GraphDatabase.driver(
+            NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
         query = """
                 MATCH (n)
                 WHERE n.id = $nodeId
@@ -264,7 +275,16 @@ def retrieveDatasets(
           AND ($publishedDateFrom IS NULL OR date(n.datePublished) >= date($publishedDateFrom))
           AND ($publishedDateTo IS NULL OR date(n.datePublished) <= date($publishedDateTo))
           AND ($status IS NULL OR n.dg__status = $status)
-        RETURN n.id AS id
+        MATCH (n)-[*1..4]-(m)
+            WHERE 
+            ( m:cr__FileObject 
+            OR m:cr__FileSet 
+            OR m:cr__Field 
+            OR m:Statistics 
+            OR m:cr__RecordSet
+            )
+            AND ($types = [] OR ANY(t IN $types WHERE t IN labels(m)))
+        RETURN DISTINCT n.id AS id
         ORDER BY {order_clause}
         SKIP $skip
         LIMIT $limit
@@ -291,7 +311,7 @@ def retrieveDatasets(
 
         properties = [p.replace(":", "__") for p in properties]
         properties_set = set(properties or [])
-        #types = [t.replace(":", "__") for t in types]
+        # types = [t.replace(":", "__") for t in types]
         types_set = set(types or [])
 
         with driver.session() as session:
@@ -327,7 +347,8 @@ def retrieveDatasets(
                     "nodes": [],
                     "edges": [],
                     "offset": offset,
-                    "count": count,
+                    "limit": count,
+                    "count": 0,
                     "total": total,
                 }
 
@@ -397,7 +418,11 @@ def retrieveDatasets(
                     node_labels = set(m.labels)
                     mid = m["id"]
 
-                    if properties_set:
+                    # ---- Check special property filters ----
+                    # "distribution" and "recordSet" are special filters that control which nodes to include
+                    has_special_filter = bool(
+                        properties_set & {"distribution", "recordSet"})
+                    if has_special_filter:
                         is_distribution = "distribution" in properties_set and node_labels & distribution_labels
                         is_recordset = "recordSet" in properties_set and node_labels & recordset_labels
                         if not (is_distribution or is_recordset):
@@ -410,6 +435,7 @@ def retrieveDatasets(
                             "properties": {
                                 k.replace("__", ":"): v
                                 for k, v in dict(m).items()
+                                if not properties_set or k in properties_set or k == "id"
                             }
                         }
 
@@ -430,7 +456,8 @@ def retrieveDatasets(
                 "nodes": list(nodes_dict.values()),
                 "edges": edges,
                 "offset": offset,
-                "count": count,
+                "limit": count,
+                "count": len(nodes_dict),
                 "total": total,
             }
 
@@ -445,7 +472,8 @@ def retrieveDatasets(
 
 def retrieveAllDatasets() -> dict:
     try:
-        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        driver = GraphDatabase.driver(
+            NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
         query = """
             MATCH (c:Dataset)
             RETURN c.id AS id, labels(c) AS labels, properties(c) AS properties
@@ -467,17 +495,18 @@ def retrieveAllDatasets() -> dict:
         logging.error(f"Neo4j retrieve failed: {e}")
         return {"error": str(e)}
 
-from neo4j import GraphDatabase
 
 def updateNodeProperties(pg_json: dict):
     try:
-        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        driver = GraphDatabase.driver(
+            NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
         nodes = pg_json.get("nodes", [])
 
         batch = []
         for node in nodes:
-            node_id = node.get("id")  # or node.get("@id") depending on your input
+            # or node.get("@id") depending on your input
+            node_id = node.get("id")
             if not node_id:
                 continue
 
@@ -516,7 +545,8 @@ def updateNodeProperties(pg_json: dict):
 
 def retrieveDatasetsOrderedBy(orderBy: str) -> dict:
     try:
-        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        driver = GraphDatabase.driver(
+            NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
         query = f"""
             MATCH (c:Dataset)
             RETURN c.id AS id, labels(c) AS labels, properties(c) AS properties
@@ -541,10 +571,11 @@ def retrieveDatasetsOrderedBy(orderBy: str) -> dict:
         return {"error": str(e)}
 
 
-#Retrieve all Datasets nodes that are transitively connected to at least one node with the given targetLabel.
+# Retrieve all Datasets nodes that are transitively connected to at least one node with the given targetLabel.
 def retrieveDatasetsByType(targetLabel: str) -> dict:
     try:
-        driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        driver = GraphDatabase.driver(
+            NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
         # Inject targetLabel carefully (validate input before using in prod!)
         query = f"""

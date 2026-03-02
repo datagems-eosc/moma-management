@@ -1,17 +1,33 @@
-from fastapi import FastAPI, HTTPException
-from typing import Any, Dict, List, Optional
-from datetime import date
-from fastapi import Query
-from app.converters import Croissant2PGjson, heavyProfiling2PGjson, lightProfiling2PGjson
-from app.manager import pgjson2Neo4j, retrieveMetadata, retrieveDatasets, updateNodeProperties, deleteDatasetsByIds, upload_nodes, upload_edges, retrieveDatasetsByType
-from app.schema import PGSchema
 import json
+from datetime import date
+from typing import Any, Dict, List, Optional
+
+from fastapi import FastAPI, HTTPException, Query
+
+from app.converters import (
+    Croissant2PGjson,
+    heavyProfiling2PGjson,
+    lightProfiling2PGjson,
+)
+from app.manager import (
+    deleteDatasetsByIds,
+    pgjson2Neo4j,
+    retrieveDatasets,
+    retrieveDatasetsByType,
+    retrieveMetadata,
+    updateNodeProperties,
+    upload_edges,
+    upload_nodes,
+)
+from app.schema import PGSchema
 
 app = FastAPI(title="MoMa API")
+
 
 @app.get("/")
 async def root():
     return {"message": "MoMa API is up and running"}
+
 
 @app.post("/ingestProfile2MoMa")
 async def ingestProfile2MoMa(input_data: Dict[str, Any]):
@@ -24,7 +40,9 @@ async def ingestProfile2MoMa(input_data: Dict[str, Any]):
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"An error occurred: {str(e)}")
+
 
 @app.post("/ingestLightProfiling")
 async def ingestLightProfiling(input_data: dict):
@@ -35,6 +53,7 @@ async def ingestLightProfiling(input_data: dict):
         "metadata": pg_json
     }
 
+
 @app.post("/ingestHeavyProfiling")
 async def ingestHeavyProfiling(input_data: dict):
     pg_json = heavyProfiling2PGjson(input_data)
@@ -44,12 +63,14 @@ async def ingestHeavyProfiling(input_data: dict):
         "metadata": pg_json
     }
 
+
 @app.post("/convertProfiling2PGjson")
 async def convertProfiling2PGjson(input_data: dict):
     pg_json = Croissant2PGjson(input_data)
     return {
         "metadata": pg_json
     }
+
 
 @app.post("/convertLightProfiling2PGjson")
 async def convertLightProfiling2PGjson(input_data: dict):
@@ -58,12 +79,14 @@ async def convertLightProfiling2PGjson(input_data: dict):
         "metadata": pg_json
     }
 
+
 @app.post("/convertHeavyProfiling2PGjson")
 async def convertHeavyProfiling2PGjson(input_data: dict):
     pg_json = heavyProfiling2PGjson(input_data)
     return {
         "metadata": pg_json
     }
+
 
 @app.post("/addMoMaNodes")
 async def addMoMaNodes(pg_json: dict, validation: Optional[bool] = Query(True)):
@@ -88,12 +111,14 @@ async def addMoMaNodes(pg_json: dict, validation: Optional[bool] = Query(True)):
         "report": report if validation else "validation skipped"
     }
 
+
 @app.post("/addMoMaEdjes")
 async def addMoMaEdjes(pg_json: dict):
     neo4j_result = upload_edges(pg_json)
     return {
         "status": neo4j_result
     }
+
 
 @app.post("/addMoMaGraph")
 async def addMoMaGraph(pg_json: dict):
@@ -113,6 +138,7 @@ async def addMoMaGraph(pg_json: dict):
         "report": report
     }
 
+
 @app.post("/validatePGjson")
 async def validatePGjson(pg_json: dict):
     # strict = True
@@ -124,6 +150,7 @@ async def validatePGjson(pg_json: dict):
         "report": report
     }
 
+
 @app.post("/updateNodes")
 async def updateNodes(pg_json: Dict[str, Any]):
     try:
@@ -131,7 +158,8 @@ async def updateNodes(pg_json: Dict[str, Any]):
         return metadata
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"An error occurred: {str(e)}")
 
 
 @app.get("/deleteDatasets")
@@ -141,7 +169,8 @@ async def deleteDatasets(ids: List[str] = Query(default=[])):
         return metadata
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"An error occurred: {str(e)}")
 
 
 @app.get("/getMoMaObject")
@@ -149,11 +178,13 @@ async def getMoMaObject(id: str):
     try:
         metadata = retrieveMetadata(id)
         return {
-           "metadata": metadata
+            "metadata": metadata
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"An error occurred: {str(e)}")
+
 
 @app.get("/getDatasets")
 async def getDatasets(
@@ -190,7 +221,8 @@ async def getDatasets(
                 "edges": metadata.get("edges", []),
             },
             "offset": metadata.get("offset", offset),
-            "count": metadata.get("count", count),
+            "limit": metadata.get("limit", count),
+            "count": metadata.get("count", 0),
             "total": metadata.get("total"),
         }
 
@@ -199,8 +231,8 @@ async def getDatasets(
             status_code=500, detail=f"An error occurred: {str(e)}")
 
 
-#uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-#gunicorn -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000
+# uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+# gunicorn -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
