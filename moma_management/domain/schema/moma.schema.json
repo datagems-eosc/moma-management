@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "MoMaGraphModel",
+    "type": "object",
+    "properties": {
+        "nodes": {
+            "type": "array",
+            "items": {
+                "$ref": "nodes/node.schema.json"
+            }
+        },
+        "edges": {
+            "type": "array",
+            "items": {
+                "$ref": "edges/edge.schema.json"
+            }
+        }
+    },
+    "required": ["nodes"]
+}

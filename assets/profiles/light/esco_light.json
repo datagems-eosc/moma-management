@@ -1,0 +1,241 @@
+{
+    "@context": {
+        "@language": "en",
+        "@vocab": "https://schema.org/",
+        "cr": "http://mlcommons.org/croissant/",
+        "rai": "http://mlcommons.org/croissant/RAI/",
+        "dg": "http://datagems.eu/TBD",
+        "data": {
+            "@id": "cr:data",
+            "@type": "@json"
+        },
+        "dataType": {
+            "@id": "cr:dataType",
+            "@type": "@vocab"
+        },
+        "examples": {
+            "@id": "cr:examples",
+            "@type": "@json"
+        },
+        "conformsTo": "dct:conformsTo",
+        "citeAs": "cr:citeAs",
+        "column": "cr:column",
+        "extract": "cr:extract",
+        "field": "cr:field",
+        "fileProperty": "cr:fileProperty",
+        "fileObject": "cr:fileObject",
+        "fileSet": "cr:fileSet",
+        "format": "cr:format",
+        "includes": "cr:includes",
+        "isLiveDataset": "cr:isLiveDataset",
+        "jsonPath": "cr:jsonPath",
+        "key": "cr:key",
+        "md5": "cr:md5",
+        "parentField": "cr:parentField",
+        "path": "cr:path",
+        "recordSet": "cr:recordSet",
+        "references": "cr:references",
+        "regex": "cr:regex",
+        "repeated": "cr:repeated",
+        "replace": "cr:replace",
+        "sc": "https://schema.org/",
+        "separator": "cr:separator",
+        "source": "cr:source",
+        "subField": "cr:subField",
+        "transform": "cr:transform",
+        "access": "dg:access",
+        "uploadedBy": "dg:uploadedBy",
+        "wd": "https://www.wikidata.org/wiki/"
+    },
+    "@type": "sc:Dataset",
+    "@id": "b551f361-3f61-4ccf-a001-7c28d065c30d",
+    "name": "ESCO",
+    "description": "The European Skills, Competences, Qualifications, and Occupations (ESCO) dataset functions as a standardized classification system for occupations, skills, and qualifications across the European labor market. It acts as a structured dictionary, defining skills and linking them to relevant job roles and qualifications.   ",
+    "sc:archivedAt": "s3:/b551f361-3f61-4ccf-a001-7c28d065c30d",
+    "conformsTo": "",
+    "citeAs": "",
+    "license": "CC-BY 4.0 ",
+    "url": "https://esco.ec.europa.eu/en/use-esco/download",
+    "dg:doi": "",
+    "version": "",
+    "dg:headline": "Standarized Classification of Occupations, Skills, and Qualifications in Europe",
+    "dg:keywords": [
+        "qualifications",
+        "lifelong learning",
+        "skills"
+    ],
+    "dg:fieldOfScience": [
+        "EDUCATIONAL SCIENCES"
+    ],
+    "inLanguage": [
+        "en"
+    ],
+    "country": "",
+    "datePublished": "24-05-2025",
+    "dg:access": "",
+    "dg:status": "loaded",
+    "dg:uploadedBy": "ADMIN",
+    "distribution": [
+        {
+            "@type": "cr:FileObject",
+            "@id": "91e0c69e-b00a-4aad-953a-530890f14020",
+            "name": "skillSkillRelations_en.csv",
+            "description": "",
+            "contentSize": "992425 B",
+            "contentUrl": "s3:/skillSkillRelations_en.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "7312807192ddc87a19a860f897bad2232b2534d7805f22b79d6fa33473665ee3"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "4eed0623-a99e-46d5-bbf5-424d0717326b",
+            "name": "ISCOGroups_en.csv",
+            "description": "",
+            "contentSize": "971562 B",
+            "contentUrl": "s3:/ISCOGroups_en.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "8a6118476e4bf7fecfe15813390ddee010706f15b3500fa20308de23f2392477"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "2ffd5709-0d9b-4314-b6b0-b57153d6410d",
+            "name": "occupationSkillRelations_en.csv",
+            "description": "",
+            "contentSize": "22008250 B",
+            "contentUrl": "s3:/occupationSkillRelations_en.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "4d7d723b456a74a5c1e2f7895b9b2de1ad04216d0db3c9972ecb88613f13c366"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "e4270017-d08b-4579-bbef-5ab1a42140eb",
+            "name": "digCompSkillsCollection_en.csv",
+            "description": "",
+            "contentSize": "18226 B",
+            "contentUrl": "s3:/digCompSkillsCollection_en.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "4e6bb9e6a8e2067ac510524724fdc796375bdc5d14b2895b1356a496dd9c4e28"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "75395ddd-43cd-4a0c-b82f-e88a9bff9cc1",
+            "name": "broaderRelationsOccPillar_en.csv",
+            "description": "",
+            "contentSize": "516308 B",
+            "contentUrl": "s3:/broaderRelationsOccPillar_en.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "0377c47eba902dc1721dc3b70d6a8921d35d21b66f92f5c59bef5858889a5381"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "fcc8c9be-5c23-4d57-822b-e68f40c555fd",
+            "name": "skillsHierarchy_en.csv",
+            "description": "",
+            "contentSize": "381768 B",
+            "contentUrl": "s3:/skillsHierarchy_en.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "fe4fe6c88165b737601a50284ab6df986c0a00d9765b486ccc21d34cfbad9c57"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "5996c404-6874-4d6b-bfe4-c79004e851ed",
+            "name": "broaderRelationsSkillPillar_en.csv",
+            "description": "",
+            "contentSize": "3659641 B",
+            "contentUrl": "s3:/broaderRelationsSkillPillar_en.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "dd9ae4e439f5c23a6f87aae12b4ef8261f663bd9e572358a96e3765eef86af1f"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "368d2b13-a9f8-44ed-bfd7-05b054f6a051",
+            "name": "skillGroups_en.csv",
+            "description": "",
+            "contentSize": "341011 B",
+            "contentUrl": "s3:/skillGroups_en.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "62efc22cd5638cfec052eb84c66ba1be8227d98d34aa2c973d43075aa9a34a8f"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "ba206bfb-3193-4bb0-bcec-55918d877fcc",
+            "name": "researchOccupationsCollection_en.csv",
+            "description": "",
+            "contentSize": "126728 B",
+            "contentUrl": "s3:/researchOccupationsCollection_en.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "15193977092f71cc5a8cd85fb0e6059e68ccce11b501255779c57794a0cd59b6"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "2a494fe5-e6bb-4202-b9cc-38ee26878d7f",
+            "name": "languageSkillsCollection_en.csv",
+            "description": "",
+            "contentSize": "154411 B",
+            "contentUrl": "s3:/languageSkillsCollection_en.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "4557c4a41f3f53993afc5059e6f7e41a25414af281c189dfcff1303dc47f8706"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "cb662cb2-75fc-4d04-81f2-b30b368b8824",
+            "name": "digitalSkillsCollection_en.csv",
+            "description": "",
+            "contentSize": "794266 B",
+            "contentUrl": "s3:/digitalSkillsCollection_en.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "b0872de8a94bfbea9cb6e15a8727a8872fedc8bd1bf4203d6600eb9a7fa14145"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "d8f86123-456f-4e14-8d62-0a1d95881d76",
+            "name": "occupations_en.csv",
+            "description": "",
+            "contentSize": "2865671 B",
+            "contentUrl": "s3:/occupations_en.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "0ff3d57d7b6848d5d8d090a9eb7254320d191106ecfbf6fbc820562ff9964ff3"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "f995f9c6-90c4-4006-bd4d-c9669d0d8700",
+            "name": "skills_en.csv",
+            "description": "",
+            "contentSize": "9281785 B",
+            "contentUrl": "s3:/skills_en.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "099747f8f38441eeda4f5ca3f5189e8deb45b798dd3559ef31d90aec0dcae28f"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "5c9bae30-7694-4e7e-ad64-6b93257d3448",
+            "name": "transversalSkillsCollection_en.csv",
+            "description": "",
+            "contentSize": "57412 B",
+            "contentUrl": "s3:/transversalSkillsCollection_en.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "c8f677c84647c94df2c329622117f958dbc67529970d3a0905fc2bc480e65aa5"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "4c1712f4-85d0-420e-aeed-fc7c3bc862e0",
+            "name": "greenSkillsCollection_en.csv",
+            "description": "",
+            "contentSize": "423824 B",
+            "contentUrl": "s3:/greenSkillsCollection_en.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "16c23f6a306924c69150521fbdc9c0fc00a21c98e71189c2c4e401244da10633"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "706e153d-6263-4953-aaab-c136b2dc6f83",
+            "name": "researchSkillsCollection_en.csv",
+            "description": "",
+            "contentSize": "27076 B",
+            "contentUrl": "s3:/researchSkillsCollection_en.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "765a90edff0933764002c284e10ab47606725d3a6d19f4dc53d00ecd0f9c378d"
+        }
+    ],
+    "recordSet": []
+}

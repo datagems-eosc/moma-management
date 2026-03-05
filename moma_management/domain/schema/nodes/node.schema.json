@@ -1,0 +1,22 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Node",
+    "type": "object",
+    "description": "A PG-JSON node in the MoMa graph. The 'labels' array identifies the MoMa type(s), and 'properties' holds all node attributes.",
+    "properties": {
+        "id": {
+            "type": "string",
+            "description": "Unique identifier of the node"
+        },
+        "labels": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Node type labels (e.g. Dataset, CSV, Column)"
+        },
+        "properties": {
+            "type": "object",
+            "description": "Node attributes as defined by the MoMa node type"
+        }
+    },
+    "required": ["id", "labels", "properties"]
+}

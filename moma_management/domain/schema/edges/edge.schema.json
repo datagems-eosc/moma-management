@@ -1,0 +1,25 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Edge",
+    "type": "object",
+    "properties": {
+        "from": {
+            "type": "string",
+            "description": "ID of the source node"
+        },
+        "to": {
+            "type": "string",
+            "description": "ID of the target node"
+        },
+        "labels": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Edge type labels (e.g. distribution, field, statistics)"
+        },
+        "properties": {
+            "type": "object",
+            "description": "Additional edge properties"
+        }
+    },
+    "required": ["from", "to", "labels"]
+}

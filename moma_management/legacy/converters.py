@@ -1,3 +1,9 @@
+"""
+This is the old implementation of a profile converter from Croissant to MoMa's format.
+This is kept there for reference and testing purposes, but is not used in the current API routes.
+"""
+
+
 def addEdge(edges, start, end, label):
     edges.append({
         "from": start,
@@ -5,6 +11,7 @@ def addEdge(edges, start, end, label):
         "labels": [label],
         "properties": {}
     })
+
 
 def Croissant2PGjson(data: dict) -> dict:
     edges = []
@@ -15,23 +22,23 @@ def Croissant2PGjson(data: dict) -> dict:
     metadata = {
         "type": data.get("@type"),
         "name": data.get("name"),
-        "sc:archivedAt": data.get("sc:archivedAt"),
+        "archivedAt": data.get("sc:archivedAt"),
         "description": data.get("description"),
         "conformsTo": data.get("conformsTo"),
         "citeAs": data.get("citeAs"),
         "license": data.get("license"),
         "url": data.get("url"),
-        "dg:doi": data.get("dg:doi"),
+        "doi": data.get("dg:doi"),
         "version": data.get("version"),
-        "dg:headline": data.get("dg:headline"),
-        "dg:keywords": data.get("dg:keywords"),
-        "dg:fieldOfScience": data.get("dg:fieldOfScience"),
+        "headline": data.get("dg:headline"),
+        "keywords": data.get("dg:keywords"),
+        "fieldOfScience": data.get("dg:fieldOfScience"),
         "inLanguage": data.get("inLanguage"),
         "country": data.get("country"),
         "datePublished": data.get("datePublished"),
-        "dg:access": data.get("dg:access"),
-        "dg:uploadedBy": data.get("dg:uploadedBy"),
-        "dg:status": data.get("dg:status")
+        "access": data.get("dg:access"),
+        "uploadedBy": data.get("dg:uploadedBy"),
+        "status": data.get("dg:status")
     }
     # remove nulls
     metadata = {k: v for k, v in metadata.items() if v is not None}
@@ -54,6 +61,7 @@ def Croissant2PGjson(data: dict) -> dict:
 
     graph = {"nodes": nodes, "edges": edges}
     return graph
+
 
 def lightProfiling2PGjson(data: dict) -> dict:
     nodes = []
@@ -234,10 +242,12 @@ def heavyProfiling2PGjson(data: dict) -> dict:
                 continue
 
             # Determine the source of the field
-            source_id = field.get("source", {}).get("fileObject", {}).get("@id")
+            source_id = field.get("source", {}).get(
+                "fileObject", {}).get("@id")
             if not source_id:  # PDF file
                 edge_type = "source/fileSet"
-                source_id = field.get("source", {}).get("fileSet", {}).get("@id")
+                source_id = field.get("source", {}).get(
+                    "fileSet", {}).get("@id")
                 safeType = field.get("@type", "")  # cr:Field
                 props_raw = {
                     "type": field.get("@type", ""),
@@ -246,7 +256,8 @@ def heavyProfiling2PGjson(data: dict) -> dict:
                     "keywords": field.get("keywords", ""),
                     "summary": field.get("summary", "")
                 }
-                properties = {k: v for k, v in props_raw.items() if v is not None}
+                properties = {k: v for k, v in props_raw.items()
+                              if v is not None}
                 labels = ["PDF", safeType]
             else:  # Column from CSV or SQL table
                 edge_type = "source/fileObject"
@@ -259,7 +270,8 @@ def heavyProfiling2PGjson(data: dict) -> dict:
                     "column": field.get("source", {}).get("extract", {}).get("column"),
                     "sample": [v for v in (field.get("sample") or []) if v is not None]
                 }
-                properties = {k: v for k, v in props_raw.items() if v is not None}
+                properties = {k: v for k, v in props_raw.items()
+                              if v is not None}
                 labels = ["Column", safeType]
 
             # Add field node

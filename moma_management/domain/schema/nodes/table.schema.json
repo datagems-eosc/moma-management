@@ -1,0 +1,26 @@
+{
+    "$id": "table.schema.json",
+    "title": "Table",
+    "allOf": [
+        {
+            "$ref": "data.schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "primaryKey": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "foreignKey": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    ]
+}

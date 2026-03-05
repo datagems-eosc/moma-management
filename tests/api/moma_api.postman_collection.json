@@ -1,0 +1,263 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "MoMa Management API",
+    "description": "End-to-end REST API tests for the MoMa Management service.\n\nEach folder is a self-contained scenario driven by a Croissant profile file.\nRun automatically from pytest via tests/test_api.py.\n\nNon-standard keys (_pytest_capture, _pytest_assert) are extension fields used\nby the pytest runner; Postman Desktop ignores them.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string",
+      "description": "Overridden at runtime by the pytest fixture with the actual server URL."
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dataset Lifecycle",
+      "description": "Full CRUD lifecycle driven by {{profileBody}} (a Croissant JSON profile).",
+      "item": [
+        {
+          "name": "Convert Profile",
+          "description": "Convert a Croissant profile to PG-JSON without persisting it.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{profileBody}}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {
+              "raw": "{{baseUrl}}/datasets/convert"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response contains a non-empty node list', () => {",
+                  "  const data = pm.response.json();",
+                  "  pm.expect(data).to.have.property('nodes');",
+                  "  pm.expect(data.nodes).to.be.an('array').with.length.above(0);",
+                  "});",
+                  "// Capture the full PG-JSON body for the subsequent validate request.",
+                  "pm.environment.set('convertedBody', pm.response.text());"
+                ]
+              }
+            }
+          ],
+          "_pytest_capture": [
+            {"var": "convertedBody", "from_response": "entire_body"}
+          ],
+          "_pytest_assert": [
+            {"key": "nodes", "op": "non_empty_list"}
+          ]
+        },
+        {
+          "name": "Validate Converted Profile",
+          "description": "Validate the PG-JSON produced by the Convert step against the MoMa schema.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{convertedBody}}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {
+              "raw": "{{baseUrl}}/datasets/validate"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response contains nodes', () => {",
+                  "  pm.expect(pm.response.json().nodes).to.be.an('array').with.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "_pytest_assert": [
+            {"key": "nodes", "op": "non_empty_list"}
+          ]
+        },
+        {
+          "name": "Ingest Profile",
+          "description": "Ingest the Croissant profile into Neo4j and capture the root dataset ID.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{profileBody}}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {
+              "raw": "{{baseUrl}}/datasets"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response contains a non-empty node list', () => {",
+                  "  pm.expect(pm.response.json().nodes).to.be.an('array').with.length.above(0);",
+                  "});",
+                  "// Capture the root sc:Dataset node ID for GET/DELETE requests.",
+                  "const root = pm.response.json().nodes.find(n => n.labels.includes('sc:Dataset'));",
+                  "pm.environment.set('rootId', root.id);"
+                ]
+              }
+            }
+          ],
+          "_pytest_capture": [
+            {"var": "rootId", "from_response": "root_dataset_id"}
+          ],
+          "_pytest_assert": [
+            {"key": "nodes", "op": "non_empty_list"}
+          ]
+        },
+        {
+          "name": "List Datasets",
+          "description": "List all datasets; expect at least one result after ingestion.",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/datasets"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Total is at least 1', () => {",
+                  "  pm.expect(pm.response.json().total).to.be.at.least(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "_pytest_assert": [
+            {"key": "total", "op": "gte", "value": 1}
+          ]
+        },
+        {
+          "name": "Get Dataset",
+          "description": "Retrieve the ingested dataset by its root ID.",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/datasets/{{rootId}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response contains the requested dataset nodes', () => {",
+                  "  pm.expect(pm.response.json().nodes).to.be.an('array').with.length.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "_pytest_assert": [
+            {"key": "nodes", "op": "non_empty_list"}
+          ]
+        },
+        {
+          "name": "Delete Dataset",
+          "description": "Delete the ingested dataset and its full connected subgraph.",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/datasets/{{rootId}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Deleted Dataset Returns 404",
+          "description": "Confirm the deleted dataset is no longer retrievable.",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/datasets/{{rootId}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

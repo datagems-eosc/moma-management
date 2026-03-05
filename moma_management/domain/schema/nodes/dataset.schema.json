@@ -1,0 +1,98 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Dataset",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "string",
+            "description": "Unique identifier of the dataset"
+        },
+        "type": {
+            "type": "string",
+            "enum": ["sc:Dataset"],
+            "description": "Node type discriminator"
+        },
+        "name": {
+            "type": "string",
+            "description": "Human-readable name of the dataset"
+        },
+        "description": {
+            "type": "string",
+            "description": "Full description of the dataset"
+        },
+        "datePublished": {
+            "type": "string",
+            "format": "date",
+            "description": "Publication date (ISO 8601: YYYY-MM-DD)"
+        },
+        "version": {
+            "type": "string",
+            "description": "Version string of the dataset"
+        },
+        "license": {
+            "type": "string",
+            "description": "License under which the dataset is published"
+        },
+        "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Canonical URL of the dataset"
+        },
+        "inLanguage": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Language(s) of the dataset content (BCP-47 tags)"
+        },
+        "country": {
+            "type": "string",
+            "description": "Country associated with the dataset"
+        },
+        "citeAs": {
+            "type": "string",
+            "description": "Preferred citation text for the dataset"
+        },
+        "conformsTo": {
+            "type": "string",
+            "description": "Standard or specification the dataset conforms to"
+        },
+        "headline": {
+            "type": "string",
+            "description": "Short headline or subtitle for the dataset"
+        },
+        "keywords": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Descriptive keywords for discovery and search"
+        },
+        "fieldOfScience": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Scientific field(s) the dataset belongs to"
+        },
+        "status": {
+            "type": "string",
+            "enum": ["draft", "published", "loaded", "archived"],
+            "description": "Lifecycle status of the dataset"
+        },
+        "access": {
+            "type": "string",
+            "description": "Access level or access URL for the dataset"
+        },
+        "doi": {
+            "type": "string",
+            "description": "Digital Object Identifier for the dataset"
+        },
+        "uploadedBy": {
+            "type": "string",
+            "description": "User or role that uploaded the dataset"
+        },
+        "archivedAt": {
+            "type": "string",
+            "description": "Storage location of the archived dataset (e.g. S3 URI)"
+        }
+    },
+    "required": [
+        "id",
+        "type"
+    ]
+}

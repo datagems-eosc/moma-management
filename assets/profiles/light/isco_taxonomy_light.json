@@ -1,0 +1,102 @@
+{
+    "@context": {
+        "@language": "en",
+        "@vocab": "https://schema.org/",
+        "cr": "http://mlcommons.org/croissant/",
+        "rai": "http://mlcommons.org/croissant/RAI/",
+        "dg": "http://datagems.eu/TBD",
+        "data": {
+            "@id": "cr:data",
+            "@type": "@json"
+        },
+        "dataType": {
+            "@id": "cr:dataType",
+            "@type": "@vocab"
+        },
+        "examples": {
+            "@id": "cr:examples",
+            "@type": "@json"
+        },
+        "conformsTo": "dct:conformsTo",
+        "citeAs": "cr:citeAs",
+        "column": "cr:column",
+        "extract": "cr:extract",
+        "field": "cr:field",
+        "fileProperty": "cr:fileProperty",
+        "fileObject": "cr:fileObject",
+        "fileSet": "cr:fileSet",
+        "format": "cr:format",
+        "includes": "cr:includes",
+        "isLiveDataset": "cr:isLiveDataset",
+        "jsonPath": "cr:jsonPath",
+        "key": "cr:key",
+        "md5": "cr:md5",
+        "parentField": "cr:parentField",
+        "path": "cr:path",
+        "recordSet": "cr:recordSet",
+        "references": "cr:references",
+        "regex": "cr:regex",
+        "repeated": "cr:repeated",
+        "replace": "cr:replace",
+        "sc": "https://schema.org/",
+        "separator": "cr:separator",
+        "source": "cr:source",
+        "subField": "cr:subField",
+        "transform": "cr:transform",
+        "access": "dg:access",
+        "uploadedBy": "dg:uploadedBy",
+        "wd": "https://www.wikidata.org/wiki/"
+    },
+    "@type": "sc:Dataset",
+    "@id": "temp_id_since_profiler_does_not_issue_ids",
+    "name": "ISCO taxonomy",
+    "description": "The ISCO taxonomy is the International Standard Classification of Occupations, a globally used system developed by the International Labour Organization (ILO) to organize and classify jobs based on their required tasks, duties, skill levels, and skill specializations. The current version, ISCO-08, is a four-level hierarchical structure with 10 Major Groups, 43 Sub-Major Groups, 130 Minor Groups, and 436 Unit Groups (the most detailed level), which facilitates international communication, comparative occupational statistics, and labor market analysis.",
+    "sc:archivedAt": "s3:/temp_id_since_profiler_does_not_issue_ids",
+    "conformsTo": "",
+    "citeAs": "",
+    "license": "CC-BY 4.0 ",
+    "url": "https://www.cedefop.europa.eu/en/projects/skills-forecast",
+    "dg:doi": "",
+    "version": "",
+    "dg:headline": "the International Standard Classification of Occupations, a globally used system developed by the International Labour Organization (ILO).",
+    "dg:keywords": [
+        "taxonomy",
+        "occupations",
+        "job classification",
+        "occupation classification"
+    ],
+    "dg:fieldOfScience": [
+        "ECONOMICS AND BUSINESS"
+    ],
+    "inLanguage": [
+        "en"
+    ],
+    "country": "",
+    "datePublished": "2025-09-10",
+    "dg:access": "",
+    "dg:status": "loaded",
+    "dg:uploadedBy": "ADMIN",
+    "distribution": [
+        {
+            "@type": "cr:FileObject",
+            "@id": "f74004e0-f4c2-41c0-9422-60e6336138dd",
+            "name": "ISCO-08 EN Structure and definitions.xlsx",
+            "description": "",
+            "contentSize": "231927 B",
+            "contentUrl": "s3:/ISCO-08 EN Structure and definitions.xlsx",
+            "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "sha256": "5b932891f8d65afe4ff982f2e8b1312d3699ae5497b7069ce7c9ee8b4c97f3cb"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "b51c7359-88bf-48b7-8a3f-561d36e81f74",
+            "name": "Sheet1",
+            "description": "",
+            "containedIn": {
+                "@id": "f74004e0-f4c2-41c0-9422-60e6336138dd"
+            },
+            "encodingFormat": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        }
+    ],
+    "recordSet": []
+}

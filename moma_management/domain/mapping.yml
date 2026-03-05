@@ -1,0 +1,158 @@
+# Croissant → MoMa mapping
+#
+# Each top-level key is a MoMa node type.
+# Reading the rules: "MoMa <key> is <croissant_type> in Croissant"
+#                    "MoMa property <X> comes from Croissant field <Y>"
+#
+# properties:  { moma_property: croissant_path }
+#   - croissant_path uses dot-notation for nested fields (e.g. source.extract.column)
+#   - "@type" / "@id" refer to the top-level Croissant @type / @id keys
+#   - properties: "*" copies all fields (wildcard), exclude: [...] lists exceptions
+#
+# children: [ { node: <MoMa node key>, path: <Croissant field> } ]
+#   - tells the engine where to find child objects inside the current Croissant item
+#
+# labels:
+#   - plain list: used as-is; "@type" expands to the Croissant @type value
+#   - by_encoding: pick by Croissant encodingFormat; when/then/else for conditionals
+#
+# edges: [ { from: <$parent|$self|croissant.path>, to: ..., label: <edge label> } ]
+#
+# variants: [ { when: <croissant.path>, ... } | { else: true, ... } ]
+#   - merges the first matching variant into the spec; "when" tests field presence
+
+Dataset:
+  croissant_type: "sc:Dataset"
+  id: "@id"
+  labels: ["sc:Dataset"]
+  properties:
+    type:              "@type"
+    name:              name
+    description:       description
+    conformsTo:        conformsTo
+    citeAs:            citeAs
+    license:           license
+    url:               url
+    archivedAt:        "sc:archivedAt"
+    doi:               "dg:doi"
+    version:           version
+    headline:          "dg:headline"
+    keywords:          "dg:keywords"
+    fieldOfScience:    "dg:fieldOfScience"
+    inLanguage:        inLanguage
+    country:           country
+    datePublished:     datePublished
+    access:            "dg:access"
+    uploadedBy:        "dg:uploadedBy"
+    status:            "dg:status"
+  children:
+    - node: Distribution
+      path: distribution
+    - node: RecordSet
+      path: recordSet
+
+Distribution:
+  croissant_type: "cr:FileObject"
+  id: "@id"
+  labels:
+    default: ["Data", "@type"]
+    by_encoding:
+      "text/csv":        ["CSV", "Data", "@type"]
+      "application/pdf": ["PDFSet", "Data", "@type"]
+      "text/sql":
+        when: containedIn
+        then: ["Table", "Data", "@type"]
+        else: ["RelationalDatabase", "Data", "@type"]
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+        when: containedIn
+        then: ["Sheet", "Data", "@type"]
+        else: ["EXCEL", "Data", "@type"]
+  properties:
+    type:           "@type"
+    name:           name
+    description:    description
+    encodingFormat: encodingFormat
+    contentSize:    contentSize
+    contentUrl:     contentUrl
+    sha256:         sha256
+  edges:
+    - from: $parent
+      to:   $self
+      label: distribution
+    - from: $self
+      to:   "containedIn.@id"
+      label: containedIn
+
+RecordSet:
+  croissant_type: "cr:RecordSet"
+  id: "@id"
+  labels: ["@type"]
+  properties:
+    type:        "@type"
+    name:        name
+    description: description
+    examples:    examples
+  children:
+    - node: Field
+      path: field
+  edges:
+    - from: $parent
+      to:   $self
+      label: recordSet
+
+Field:
+  croissant_type: "cr:Field"
+  id: "@id"
+  children:
+    - node: ColumnStatistics
+      path: statistics
+  edges:
+    - from: $parent
+      to:   $self
+      label: field
+  variants:
+    - when: "source.fileObject.@id"
+      node_type: Column
+      labels: ["Column", "@type"]
+      properties:
+        type:        "@type"
+        name:        name
+        description: description
+        dataType:    dataType
+        column:      source.extract.column   # MoMa "column" <- Croissant nested path
+        sample:      sample
+      edges:
+        - from: $parent
+          to:   $self
+          label: field
+        - from: $self
+          to:   "source.fileObject.@id"
+          label: "source/fileObject"
+    - else: true
+      node_type: PDF
+      labels: ["PDF", "@type"]
+      properties:
+        type:            "@type"
+        name:            name
+        file_size_bytes: file_size_bytes
+        keywords:        keywords
+        summary:         summary
+      edges:
+        - from: $parent
+          to:   $self
+          label: field
+        - from: $self
+          to:   "source.fileSet.@id"
+          label: "source/fileSet"
+
+ColumnStatistics:
+  croissant_type: "dg:ColumnStatistics"
+  id: "@id"
+  labels: ["Statistics", "@type"]
+  properties: "*"
+  strip_prefix: "dg:"
+  exclude: ["@id", "@type"]
+  edges:
+    - from: $parent
+      to:   $self
+      label: statistics
