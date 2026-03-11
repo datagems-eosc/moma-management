@@ -214,10 +214,13 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             SKIP $skip
             LIMIT $limit
 
-            // Hop 1 – direct neighbours of the dataset root
+            // Hop 1 – direct neighbours of the dataset root.
+            // NOTE: $types is intentionally NOT applied here.  The filter above
+            // already selected only qualifying datasets; the subgraph expansion
+            // must return ALL connected nodes (so a CSV-filtered dataset still
+            // includes its PDF/Table/… siblings in the response).
             OPTIONAL MATCH (n)-[r1]-(h1)
             WHERE ANY(l IN labels(h1) WHERE l IN $allowedLabels)
-              AND ($types = [] OR ANY(t IN $types WHERE t IN labels(h1)))
             WITH n,
                  collect(DISTINCT h1) AS h1n,
                  collect(DISTINCT r1) AS h1r
@@ -227,7 +230,6 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             OPTIONAL MATCH (h1)-[r2]-(h2)
             WHERE ANY(l IN labels(h2) WHERE l IN $allowedLabels)
               AND NOT h2 IN h1n
-              AND ($types = [] OR ANY(t IN $types WHERE t IN labels(h2)))
             WITH n, h1n, h1r,
                  collect(DISTINCT h2) AS h2n,
                  collect(DISTINCT r2) AS h2r
@@ -237,7 +239,6 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             OPTIONAL MATCH (h2)-[r3]-(h3)
             WHERE ANY(l IN labels(h3) WHERE l IN $allowedLabels)
               AND NOT h3 IN h1n AND NOT h3 IN h2n
-              AND ($types = [] OR ANY(t IN $types WHERE t IN labels(h3)))
             WITH n, h1n, h1r, h2n, h2r,
                  collect(DISTINCT h3) AS h3n,
                  collect(DISTINCT r3) AS h3r
@@ -247,7 +248,6 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             OPTIONAL MATCH (h3)-[r4]-(h4)
             WHERE ANY(l IN labels(h4) WHERE l IN $allowedLabels)
               AND NOT h4 IN h1n AND NOT h4 IN h2n AND NOT h4 IN h3n
-              AND ($types = [] OR ANY(t IN $types WHERE t IN labels(h4)))
             WITH n, h1n, h1r, h2n, h2r, h3n, h3r,
                  collect(DISTINCT h4) AS h4n,
                  collect(DISTINCT r4) AS h4r

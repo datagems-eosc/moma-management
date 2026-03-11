@@ -243,3 +243,66 @@ def mixed_date_repository(
             repo.create(ds)
         yield repo
     driver.close()
+
+
+@pytest.fixture(scope="class")
+def mixed_types_repository(
+    neo4j_container_class: Neo4jContainer,
+) -> Generator[Neo4jDatasetRepository, None, None]:
+    """
+    Repository for testing that mimeType filtering selects datasets by the
+    presence of a matching file-object type, but always returns the FULL
+    subgraph (i.e. every file-object type on the dataset, not only those that
+    matched the filter).
+
+    Dataset layout
+    --------------
+    ds-mixed   sc:Dataset
+               ├─ cr:FileObject + CSV     (distribution)
+               └─ cr:FileObject + PDFSet  (distribution)
+
+    ds-csv-only  sc:Dataset
+                 └─ cr:FileObject + CSV   (distribution)
+
+    ds-pdf-only  sc:Dataset
+                 └─ cr:FileObject + PDFSet (distribution)
+    """
+    from moma_management.domain.dataset import Dataset
+    from moma_management.domain.generated.edges.edge_schema import Edge
+    from moma_management.domain.generated.nodes.node_schema import Node
+
+    def _make_multi(ds_id: str, file_specs: List[tuple]) -> Dataset:
+        """
+        file_specs: list of (file_id_suffix, extra_labels) pairs, one per file node.
+        """
+        nodes = [
+            Node(
+                id=ds_id,
+                labels=["sc:Dataset"],
+                properties={"datePublished": "2024-01-01",
+                            "status": "published"},
+            )
+        ]
+        edges = []
+        for suffix, extra_labels in file_specs:
+            fid = f"{ds_id}-{suffix}"
+            nodes.append(
+                Node(id=fid, labels=["cr:FileObject"] + extra_labels, properties={}))
+            edges.append(
+                Edge(**{"from": ds_id, "to": fid, "labels": ["distribution"]}))
+        return Dataset(nodes=nodes, edges=edges)
+
+    uri = neo4j_container_class.get_connection_url()
+    auth = (neo4j_container_class.username, neo4j_container_class.password)
+    driver = GraphDatabase.driver(uri, auth=auth)
+    with driver.session() as session:
+        repo = Neo4jDatasetRepository(session)
+        for ds in [
+            _make_multi(
+                "ds-mixed",    [("csv", ["CSV"]), ("pdf", ["PDFSet"])]),
+            _make_multi("ds-csv-only", [("csv", ["CSV"])]),
+            _make_multi("ds-pdf-only", [("pdf", ["PDFSet"])]),
+        ]:
+            repo.create(ds)
+        yield repo
+    driver.close()

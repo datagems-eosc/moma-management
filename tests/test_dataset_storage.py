@@ -436,3 +436,95 @@ class TestOrderByDate:
         assert result["total"] == 2
         ids = {self._root(ds).id for ds in result["datasets"]}
         assert ids == {"ds-date-b", "ds-date-c"}
+
+
+# ---------------------------------------------------------------------------
+# mimeType filter: full subgraph must be returned
+#
+# Requirement: filtering by mimeType selects datasets that CONTAIN at least
+# one FileObject of the given type, but the response must include ALL connected
+# nodes for those datasets — not only the nodes matching the filter type.
+#
+# Seed (mixed_types_repository):
+#   ds-mixed    cr:FileObject+CSV  +  cr:FileObject+PDFSet
+#   ds-csv-only cr:FileObject+CSV
+#   ds-pdf-only cr:FileObject+PDFSet
+# ---------------------------------------------------------------------------
+
+class TestMimeTypeFullSubgraph:
+
+    def _file_labels(self, ds) -> set[frozenset]:
+        """Return the set of label-sets for every cr:FileObject node in ds."""
+        return {
+            frozenset(n.labels)
+            for n in ds.nodes
+            if "cr:FileObject" in n.labels
+        }
+
+    def _root_id(self, ds) -> str:
+        return next(n.id for n in ds.nodes if "sc:Dataset" in n.labels)
+
+    # -- selection correctness -----------------------------------------------
+
+    def test_csv_filter_selects_csv_and_mixed_datasets(self, mixed_types_repository):
+        result = _list(mixed_types_repository, mimeTypes=[MimeType.CSV])
+        assert result["total"] == 2
+        ids = {self._root_id(ds) for ds in result["datasets"]}
+        assert ids == {"ds-mixed", "ds-csv-only"}
+
+    def test_pdf_filter_selects_pdf_and_mixed_datasets(self, mixed_types_repository):
+        result = _list(mixed_types_repository, mimeTypes=[MimeType.PDF])
+        assert result["total"] == 2
+        ids = {self._root_id(ds) for ds in result["datasets"]}
+        assert ids == {"ds-mixed", "ds-pdf-only"}
+
+    # -- full subgraph correctness -------------------------------------------
+
+    def test_csv_filter_returns_all_file_nodes_of_mixed_dataset(
+        self, mixed_types_repository
+    ):
+        """
+        A dataset that has both a CSV and a PDF file must return BOTH file nodes
+        when the query filters by text/csv — not only the CSV node.
+        """
+        result = _list(mixed_types_repository, mimeTypes=[MimeType.CSV])
+        mixed = next(
+            ds for ds in result["datasets"] if self._root_id(ds) == "ds-mixed"
+        )
+        label_sets = self._file_labels(mixed)
+        assert frozenset(["cr:FileObject", "CSV"]) in label_sets, (
+            "CSV file node missing from ds-mixed when filtered by text/csv"
+        )
+        assert frozenset(["cr:FileObject", "PDFSet"]) in label_sets, (
+            "PDF file node incorrectly stripped from ds-mixed when filtered by text/csv"
+        )
+
+    def test_pdf_filter_returns_all_file_nodes_of_mixed_dataset(
+        self, mixed_types_repository
+    ):
+        """
+        A dataset that has both a CSV and a PDF file must return BOTH file nodes
+        when the query filters by application/pdf.
+        """
+        result = _list(mixed_types_repository, mimeTypes=[MimeType.PDF])
+        mixed = next(
+            ds for ds in result["datasets"] if self._root_id(ds) == "ds-mixed"
+        )
+        label_sets = self._file_labels(mixed)
+        assert frozenset(["cr:FileObject", "PDFSet"]) in label_sets, (
+            "PDF file node missing from ds-mixed when filtered by application/pdf"
+        )
+        assert frozenset(["cr:FileObject", "CSV"]) in label_sets, (
+            "CSV file node incorrectly stripped from ds-mixed when filtered by application/pdf"
+        )
+
+    def test_no_filter_returns_all_nodes_of_all_datasets(self, mixed_types_repository):
+        """Baseline: unfiltered list returns full subgraphs for all datasets."""
+        result = _list(mixed_types_repository)
+        assert result["total"] == 3
+        mixed = next(
+            ds for ds in result["datasets"] if self._root_id(ds) == "ds-mixed"
+        )
+        assert len(self._file_labels(mixed)) == 2, (
+            "ds-mixed should have 2 file nodes when no filter is applied"
+        )
