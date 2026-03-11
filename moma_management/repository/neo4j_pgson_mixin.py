@@ -1,6 +1,8 @@
+from datetime import date as date_type
 from logging import getLogger
 from typing import Any, Dict, List, LiteralString, Optional, cast
 
+import arrow
 from neo4j import Transaction
 
 from moma_management.domain.generated.edges.edge_schema import Edge
@@ -8,6 +10,37 @@ from moma_management.domain.generated.moma_schema import MoMaGraphModel
 from moma_management.domain.generated.nodes.node_schema import Node
 
 logger = getLogger(__name__)
+
+# Properties whose values must be stored in ISO-8601 (YYYY-MM-DD) so that
+# Neo4j's date() function and lexicographic ORDER BY both work correctly.
+_DATE_PROPS = {"datePublished"}
+
+
+# Formats tried in order.  ISO-8601 is first so the common case is one
+# attempt.  Dash and slash European variants follow.  The order matters for
+# ambiguous values (e.g. 01/02/2024): DD comes before MM so we treat unknown
+# separators as DD-first (European convention).
+_DATE_FORMATS = [
+    "YYYY-MM-DD",   # ISO-8601          2024-06-01  ← canonical storage format
+    "DD-MM-YYYY",   # European dash     01-06-2024
+    "DD/MM/YYYY",   # European slash    01/06/2024
+    "YYYY/MM/DD",   # ISO slash         2024/06/01
+    "DD.MM.YYYY",   # European dot      01.06.2024
+    # US slash          06/01/2024  (tried last to prefer DD/MM)
+    "MM/DD/YYYY",
+]
+
+
+def _to_iso_date(value: Any) -> str | Any:
+    if isinstance(value, date_type):
+        return value.isoformat()
+    if not isinstance(value, str) or not value.strip():
+        return value
+    try:
+        return arrow.get(value.strip(), _DATE_FORMATS).date().isoformat()
+    except Exception:
+        logger.warning("Could not parse date value %r – storing as-is", value)
+        return value
 
 
 class Neo4jPgJsonMixin:
@@ -46,6 +79,8 @@ class Neo4jPgJsonMixin:
             new_key = k.strip().replace(" ", "_").replace(":", "__")
             if isinstance(v, list):
                 cleaned[new_key] = v if len(v) > 0 else None
+            elif new_key in _DATE_PROPS:
+                cleaned[new_key] = _to_iso_date(v)
             else:
                 cleaned[new_key] = v
         return cleaned

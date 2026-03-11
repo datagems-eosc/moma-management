@@ -4,7 +4,7 @@ from typing import List, Optional
 from neo4j import Session, Transaction
 
 from moma_management.domain.dataset import Dataset
-from moma_management.domain.filters import DatasetFilter
+from moma_management.domain.filters import DatasetFilter, DatasetSortField
 from moma_management.repository.neo4j_pgson_mixin import Neo4jPgJsonMixin
 
 logger = getLogger(__name__)
@@ -116,8 +116,17 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             limit = criteria.pageSize
 
             order = criteria.direction.value.upper()
+            # datePublished is stored as an ISO string; wrap it in date() so
+            # that any pre-normalised values still sort chronologically, not
+            # lexicographically (e.g. "10-03-2025" < "2025-03-10" as strings).
+
+            def _order_expr(field: DatasetSortField) -> str:
+                if field.value == "datePublished":
+                    return f"date(coalesce(n.`datePublished`, '1970-01-01')) {order}"
+                return f"n.`{field.value}` {order}"
+
             order_clause = (
-                ", ".join([f"n.`{k.value}` {order}" for k in criteria.orderBy])
+                ", ".join([_order_expr(k) for k in criteria.orderBy])
                 if criteria.orderBy else "n.id ASC"
             )
 

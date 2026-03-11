@@ -191,3 +191,55 @@ def populated_repository(
 def dataset_service(dataset_repository: Neo4jDatasetRepository, mapping_file: Path) -> DatasetService:
     """Provide a DatasetService with a Neo4jDatasetRepository and mapping file."""
     return DatasetService(dataset_repository, mapping_file)
+
+
+@pytest.fixture(scope="class")
+def mixed_date_repository(
+    neo4j_container_class: Neo4jContainer,
+) -> Generator[Neo4jDatasetRepository, None, None]:
+    """
+    Repository pre-loaded with four datasets whose ``datePublished`` values are
+    written in *different* input formats.  Used to verify that date
+    normalisation and sort-by-date both work regardless of input format.
+
+    Dataset layout (chronological order, i.e. expected ASC result)
+    -----------------------------------------------------------------
+    ds-date-a  datePublished="15-01-2023"  (DD-MM-YYYY) → 2023-01-15  (oldest)
+    ds-date-b  datePublished="2024-01-15"  (ISO)         → 2024-01-15
+    ds-date-c  datePublished="01/06/2024"  (DD/MM/YYYY)  → 2024-06-01
+    ds-date-d  datePublished="2025-03-01"  (ISO)         → 2025-03-01  (newest)
+    """
+    from moma_management.domain.dataset import Dataset
+    from moma_management.domain.generated.edges.edge_schema import Edge
+    from moma_management.domain.generated.nodes.node_schema import Node
+
+    def _make(ds_id: str, date_published: str) -> Dataset:
+        file_id = f"{ds_id}-file"
+        return Dataset(
+            nodes=[
+                Node(
+                    id=ds_id,
+                    labels=["sc:Dataset"],
+                    properties={"datePublished": date_published,
+                                "status": "published"},
+                ),
+                Node(id=file_id, labels=["cr:FileObject"], properties={}),
+            ],
+            edges=[Edge(**{"from": ds_id, "to": file_id,
+                        "labels": ["distribution"]})],
+        )
+
+    uri = neo4j_container_class.get_connection_url()
+    auth = (neo4j_container_class.username, neo4j_container_class.password)
+    driver = GraphDatabase.driver(uri, auth=auth)
+    with driver.session() as session:
+        repo = Neo4jDatasetRepository(session)
+        for ds in [
+            _make("ds-date-a", "15-01-2023"),   # DD-MM-YYYY
+            _make("ds-date-b", "2024-01-15"),    # ISO
+            _make("ds-date-c", "01/06/2024"),    # DD/MM/YYYY
+            _make("ds-date-d", "2025-03-01"),    # ISO
+        ]:
+            repo.create(ds)
+        yield repo
+    driver.close()

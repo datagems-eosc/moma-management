@@ -3,18 +3,21 @@ Storage testing for Dataset repository implementations.
 Basically, we need to kow if manipulating the dataset in neo4j works
 """
 
+import copy
 from datetime import date
 from pathlib import Path
 
 from moma_management.domain.dataset import Dataset
 from moma_management.domain.filters import (
     DatasetFilter,
+    DatasetSortField,
     MimeType,
     NodeLabel,
     SortDirection,
 )
 from moma_management.domain.generated.nodes.dataset_schema import Status
 from moma_management.repository.dataset import Neo4jDatasetRepository
+from moma_management.repository.neo4j_pgson_mixin import _DATE_PROPS, _to_iso_date
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -24,6 +27,24 @@ from moma_management.repository.dataset import Neo4jDatasetRepository
 def _list(repo: Neo4jDatasetRepository, **kwargs) -> dict:
     """Shorthand: build a DatasetFilter from keyword overrides and call list()."""
     return repo.list(DatasetFilter(**kwargs))
+
+
+def _with_normalised_dates(dataset: Dataset) -> Dataset:
+    """
+    Return a copy of *dataset* with every ``datePublished`` / ``archivedAt``
+    property on every node normalised to ISO-8601 (YYYY-MM-DD).
+
+    Storage applies the same normalisation via ``_sanitize_properties``, so
+    ``stored == _with_normalised_dates(original)`` is the correct round-trip
+    invariant when the ingested profile may contain non-ISO date strings.
+    """
+    cloned = copy.deepcopy(dataset)
+    for node in cloned.nodes:
+        if node.properties:
+            for key in _DATE_PROPS:
+                if key in node.properties:
+                    node.properties[key] = _to_iso_date(node.properties[key])
+    return cloned
 
 
 # ---------------------------------------------------------------------------
@@ -37,28 +58,32 @@ def test_round_trip(
 ):
     """
     Store / Retrieve round-trip test for a single dataset JSON file.
+
+    Dates are normalised to ISO-8601 on write, so the comparison target is
+    the normalised form of the original rather than the raw file content.
     """
     original = Dataset.model_validate_json(dataset_file.read_text())
     dataset_repository.create(original)
 
     stored = dataset_repository.get(original.root_id)
+    expected = _with_normalised_dates(original)
 
     assert len(stored.nodes) > 0 and len(stored.edges) > 0, (
         f"get() did not return a PG-JSON structure for {dataset_file.name!r}"
     )
 
-    assert len(stored.nodes) == len(original.nodes), (
+    assert len(stored.nodes) == len(expected.nodes), (
         f"Node count mismatch for {dataset_file.name!r}:\n"
-        f"  expected: {len(original.nodes)}\n"
+        f"  expected: {len(expected.nodes)}\n"
         f"  got     : {len(stored.nodes)}"
     )
-    assert len(stored.edges) == len(original.edges), (
+    assert len(stored.edges) == len(expected.edges), (
         f"Edge count mismatch for {dataset_file.name!r}:\n"
-        f"  expected: {len(original.edges)}\n"
+        f"  expected: {len(expected.edges)}\n"
         f"  got     : {len(stored.edges)}"
     )
 
-    assert stored == original, (
+    assert stored == expected, (
         f"Round-trip mismatch for {dataset_file.name!r}"
     )
 
@@ -316,3 +341,98 @@ class TestListMethod:
         # An empty mimeTypes list must not restrict results.
         result = _list(populated_repository, mimeTypes=[])
         assert result["total"] == 3
+
+
+# ---------------------------------------------------------------------------
+# Date normalisation and sort-by-date
+#
+# All tests in this class share a single Neo4j container via
+# mixed_date_repository, which seeds four datasets with datePublished values
+# written in three different input formats.
+#
+# Expected normalised ISO-8601 storage (chronological ASC order):
+#   ds-date-a  "15-01-2023" (DD-MM-YYYY)  → 2023-01-15
+#   ds-date-b  "2024-01-15" (ISO)          → 2024-01-15
+#   ds-date-c  "01/06/2024" (DD/MM/YYYY)  → 2024-06-01
+#   ds-date-d  "2025-03-01" (ISO)          → 2025-03-01
+# ---------------------------------------------------------------------------
+
+class TestOrderByDate:
+
+    def _root(self, ds) -> object:
+        return next(n for n in ds.nodes if "sc:Dataset" in n.labels)
+
+    def _dates(self, result: dict) -> list[str]:
+        return [self._root(ds).properties["datePublished"] for ds in result["datasets"]]
+
+    def test_dates_are_normalised_to_iso(self, mixed_date_repository):
+        """All datePublished values must be stored as YYYY-MM-DD regardless of input format."""
+        result = _list(mixed_date_repository)
+        for ds in result["datasets"]:
+            date_val = self._root(ds).properties.get("datePublished", "")
+            assert len(date_val) == 10 and date_val[4] == "-" and date_val[7] == "-", (
+                f"datePublished {date_val!r} is not in YYYY-MM-DD format "
+                f"for dataset {self._root(ds).id!r}"
+            )
+
+    def test_dd_mm_yyyy_normalised_correctly(self, mixed_date_repository):
+        """DD-MM-YYYY input '15-01-2023' must be stored as '2023-01-15'."""
+        result = _list(mixed_date_repository, nodeIds=["ds-date-a"])
+        stored_date = self._root(
+            result["datasets"][0]).properties["datePublished"]
+        assert stored_date == "2023-01-15"
+
+    def test_dd_slash_mm_yyyy_normalised_correctly(self, mixed_date_repository):
+        """DD/MM/YYYY input '01/06/2024' must be stored as '2024-06-01'."""
+        result = _list(mixed_date_repository, nodeIds=["ds-date-c"])
+        stored_date = self._root(
+            result["datasets"][0]).properties["datePublished"]
+        assert stored_date == "2024-06-01"
+
+    def test_sort_asc_by_date_returns_chronological_order(self, mixed_date_repository):
+        """Sorting ASC by datePublished must return datasets oldest-first."""
+        result = _list(
+            mixed_date_repository,
+            orderBy=[DatasetSortField.DATE_PUBLISHED],
+            direction=SortDirection.ASC,
+        )
+        dates = self._dates(result)
+        assert dates == sorted(dates), (
+            f"ASC sort by datePublished not chronological: {dates}"
+        )
+        assert dates[0] == "2023-01-15", f"Oldest dataset should be first, got {dates[0]}"
+
+    def test_sort_desc_by_date_returns_reverse_chronological_order(self, mixed_date_repository):
+        """Sorting DESC by datePublished must return datasets newest-first."""
+        result = _list(
+            mixed_date_repository,
+            orderBy=[DatasetSortField.DATE_PUBLISHED],
+            direction=SortDirection.DESC,
+        )
+        dates = self._dates(result)
+        assert dates == sorted(dates, reverse=True), (
+            f"DESC sort by datePublished not reverse-chronological: {dates}"
+        )
+        assert dates[0] == "2025-03-01", f"Newest dataset should be first, got {dates[0]}"
+
+    def test_sort_order_matches_expected_sequence(self, mixed_date_repository):
+        """Full ASC sequence must be exactly [2023-01-15, 2024-01-15, 2024-06-01, 2025-03-01]."""
+        result = _list(
+            mixed_date_repository,
+            orderBy=[DatasetSortField.DATE_PUBLISHED],
+            direction=SortDirection.ASC,
+        )
+        assert self._dates(result) == [
+            "2023-01-15", "2024-01-15", "2024-06-01", "2025-03-01"]
+
+    def test_date_range_filter_works_with_mixed_input_formats(self, mixed_date_repository):
+        """publishedFrom/publishedTo must correctly bound datasets after normalisation."""
+        # Only ds-date-b (2024-01-15) and ds-date-c (2024-06-01) fall in 2024
+        result = _list(
+            mixed_date_repository,
+            publishedFrom=date(2024, 1, 1),
+            publishedTo=date(2024, 12, 31),
+        )
+        assert result["total"] == 2
+        ids = {self._root(ds).id for ds in result["datasets"]}
+        assert ids == {"ds-date-b", "ds-date-c"}
