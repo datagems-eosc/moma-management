@@ -5,6 +5,7 @@ from neo4j import Session, Transaction
 
 from moma_management.domain.dataset import Dataset
 from moma_management.domain.filters import DatasetFilter, DatasetSortField
+from moma_management.domain.generated.moma_schema import MoMaGraphModel
 from moma_management.repository.neo4j_pgson_mixin import Neo4jPgJsonMixin
 
 logger = getLogger(__name__)
@@ -268,6 +269,29 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                 )
                 for record in records
             ]
+
+            if criteria.properties:
+                prop_values = {p.value for p in criteria.properties}
+                scalar_props = prop_values - {"distribution", "recordSet"}
+                include_subgraph = bool(
+                    prop_values & {"distribution", "recordSet"})
+
+                filtered = []
+                for ds in datasets:
+                    nodes = []
+                    for n in ds.nodes:
+                        if "sc:Dataset" in n.labels:
+                            filtered_props = {
+                                k: v for k, v in n.properties.items()
+                                if k in scalar_props
+                            }
+                            nodes.append(n.model_copy(
+                                update={"properties": filtered_props}))
+                        elif include_subgraph:
+                            nodes.append(n)
+                    edges = ds.edges if include_subgraph else None
+                    filtered.append(MoMaGraphModel(nodes=nodes, edges=edges))
+                datasets = filtered
 
             return {
                 "datasets": datasets,
