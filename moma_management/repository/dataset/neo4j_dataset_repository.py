@@ -174,6 +174,18 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             # ---------------- DATA QUERY ----------------
             # SKIP/LIMIT is applied to dataset nodes (n) BEFORE the subgraph
             # traversal so pagination is dataset-accurate.
+            #
+            # Subgraph expansion uses explicit hop-by-hop traversal with
+            # DISTINCT at each level to avoid the path-explosion problem that
+            # occurs when collect(nodes(p)) is used with variable-length paths.
+            # Collecting entire PATH objects forces Neo4j to materialise every
+            # distinct route to every node, which causes OOM on large subgraphs
+            # (many fields × statistics).  Collecting DISTINCT node/rel objects
+            # directly is O(|nodes| + |rels|) instead of O(|paths|).
+            #
+            # CASE WHEN … ELSE [null] END on each UNWIND ensures that datasets
+            # with no neighbours at a given hop still produce a row so the root
+            # node (n) is included in the final result.
 
             query = f"""//cypher
             MATCH (n:`sc:Dataset`)
@@ -193,15 +205,47 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             SKIP $skip
             LIMIT $limit
 
-            OPTIONAL MATCH p=(n)-[*1..4]-(m)
-            WHERE ANY(l IN labels(m) WHERE l IN $allowedLabels)
-            AND ($types = [] OR ANY(t IN $types WHERE t IN labels(m)))
-
+            // Hop 1 – direct neighbours of the dataset root
+            OPTIONAL MATCH (n)-[r1]-(h1)
+            WHERE ANY(l IN labels(h1) WHERE l IN $allowedLabels)
+              AND ($types = [] OR ANY(t IN $types WHERE t IN labels(h1)))
             WITH n,
-                collect(nodes(p))         AS node_lists,
-                collect(relationships(p)) AS rel_lists
+                 collect(DISTINCT h1) AS h1n,
+                 collect(DISTINCT r1) AS h1r
 
-            RETURN n AS dataset, node_lists, rel_lists
+            // Hop 2 – expand from hop-1 nodes, skipping already-visited
+            UNWIND CASE WHEN size(h1n) > 0 THEN h1n ELSE [null] END AS h1
+            OPTIONAL MATCH (h1)-[r2]-(h2)
+            WHERE ANY(l IN labels(h2) WHERE l IN $allowedLabels)
+              AND NOT h2 IN h1n
+              AND ($types = [] OR ANY(t IN $types WHERE t IN labels(h2)))
+            WITH n, h1n, h1r,
+                 collect(DISTINCT h2) AS h2n,
+                 collect(DISTINCT r2) AS h2r
+
+            // Hop 3 – expand from hop-2 nodes, skipping already-visited
+            UNWIND CASE WHEN size(h2n) > 0 THEN h2n ELSE [null] END AS h2
+            OPTIONAL MATCH (h2)-[r3]-(h3)
+            WHERE ANY(l IN labels(h3) WHERE l IN $allowedLabels)
+              AND NOT h3 IN h1n AND NOT h3 IN h2n
+              AND ($types = [] OR ANY(t IN $types WHERE t IN labels(h3)))
+            WITH n, h1n, h1r, h2n, h2r,
+                 collect(DISTINCT h3) AS h3n,
+                 collect(DISTINCT r3) AS h3r
+
+            // Hop 4 – expand from hop-3 nodes, skipping already-visited
+            UNWIND CASE WHEN size(h3n) > 0 THEN h3n ELSE [null] END AS h3
+            OPTIONAL MATCH (h3)-[r4]-(h4)
+            WHERE ANY(l IN labels(h4) WHERE l IN $allowedLabels)
+              AND NOT h4 IN h1n AND NOT h4 IN h2n AND NOT h4 IN h3n
+              AND ($types = [] OR ANY(t IN $types WHERE t IN labels(h4)))
+            WITH n, h1n, h1r, h2n, h2r, h3n, h3r,
+                 collect(DISTINCT h4) AS h4n,
+                 collect(DISTINCT r4) AS h4r
+
+            RETURN n AS dataset,
+                   [h1n + h2n + h3n + h4n] AS node_lists,
+                   [h1r + h2r + h3r + h4r] AS rel_lists
             """
 
             records = list(self._session.run(
