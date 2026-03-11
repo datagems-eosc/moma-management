@@ -149,9 +149,18 @@ ColumnStatistics:
   croissant_type: "dg:ColumnStatistics"
   id: "@id"
   labels: ["Statistics", "@type"]
-  properties: "*"
-  strip_prefix: "dg:"
-  exclude: ["@id", "@type"]
+  properties:
+    type:              "@type"
+    rowCount:          "dg:rowCount"
+    mean:              "dg:mean"
+    median:            "dg:median"
+    standardDeviation: "dg:standardDeviation"
+    min:               "dg:min"
+    max:               "dg:max"
+    missingCount:      "dg:missingCount"
+    missingPercentage: "dg:missingPercentage"
+    histogram:         "dg:histogram"
+    uniqueCount:       "dg:uniqueCount"
   edges:
     - from: $parent
       to:   $self

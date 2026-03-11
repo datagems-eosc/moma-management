@@ -294,8 +294,9 @@ def heavyProfiling2PGjson(data: dict) -> dict:
                     if v is not None and k not in ("@id", "@type")
                 }
 
-                # Only create the node if there is at least one non-null property
-                if properties_stats:
+                # Only create the node if we could resolve an id
+                if stats_id and stats_type:
+                    properties_stats["type"] = stats_type
                     nodes.append({
                         "id": stats_id,
                         "labels": ["Statistics", stats_type],

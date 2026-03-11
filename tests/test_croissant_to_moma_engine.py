@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from moma_management.domain.mapping_engine import croissant_to_pgjson
 from moma_management.domain.generated.moma_schema import MoMaGraphModel
+from moma_management.domain.mapping_engine import croissant_to_pgjson
 from moma_management.legacy.converters import Croissant2PGjson
 from tests.utils import normalize, save
 
@@ -57,3 +57,71 @@ def test_generation_cycle(light_profile: Path, mapping_file: Path):
     new_model = croissant_to_pgjson(profile, mapping)
     graph = MoMaGraphModel.model_validate(new_model)
     assert normalize(new_model) == normalize(graph.model_dump(by_alias=True))
+
+
+def test_column_statistics_type_property(mapping_file: Path):
+    """
+    ColumnStatistics nodes must carry a 'type' property that mirrors the
+    Croissant @type value ("dg:ColumnStatistics"), consistent with how every
+    other MoMa node exposes its type.
+    A statistics object whose numeric values are all null still produces a node
+    because the object itself exists in the data (it just has no values yet).
+    """
+    mapping = yaml.safe_load(mapping_file.open("r"))
+
+    profile = {
+        "@id": "ds-1",
+        "@type": "sc:Dataset",
+        "name": "test",
+        "recordSet": [
+            {
+                "@type": "cr:RecordSet",
+                "@id": "rs-1",
+                "name": "rows",
+                "field": [
+                    {
+                        "@type": "cr:Field",
+                        "@id": "f-1",
+                        "name": "col_a",
+                        "source": {"fileObject": {"@id": "fo-1"}, "extract": {"column": "col_a"}},
+                        "statistics": {
+                            "@id": "stats-1",
+                            "@type": "dg:ColumnStatistics",
+                            "dg:rowCount": 100,
+                            "dg:mean": 3.5,
+                        },
+                    },
+                    {
+                        "@type": "cr:Field",
+                        "@id": "f-2",
+                        "name": "col_b",
+                        "source": {"fileObject": {"@id": "fo-1"}, "extract": {"column": "col_b"}},
+                        "statistics": {
+                            "@id": "stats-2",
+                            "@type": "dg:ColumnStatistics",
+                            "dg:rowCount": None,
+                            "dg:mean": None,
+                        },
+                    },
+                ],
+            }
+        ],
+    }
+
+    result = croissant_to_pgjson(profile, mapping)
+    stats_nodes = [n for n in result["nodes"]
+                   if "Statistics" in n.get("labels", [])]
+
+    # Both cols have a statistics object with an @id → both produce a Statistics node
+    assert len(
+        stats_nodes) == 2, f"Expected 2 Statistics nodes, got {len(stats_nodes)}"
+
+    for stats in stats_nodes:
+        assert stats["properties"].get("type") == "dg:ColumnStatistics", (
+            f"Expected type='dg:ColumnStatistics', got: {stats['properties']}"
+        )
+
+    # col_a's node also carries numeric values
+    col_a_stats = next(n for n in stats_nodes if n["id"] == "stats-1")
+    assert col_a_stats["properties"].get("rowCount") == 100
+    assert col_a_stats["properties"].get("mean") == 3.5
