@@ -1,9 +1,9 @@
 from datetime import date
-from typing import List
+from typing import List, Never
 
 from fastapi import Depends, HTTPException, Query
 
-from moma_management.di import get_dataset_service
+from moma_management.di import get_dataset_service, require_permission
 from moma_management.domain.filters import (
     DatasetFilter,
     DatasetProperty,
@@ -13,6 +13,7 @@ from moma_management.domain.filters import (
     SortDirection,
 )
 from moma_management.domain.generated.nodes.dataset_schema import Status
+from moma_management.services.authorization import DatasetAction
 from moma_management.services.dataset import DatasetService
 
 
@@ -47,6 +48,7 @@ def _dataset_filters(
 async def list_datasets(
     filters: DatasetFilter = Depends(_dataset_filters),
     svc: DatasetService = Depends(get_dataset_service),
+    _auth: Never = Depends(require_permission(DatasetAction.browse)),
 ) -> dict:
     """
     List datasets with optional filtering, sorting, and pagination criteria.
