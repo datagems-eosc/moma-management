@@ -7,6 +7,7 @@ from neo4j import AsyncGraphDatabase, GraphDatabase
 from testcontainers.neo4j import Neo4jContainer
 
 from moma_management.repository.dataset import Neo4jDatasetRepository
+from moma_management.repository.node import Neo4jNodeRepository
 from moma_management.services.dataset import DatasetService
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -305,4 +306,15 @@ def mixed_types_repository(
         ]:
             repo.create(ds)
         yield repo
+    driver.close()
+
+
+@pytest.fixture(scope="function")
+def node_repository(neo4j_container: Neo4jContainer) -> Generator[Neo4jNodeRepository, None, None]:
+    """Provide a Neo4jNodeRepository backed by a throwaway Neo4j container session."""
+    uri = neo4j_container.get_connection_url()
+    auth = (neo4j_container.username, neo4j_container.password)
+    driver = GraphDatabase.driver(uri, auth=auth)
+    with driver.session() as session:
+        yield Neo4jNodeRepository(session)
     driver.close()

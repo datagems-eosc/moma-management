@@ -7,7 +7,9 @@ from fastapi import Depends, FastAPI
 from neo4j import Driver, GraphDatabase, Session
 
 from moma_management.repository import DatasetRepository, Neo4jDatasetRepository
+from moma_management.repository.node import Neo4jNodeRepository, NodeRepository
 from moma_management.services.dataset import DatasetService
+from moma_management.services.node import NodeService
 
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
@@ -51,3 +53,13 @@ def get_dataset_repo(session: Session = Depends(get_db_session)) -> DatasetRepos
 def get_dataset_service(repo: DatasetRepository = Depends(get_dataset_repo), mapping_file: Path = Depends(get_mapping_file)) -> DatasetService:
     """Return the service for Dataset operations."""
     return DatasetService(repo, mapping_file)
+
+
+def get_node_repo(session: Session = Depends(get_db_session)) -> NodeRepository:
+    """Return the repository for single-node graph operations."""
+    return Neo4jNodeRepository(session)
+
+
+def get_node_service(repo: NodeRepository = Depends(get_node_repo)) -> NodeService:
+    """Return the service for single-node operations."""
+    return NodeService(repo)

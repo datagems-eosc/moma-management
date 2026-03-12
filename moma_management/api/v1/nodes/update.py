@@ -1,0 +1,30 @@
+from typing import Any, Dict
+
+from fastapi import Depends, HTTPException
+
+from moma_management.di import get_node_service
+from moma_management.domain.generated.nodes.node_schema import Node
+from moma_management.services.node import NodeService
+
+
+async def update_node(
+    id: str,
+    properties: Dict[str, Any],
+    svc: NodeService = Depends(get_node_service),
+) -> dict:
+    """
+    Merge the supplied properties onto the existing node identified by *id*.
+    Only the provided keys are updated; all other properties are left unchanged.
+    Returns 404 if the node does not exist.
+    """
+    try:
+        result = svc.update(Node(id=id, labels=[], properties=properties))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"An error occurred: {str(e)}")
+
+    if result.get("updated", 0) == 0:
+        raise HTTPException(
+            status_code=404, detail=f"Node '{id}' not found.")
+
+    return result
