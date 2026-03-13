@@ -5,35 +5,28 @@
 
 ## Overview
 
-The **MoMa Management API** is a [FastAPI](https://fastapi.tiangolo.com/) service for managing the **MoMa** (Metadata Object Model) property graph stored in [Neo4j](https://neo4j.com/). It accepts dataset profiles in [Croissant](https://docs.mlcommons.org/croissant/docs/) format, converts them to PG-JSON according to the MoMa schema, and persists the result to Neo4j. Individual graph nodes can also be retrieved and updated independently through the nodes API.
-
-## Features
-
-- **Dataset CRUD** – Ingest, retrieve, list, and delete dataset subgraphs stored in Neo4j.
-- **Croissant conversion** – Convert a Croissant profile to PG-JSON on the fly without persisting it (`/datasets/convert`).
-- **Node management** – Retrieve and partially update individual graph nodes (`/nodes/{id}`).
-- **Authentication** – Bearer JWT validation against a configurable OIDC issuer (RS256); disabled when `OIDC_ISSUER` is unset.
-- **Authorization** – Per-dataset permission checks delegated to an external gateway; disabled when `PERMISSIONS_GATEWAY_URL` is unset.
-- **Schema code generation** – Pydantic v2 models are generated from JSON Schema via `make gen`.
+The **MoMa Management API** manage CRUD operation on MoMa, a data-flox graph.
 
 ## Quick Start
 
-**Prerequisites:** [uv](https://docs.astral.sh/uv/) and a running Neo4j instance.
+Just run the .devcontainer provided. 
+Once inside the devcontainer, you can then install the dependencies like so
 
-```bash
-git clone https://github.com/datagems-eosc/moma-management.git
-cd moma-management
-
-# Install dependencies (remove --all-groups for production)
+```sh
 uv sync --all-groups
 
-# Start the API (default: http://localhost:5000)
+```
+
+And run the project :
+```sh
+# You can also use the debug configuration if you are using vscode
 uv run python moma_management/main.py
 ```
 
+Once launched, the APi is avilable here
 **Interactive docs:** http://localhost:5000/docs
 
-## Docker
+## Running the container
 
 The `Dockerfile` exposes two build targets:
 
@@ -55,58 +48,58 @@ docker run -p 5000:5000 \
 
 Configuration is managed entirely through environment variables:
 
-| Variable | Default | Description |
-|---|---|---|
-| `NEO4J_URI` | `bolt://localhost:7687` | Neo4j Bolt connection URI |
-| `NEO4J_USER` | `neo4j` | Neo4j username |
-| `NEO4J_PASSWORD` | `datagems` | Neo4j password |
-| `MAPPING_FILE` | `moma_management/domain/mapping.yml` | Path to the Croissant → PG-JSON field mapping |
-| `ROOT_PATH` | *(empty)* | ASGI root path (useful when behind a reverse proxy) |
-| `OIDC_ISSUER` | *(empty)* | OIDC issuer URL for JWT validation (auth disabled if unset) |
-| `OIDC_AUDIENCE` | *(empty)* | Expected JWT audience claim (optional) |
-| `JWKS_TTL_SECONDS` | `300` | How long to cache the JWKS from the OIDC issuer |
-| `PERMISSIONS_GATEWAY_URL` | *(empty)* | External gateway URL for dataset-level authorization (disabled if unset) |
+| Variable                  | Required | Default                              | Description                                                              |
+| ------------------------- | -------- | ------------------------------------ | ------------------------------------------------------------------------ |
+| `NEO4J_URI`               | yes      | `bolt://localhost:7687`              | Neo4j Bolt connection URI                                                |
+| `NEO4J_USER`              | yes      | `neo4j`                              | Neo4j username                                                           |
+| `NEO4J_PASSWORD`          | yes      | `datagems`                           | Neo4j password                                                           |
+| `MAPPING_FILE`            | no       | `moma_management/domain/mapping.yml` | Path to the Croissant → PG-JSON field mapping                            |
+| `ROOT_PATH`               | no       | *(empty)*                            | ASGI root path (useful when behind a reverse proxy)                      |
+| `OIDC_ISSUER`             | no       | *(empty)*                            | OIDC issuer URL for JWT validation (auth disabled if unset)              |
+| `OIDC_AUDIENCE`           | no       | *(empty)*                            | Expected JWT audience claim (optional)                                   |
+| `JWKS_TTL_SECONDS`        | no       | `300`                                | How long to cache the JWKS from the OIDC issuer                          |
+| `PERMISSIONS_GATEWAY_URL` | no       | *(empty)*                            | External gateway URL for dataset-level authorization (disabled if unset) |
 
 ## API Endpoints
 
 ### Datasets (`/datasets`)
 
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/datasets` | Ingest a Croissant profile → store as PG-JSON in Neo4j |
-| `GET` | `/datasets` | List datasets with filtering and pagination |
-| `GET` | `/datasets/{id}` | Retrieve the full dataset subgraph by ID |
-| `DELETE` | `/datasets/{id}` | Delete a dataset and its connected subgraph |
-| `POST` | `/datasets/convert` | Convert a Croissant profile to PG-JSON (no persistence) |
+| Method   | Path                | Description                                             |
+| -------- | ------------------- | ------------------------------------------------------- |
+| `POST`   | `/datasets`         | Ingest a Croissant profile → store as PG-JSON in Neo4j  |
+| `GET`    | `/datasets`         | List datasets with filtering and pagination             |
+| `GET`    | `/datasets/{id}`    | Retrieve the full dataset subgraph by ID                |
+| `DELETE` | `/datasets/{id}`    | Delete a dataset and its connected subgraph             |
+| `POST`   | `/datasets/convert` | Convert a Croissant profile to PG-JSON (no persistence) |
 
 #### `GET /datasets` query parameters
 
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `nodeIds` | `string[]` | `[]` | Filter by node IDs |
-| `properties` | `DatasetProperty[]` | `[]` | Filter by dataset properties |
-| `types` | `NodeLabel[]` | `[]` | Filter by node label |
-| `mimeTypes` | `MimeType[]` | `[]` | Filter by MIME type |
-| `orderBy` | `DatasetSortField[]` | `[]` | Sort fields |
-| `direction` | `ASC` \| `DESC` | `ASC` | Sort direction |
-| `publishedFrom` | `date` | — | Published date lower bound |
-| `publishedTo` | `date` | — | Published date upper bound |
-| `status` | `Status` | — | Filter by dataset status |
-| `page` | `int ≥ 1` | `1` | Page number |
-| `pageSize` | `1–100` | `25` | Items per page |
+| Parameter       | Type                 | Default | Description                  |
+| --------------- | -------------------- | ------- | ---------------------------- |
+| `nodeIds`       | `string[]`           | `[]`    | Filter by node IDs           |
+| `properties`    | `DatasetProperty[]`  | `[]`    | Filter by dataset properties |
+| `types`         | `NodeLabel[]`        | `[]`    | Filter by node label         |
+| `mimeTypes`     | `MimeType[]`         | `[]`    | Filter by MIME type          |
+| `orderBy`       | `DatasetSortField[]` | `[]`    | Sort fields                  |
+| `direction`     | `ASC` \| `DESC`      | `ASC`   | Sort direction               |
+| `publishedFrom` | `date`               | —       | Published date lower bound   |
+| `publishedTo`   | `date`               | —       | Published date upper bound   |
+| `status`        | `Status`             | —       | Filter by dataset status     |
+| `page`          | `int ≥ 1`            | `1`     | Page number                  |
+| `pageSize`      | `1–100`              | `25`    | Items per page               |
 
 ### Nodes (`/nodes`)
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/nodes/{id}` | Retrieve a single graph node by ID |
+| Method  | Path          | Description                                     |
+| ------- | ------------- | ----------------------------------------------- |
+| `GET`   | `/nodes/{id}` | Retrieve a single graph node by ID              |
 | `PATCH` | `/nodes/{id}` | Partially update properties of an existing node |
 
 ### Health
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/health` | Returns `200 OK` when the service is up |
+| Method | Path      | Description                             |
+| ------ | --------- | --------------------------------------- |
+| `GET`  | `/health` | Returns `200 OK` when the service is up |
 
 ## Project Structure
 
@@ -114,20 +107,10 @@ Configuration is managed entirely through environment variables:
 moma_management/
 ├── main.py                    # FastAPI app entry point (port 5000)
 ├── di.py                      # Dependency injection (Neo4j driver, auth, service wiring)
-├── api/v1/
-│   ├── health.py              # GET /health
-│   ├── datasets/
-│   │   ├── ingest.py          # POST   /datasets
-│   │   ├── list.py            # GET    /datasets
-│   │   ├── get.py             # GET    /datasets/{id}
-│   │   ├── delete.py          # DELETE /datasets/{id}
-│   │   └── convert.py         # POST   /datasets/convert
-│   └── nodes/
-│       ├── get.py             # GET   /nodes/{id}
-│       └── update.py          # PATCH /nodes/{id}
+├── api/v1/                    # Front facing API
 ├── services/
-│   ├── dataset.py             # DatasetService: convert / ingest / get / delete / list
-│   ├── node.py                # NodeService: get / update
+│   ├── dataset.py             # Dataset CRUD
+│   ├── node.py                # Node CRUD
 │   ├── authentication.py      # JWT validation (OIDC/JWKS, RS256)
 │   └── authorization.py       # Dataset-level permission checks via external gateway
 ├── domain/
@@ -137,22 +120,9 @@ moma_management/
 │   ├── mapping.yml            # Field mapping configuration
 │   ├── generated/             # Pydantic v2 models (generated via `make gen`)
 │   └── schema/                # JSON Schema source files
-│       └── moma.schema.json
-├── repository/
-│   ├── dataset/               # Abstract + Neo4j-backed dataset repository
-│   ├── node/                  # Abstract + Neo4j-backed node repository
-│   └── neo4j_pgson_mixin.py   # Shared Neo4j PG-JSON helpers
+├── repository/                # Object to DB layer
 └── legacy/
     └── converters.py          # Deprecated converters (kept for reference)
-assets/
-├── datasets/                  # Sample Croissant input files (light / heavy variants)
-└── profiles/                  # Sample profile files
-tests/
-├── conftest.py
-├── test_croissant_to_moma_engine.py
-├── test_dataset_service.py
-├── test_dataset_storage.py
-└── test_node_storage.py
 ```
 
 ## Testing
@@ -167,26 +137,102 @@ uv sync --all-groups
 uv run pytest
 ```
 
-## Development
+## Updating the Moma model
+To update the MoMa model, two step are involved.
 
-```bash
-# Regenerate Pydantic models from JSON Schema
+First, update the json schema in `domain/schema`.
+
+For example, let's add a new property to the `data` node 
+```jsonc
+// domain/schema/nodes/data.schema.json
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Data",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "string"
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "Data"
+            ]
+        },
+        "name": {
+            "type": "string"
+        },
+        "description": {
+            "type": "string"
+        },
+        "contentSize": {
+            "type": "string"
+        },
+        "contentUrl": {
+            "type": "string",
+            "format": "uri"
+        },
+        "encodingFormat": {
+            "type": "string"
+        },
+        "sha256": {
+            "type": "string"
+        },
+        // THIS IS NEW
+        "myProp": {
+            "type": "thing"
+        }
+    },
+    "required": [
+        "id",
+        "type"
+    ]
+}
+```
+
+We can then update the pydantic models using:
+
+```sh
 make gen
 ```
 
-The `make gen` command runs `datamodel-codegen` against `moma_management/domain/schema/` and writes generated Pydantic v2 models to `moma_management/domain/generated/`.
+This will recreate the `domain/generated/nodes/data_schema.py` with the updated property
 
-## Tech Stack
+```py
+class Type(Enum):
+    data = 'Data'
 
-| Component | Library |
-|---|---|
-| Web framework | [FastAPI](https://fastapi.tiangolo.com/) |
-| Graph database | [Neo4j](https://neo4j.com/) (via `neo4j` Python driver) |
-| Data validation | [Pydantic v2](https://docs.pydantic.dev/) |
-| Schema codegen | [datamodel-code-generator](https://koxudaxi.github.io/datamodel-code-generator/) |
-| Package manager | [uv](https://docs.astral.sh/uv/) |
-| Test runner | pytest + [testcontainers](https://testcontainers-python.readthedocs.io/) |
-| Python | ≥ 3.14 |
+
+class Data(BaseModel):
+    id: str
+    type: Type
+    name: str | None = None
+    description: str | None = None
+    content_size: str | None = Field(None, alias='contentSize')
+    content_url: AnyUrl | None = Field(None, alias='contentUrl')
+    encoding_format: str | None = Field(None, alias='encodingFormat')
+    sha256: str | None = None
+    my_prop: str | None = None = Field(None, alias='myProp')
+```
+
+The second step is map this property from the Croissant format to the MoMa format. 
+To achieve this, we must edit `domain/mapping.yml`. Croissant `Data` maps to a `Distribution` Moma node in this case.
+
+```yml
+Distribution:
+  properties:
+    type:           "@type"
+    name:           name
+    description:    description
+    encodingFormat: encodingFormat
+    contentSize:    contentSize
+    contentUrl:     contentUrl
+    sha256:         sha256
+    # NEW
+    # myProp is the name of the property we've added
+    # myCroissantProp is the name of the property we want to map to in the croissant format
+    myProp:         myCroissantProp
+```
 
 ## Documentation
 
