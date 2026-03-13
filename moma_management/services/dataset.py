@@ -20,6 +20,13 @@ class DatasetService:
         ), f"Mapping file not found at {mapping_file}"
         self._mapping_file = mapping_file
 
+    def create(self, candidate: Dataset) -> Dataset:
+        """
+        Create a new dataset from a validated Dataset object.
+        """
+        self._repo.create(candidate)
+        return candidate
+
     def convert(self, candidate: Dict[str, Any]) -> Dataset:
         """
         Convert a Croissant-format JSON body to PG-JSON according to the MoMa graph schema.

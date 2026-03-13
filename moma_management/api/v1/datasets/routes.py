@@ -2,6 +2,7 @@
 from fastapi import APIRouter
 
 from .convert import convert_profile
+from .create import create_dataset
 from .delete import delete_dataset
 from .get import get_dataset
 from .ingest import ingest_profile
@@ -13,7 +14,8 @@ router = APIRouter(
 )
 
 # CRUD
-router.add_api_route("/", ingest_profile, methods=["POST"])
+router.add_api_route("/croissant", ingest_profile, methods=["POST"])
+router.add_api_route("/", create_dataset, methods=["POST"])
 router.add_api_route("/", list_datasets, methods=["GET"])
 router.add_api_route("/{id}", get_dataset, methods=["GET"])
 router.add_api_route("/{id}", delete_dataset,
