@@ -1,12 +1,38 @@
 # Maintenance
 
-The service is part of the DataGEMS platform offered through an existing deployment, following the DataGEMS release and deployment procedures over a managed infrasrtucture along with the maintenance activities that are scheduled within the platform. The purpose of this section is not to detail the maintenance activities put in place by the DataGEMS team.
+The service is part of the DataGEMS platform, following the DataGEMS release and deployment procedures. This section describes operational maintenance topics.
 
 ## Healthchecks
 
-The service [OpenAPI Reference](openapi.md) describes healthcheck endpoints that can be used to track the status of the service.
+The service exposes a `/health` endpoint that returns `200 OK` when the service is running. This endpoint does not require authentication and can be used by load balancers, orchestrators, or monitoring systems as a liveness probe.
 
-The appropriate configuration file that controls the behavior of the healthcheck endpoints is described in the relevant [Configuration](configuration.md) section along with the response status codes for Healthy / Degrades / Unhealthy status and if the response will be verbose.
+## Versions & Updates
+
+The service follows [Semantic Versioning](https://semver.org/):
+
+- **MAJOR** (X.0.0): Breaking changes that are incompatible with previous versions.
+- **MINOR** (X.Y.0): New features added in a backward-compatible way.
+- **PATCH** (X.Y.Z): Bug fixes and security patches that do not affect compatibility.
+
+Releases are published as Git tags in the [code repository](https://github.com/datagems-eosc/moma-management/releases) and automatically trigger the Docker image build and GitHub Release workflows.
+
+## Schema regeneration
+
+When the MoMa JSON Schema (`moma_management/domain/schema/`) changes, the generated Pydantic models must be regenerated:
+
+```bash
+make gen
+```
+
+This regenerates all models in `moma_management/domain/generated/` and should be committed alongside schema changes.
+
+## Backups
+
+All state persisted by the service resides in the Neo4j graph database described in the [Datastores](datastore.md) section. Backup strategy should follow the Neo4j backup and restore procedures appropriate for the deployed Neo4j version and edition.
+
+## Troubleshooting
+
+Troubleshooting is primarily done through the logging output described in the [Logging](logging.md) section. Running the service with `DEBUG` log level provides detailed information on requests, JWKS fetches, and Neo4j operations.
 
 An example of a Verbose response that returns 200 OK for healthy state is:
 ```json

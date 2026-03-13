@@ -1,10 +1,44 @@
 # Automations
 
-A number of automations are available to facilitate the development, quality assurance, security, deployment, maintenance and onboarding of the service. Here we describe some that are directly, publicly available.
+A number of GitHub Actions workflows automate development, quality assurance, and deployment for the service. All workflows are defined in the [`.github/workflows`](https://github.com/datagems-eosc/moma-management/tree/main/.github/workflows) directory of the repository.
 
-## Dockerfile
+## Test workflow
 
-The main delivery package for the service is a docker image. The [Dockerfile](https://github.com/datagems-eosc/dg-app-api/blob/main/src/Dockerfile) bundled under the Http Api project for the service builds the Docker image.
+Workflow file: [`tests.yml`](https://github.com/datagems-eosc/moma-management/blob/main/.github/workflows/tests.yml)
+
+Triggered automatically on every push and pull request targeting the `main` or `develop` branches. The workflow:
+
+1. Checks out the repository.
+2. Installs Python 3.14 and [uv](https://docs.astral.sh/uv/).
+3. Installs all dependency groups (`uv sync --all-groups`).
+4. Runs the full pytest suite (`uv run pytest`).
+
+Tests use [testcontainers](https://testcontainers-python.readthedocs.io/) to spin up a real Neo4j instance automatically — no external services need to be pre-configured.
+
+## Docker image publishing
+
+Workflow file: [`docker-image.yml`](https://github.com/datagems-eosc/moma-management/blob/main/.github/workflows/docker-image.yml)
+
+Triggered when a tag matching `v*` is pushed to the repository. The workflow:
+
+1. Builds the `test` Docker target and runs the test suite inside the container.
+2. If tests pass, builds and pushes the `prod` image to the GitHub Container Registry (`ghcr.io/datagems-eosc/moma-management`) tagged with the version that triggered the run.
+
+## Release creation
+
+Workflow file: [`release.yml`](https://github.com/datagems-eosc/moma-management/blob/main/.github/workflows/release.yml)
+
+Triggered alongside the Docker publish workflow when a `v*` tag is pushed. Creates a GitHub Release named after the tag and populates the release notes from `CHANGELOG.md`.
+
+## Documentation deployment
+
+Workflow file: [`deploy-docs-on-demand.yml`](https://github.com/datagems-eosc/moma-management/blob/main/.github/workflows/deploy-docs-on-demand.yml)
+
+Triggered manually via `workflow_dispatch`. Accepts a documentation version string as input. The workflow:
+
+1. Installs [mkdocs-material](https://squidfunk.github.io/mkdocs-material/), [mike](https://github.com/jimporter/mike), [neoteroi-mkdocs](https://www.neoteroi.dev/mkdocs-plugins/), and related plugins.
+2. Builds the versioned documentation site.
+3. Pushes the generated site to the `gh-pages` branch, making it available at [https://datagems-eosc.github.io/moma-management/](https://datagems-eosc.github.io/moma-management/).
 
 ## Docker image publishing
 

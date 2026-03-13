@@ -1,15 +1,20 @@
 # Data Stores
 
-The service functions primarily as a gateway between the user interface, or other external integration points, and the core DataGEMS services. While it does not serve as the main repository for datasets or models related to most user requests, it plays a critical role in facilitating access to core platform features. As such, it must manage certain operational data necessary to support its responsibilities and ensure smooth interaction with the broader system.
+The MoMa Management API uses **Neo4j** as its sole data store. All MoMa property graph data — nodes, edges, and their properties — is persisted there.
 
-## Relational Database
+## Neo4j graph database
 
-The primary data store for the service is a PostgreSQL hosted relational database.
+Neo4j is a native property graph database accessed via the official Python driver using the Bolt protocol. The service manages two kinds of graph objects:
 
-The schema of the relational database can be found in the service repository under the [db](https://github.com/datagems-eosc/dg-app-api/tree/main/db) folder.
+- **Nodes** – represent entities in the MoMa model (datasets, distributions, record sets, fields, etc.). Each node carries a set of labels and a properties map.
+- **Edges** – directed relationships between nodes, each with a label and optional properties.
 
-## Change scripts
+The graph schema is formally defined in `moma_management/domain/schema/moma.schema.json` and translated into Pydantic v2 models via `make gen`.
 
-The evolution of the database is managed through ordered database change scripts. The scripts incrimentaly update the database schema to target the desired version. The change scripts are numbered and versioned in the service repository under the [db](https://github.com/datagems-eosc/dg-app-api/tree/main/db) folder.
+## Connection
 
-Intermediate "XX.XX.XXX-Seed.Scema.sql" scripts can be used to initialize the database in the sepecific version so that previous change scripts do not need to be applied.
+The service connects to Neo4j using the Bolt URI, username, and password configured through the `NEO4J_URI`, `NEO4J_USER`, and `NEO4J_PASSWORD` environment variables (see [Configuration](configuration.md)). A single driver instance is created at startup and torn down gracefully on shutdown via the FastAPI lifespan context manager.
+
+## Version requirements
+
+The service requires **Neo4j 5+**. Tested against the `neo4j` Python driver v6.

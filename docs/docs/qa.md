@@ -1,12 +1,45 @@
 # Quality Assurance
 
-Key aspects of the Quality Assurance checklist that DataGEMS services must pass have been defined in the processes and documents governing the platform development and quality assurance. In this section we present a selected subset of these that are directly, publicly available.
+Key aspects of the Quality Assurance checklist that DataGEMS services must pass have been defined in the processes and documents governing the platform development and quality assurance. This section describes the QA practices applied to the MoMa Management API.
 
-## Code Analysis
+## Testing
 
-Static code analysis is the process of examining source code without executing it, to identify potential errors, vulnerabilities, or deviations from coding standards. It is typically performed using tools that analyze the code's structure, syntax, and logic to detect issues such as bugs, security flaws, or maintainability problems early in the development cycle. This helps improve code quality, reduce technical debt, and ensure compliance with best practices before the software is run or deployed.
+The service uses [pytest](https://docs.pytest.org/) for automated testing. Tests use [testcontainers](https://testcontainers-python.readthedocs.io/) to spin up a real Neo4j instance automatically — no external services need to be pre-configured.
 
-Static code analysis is a process that has been tied with the development and release lifecycle through the configured GitHub Actions workflow that performs security, quality and maintenability of the code base. The workflow is described in the relevant [Automations](automations.md) section.
+```bash
+# Install all dependency groups
+uv sync --all-groups
+
+# Run the full test suite (4 parallel workers)
+uv run pytest
+```
+
+Test files are in the `tests/` folder:
+
+| File | What it tests |
+|---|---|
+| `test_croissant_to_moma_engine.py` | Croissant → PG-JSON mapping engine |
+| `test_dataset_service.py` | Dataset service business logic |
+| `test_dataset_storage.py` | Neo4j dataset repository (integration) |
+| `test_node_storage.py` | Neo4j node repository (integration) |
+| `test_api.py` | End-to-end API tests |
+
+Tests are also run automatically on every push and pull request via the [CI workflow](automations.md).
+
+## Static code analysis
+
+Static code analysis helps identify potential errors, vulnerabilities, and maintainability issues without executing the code. The repository is configured to enable GitHub CodeQL scanning for security and quality issues.
+
+## Vulnerability checks
+
+Docker image vulnerability scanning can be performed using [Trivy](https://trivy.dev/) or equivalent tooling against the versioned images published to the GitHub Container Registry.
+
+## Postman collection
+
+A Postman collection for manual and exploratory API testing is available in the repository at `tests/api/moma_api.postman_collection.json`. To use it, create a Postman environment with the following variables:
+
+- `baseUrl`: the API endpoint (e.g. `http://localhost:5000`)
+- `userAccessToken`: a valid Bearer token obtained from the DataGEMS AAI service
 
 ## Code Metrics
 

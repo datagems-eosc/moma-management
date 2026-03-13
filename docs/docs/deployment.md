@@ -1,15 +1,38 @@
 # Deployment
 
-The service is part of the DataGEMS platform offered through an existing deployment, following the DataGEMS release and deployment procedures over a managed infrasrtucture. The purpose of this section is not to detail the deployment processes put in place by the DataGEMS team.
+The service is distributed as a Docker image and is part of the DataGEMS platform, following the DataGEMS release and deployment procedures. This section covers the practical steps needed to run the service.
 
 ## Docker
 
-The service is offered as a Docker image through the DataGEMS GitHub Organization Packages. This process is described in the relevant [Automations](automations.md) section.
+The service ships with a multi-stage `Dockerfile` that produces two targets:
+
+| Target | Purpose |
+|---|---|
+| `test` | Runs the full pytest suite inside the container |
+| `prod` | Minimal production image that starts the FastAPI server |
+
+The production image is built and pushed to the GitHub Container Registry (`ghcr.io/datagems-eosc/moma-management`) automatically on each versioned tag. See the [Automations](automations.md) section for details.
+
+### Running the production image
+
+```bash
+docker run -p 5000:5000 \
+  -e NEO4J_URI=bolt://<host>:7687 \
+  -e NEO4J_USER=neo4j \
+  -e NEO4J_PASSWORD=<password> \
+  -e OIDC_ISSUER=https://aai.datagems.eu/realms/datagems \
+  -e PERMISSIONS_GATEWAY_URL=https://<gateway>/api \
+  ghcr.io/datagems-eosc/moma-management:<version>
+```
 
 ## Configuration
 
-In order for the service to operate properly, the needed configuration values must be set to match the environment that it must operate in. The needed configuration is described in the relevant [Configuration](configuration.md) section.
+All runtime configuration is provided through environment variables. The full list of supported variables and their defaults is described in the [Configuration](configuration.md) section.
 
 ## Dependencies
 
-For the service to be able to operate, its underpinning services and dependnecies must be available and accessible. The [Architecture](architecture.md) section describes the ecosystem in which the service needs to operate.
+Before starting the service, ensure the following are reachable:
+
+- **Neo4j** (Bolt endpoint specified by `NEO4J_URI`) – required for all data operations.
+- **OIDC issuer** (`OIDC_ISSUER`) – required when authentication is enabled; the service fetches JWKS on first request.
+- **Permissions gateway** (`PERMISSIONS_GATEWAY_URL`) – required when authorization is enabled.

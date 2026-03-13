@@ -1,20 +1,58 @@
 # Status & Error Codes
 
-The HTTP Api exposed by the service exposes restful endpoints to offer its functionality. These endpoints are documented using the [OpenAPI specification](http://openapis.org/) and available for integrators to consult in the respective [API section](openapi.md).
+The MoMa Management API uses standard HTTP status codes to communicate the outcome of requests. All responses with error bodies use `application/json`.
 
-In this section, we describe further the HTTP Status Codes that the service may expose and possible Error Codes that can be expected.
+## Status codes
 
-## Status Codes
+| Code | Meaning | When it occurs |
+|---|---|---|
+| `200 OK` | Success | Request succeeded and a body is returned |
+| `204 No Content` | Success (no body) | `DELETE /datasets/{id}` completed successfully |
+| `400 Bad Request` | Client error | Request body failed Pydantic validation |
+| `401 Unauthorized` | Authentication failure | Missing, expired, or invalid Bearer token |
+| `403 Forbidden` | Authorization failure | Token is valid but the caller lacks the required permission |
+| `404 Not Found` | Resource not found | Dataset or node with the given ID does not exist |
+| `422 Unprocessable Entity` | Validation error | FastAPI request model validation failed (e.g. wrong query parameter type) |
+| `500 Internal Server Error` | Server error | Unexpected error during processing |
+| `502 Bad Gateway` | Upstream error | Permissions gateway returned an unexpected error or was unreachable |
 
-Commonly used HTTP Response codes are in the service. It makes proper usage of these HTTP Status Codes and tries not to abuse their semantics. The following subset is used and documented in the respective [OpenAPI document](openapi.md):
+## Error response format
 
-* 200 OK - request has succeeded
-* 400 Bad Request - request not processed due to a request/client error
-* 401 Unauthorized - request was not successful because it lacks valid authentication credentials
-* 403 Forbidden - understood the request but refused to process it. Authenticating or re-authenticating makes no difference. The request failure is tied to application logic, such as insufficient permissions to a resource or action
-* 404 Not Found - cannot find the requested resource
-* 424 Failed Dependency - method could not be performed on the resource because the requested action depended on another action, and that action failed
-* 500 Internal Server Error - encountered an unexpected condition that prevented the service from fulfilling the request
+For `4xx` and `5xx` responses FastAPI returns a JSON body of the form:
+
+```json
+{
+  "detail": "<human-readable description of the error>"
+}
+```
+
+For `422 Unprocessable Entity` (FastAPI input validation), the `detail` field is an array describing each validation failure:
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "fieldName"],
+      "msg": "field required",
+      "type": "value_error.missing"
+    }
+  ]
+}
+```
+
+## Authentication errors
+
+`401` responses are returned in the following situations:
+
+- The `Authorization` header is absent or does not start with `Bearer `.
+- The JWT signature is invalid or the token has expired.
+- Token validation raised an unexpected error.
+
+## Authorization errors
+
+`403` responses are returned when the authenticated user does not have the required action permission on the requested dataset, as determined by the external permissions gateway.
+
+`502` is returned when the permissions gateway is unavailable or returns an unexpected error.
 
 ## Error Codes
 
