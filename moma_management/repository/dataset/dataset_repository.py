@@ -13,14 +13,6 @@ class DatasetRepository(Protocol):
         """Store a full PG-JSON graph (nodes + edges)."""
         ...
 
-    def create_nodes(self, pg_json: Dataset) -> str:
-        """Store only the nodes of a PG-JSON graph."""
-        ...
-
-    def create_edges(self, pg_json: Dataset) -> str:
-        """Store only the edges of a PG-JSON graph."""
-        ...
-
     def delete(self, id: str) -> int:
         """Delete datasets and their connected subgraph by ID."""
         ...

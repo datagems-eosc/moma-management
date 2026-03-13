@@ -528,3 +528,58 @@ class TestMimeTypeFullSubgraph:
         assert len(self._file_labels(mixed)) == 2, (
             "ds-mixed should have 2 file nodes when no filter is applied"
         )
+
+
+def test_prevent_ap_or_ml_traversal(
+    dataset_repository: Neo4jDatasetRepository,
+):
+    """
+    The dataset repository can't interact with non-Dataset nodes
+    """
+    from moma_management.domain.generated.edges.edge_schema import Edge
+    from moma_management.domain.generated.nodes.node_schema import Node
+
+    ds_id = "ds-forbidden-edge-test"
+    blue_id = "blue-file-node"
+
+    # One node per forbidden edge type — simulating orange/green nodes
+    orange_nodes = {
+        edge_type: f"orange-{edge_type}-node"
+        for edge_type in Neo4jDatasetRepository.FORBIDDEN_EDGES
+    }
+
+    dataset = Dataset(
+        nodes=[
+            Node(id=ds_id, labels=["sc:Dataset"],
+                 properties={"status": "published"}),
+            Node(id=blue_id, labels=["cr:FileObject"], properties={}),
+            *[
+                Node(id=node_id, labels=["Operator"], properties={})
+                for node_id in orange_nodes.values()
+            ],
+        ],
+        edges=[
+            # Normal edge — must be traversed
+            Edge(**{"from": ds_id, "to": blue_id, "labels": ["distribution"]}),
+            # Forbidden edges — must NOT be traversed
+            *[
+                Edge(**{"from": ds_id, "to": node_id, "labels": [edge_type]})
+                for edge_type, node_id in orange_nodes.items()
+            ],
+        ],
+    )
+
+    dataset_repository.create(dataset)
+    result = dataset_repository.get(ds_id)
+
+    assert result is not None
+    returned_ids = {n.id for n in result.nodes}
+
+    # The blue node must be present
+    assert blue_id in returned_ids, "Blue node reachable via normal edge must be returned"
+
+    # No orange/green node may appear in the result
+    for edge_type, node_id in orange_nodes.items():
+        assert node_id not in returned_ids, (
+            f"Node connected via forbidden edge '{edge_type}' must not be returned"
+        )
