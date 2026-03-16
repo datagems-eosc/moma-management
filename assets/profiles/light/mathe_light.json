@@ -1,0 +1,90 @@
+{
+    "@context": {
+        "@language": "en",
+        "@vocab": "https://schema.org/",
+        "cr": "http://mlcommons.org/croissant/",
+        "rai": "http://mlcommons.org/croissant/RAI/",
+        "dg": "http://datagems.eu/TBD",
+        "data": {
+            "@id": "cr:data",
+            "@type": "@json"
+        },
+        "dataType": {
+            "@id": "cr:dataType",
+            "@type": "@vocab"
+        },
+        "examples": {
+            "@id": "cr:examples",
+            "@type": "@json"
+        },
+        "conformsTo": "dct:conformsTo",
+        "citeAs": "cr:citeAs",
+        "column": "cr:column",
+        "extract": "cr:extract",
+        "field": "cr:field",
+        "fileProperty": "cr:fileProperty",
+        "fileObject": "cr:fileObject",
+        "fileSet": "cr:fileSet",
+        "format": "cr:format",
+        "includes": "cr:includes",
+        "isLiveDataset": "cr:isLiveDataset",
+        "jsonPath": "cr:jsonPath",
+        "key": "cr:key",
+        "md5": "cr:md5",
+        "parentField": "cr:parentField",
+        "path": "cr:path",
+        "recordSet": "cr:recordSet",
+        "references": "cr:references",
+        "regex": "cr:regex",
+        "repeated": "cr:repeated",
+        "replace": "cr:replace",
+        "sc": "https://schema.org/",
+        "separator": "cr:separator",
+        "source": "cr:source",
+        "subField": "cr:subField",
+        "transform": "cr:transform",
+        "access": "dg:access",
+        "uploadedBy": "dg:uploadedBy",
+        "wd": "https://www.wikidata.org/wiki/"
+    },
+    "@type": "sc:Dataset",
+    "@id": "8930240b-a0e8-46e7-ace8-aab2b42fcc01",
+    "name": "Mathematics Learning Assessment",
+    "description": "This dataset was extracted from the MathE platform, an online educational platform developed to support mathematics teaching and learning in higher education. It contains 546 student responses to questions on several mathematical topics. Each record corresponds to an individual answer and includes the following features: Student ID, Student Country, Question ID, Type of Answer (correct or incorrect), Question Level (basic or advanced based on the assessment of the contributing professor), Math Topic (broader mathematical area of the question), Math Subtopic, and Question Keywords. The data spans from February 2019 to December 2023.",
+    "sc:archivedAt": "s3://s3/dataset/8930240b-a0e8-46e7-ace8-aab2b42fcc01",
+    "conformsTo": "",
+    "citeAs": "ca",
+    "license": "CC0 1.0",
+    "url": "https://dados.ipb.pt//dataset.xhtml?persistentId=doi:10.34620/dadosipb/PW3OWY",
+    "dg:doi": "",
+    "version": "",
+    "dg:headline": "Dataset for Assessing Mathematics Learning in Higher Education.",
+    "dg:keywords": [
+        "math",
+        "student",
+        "higher education"
+    ],
+    "dg:fieldOfScience": [
+        "MATHEMATICS"
+    ],
+    "inLanguage": [
+        "en"
+    ],
+    "country": "PT",
+    "datePublished": "2025-05-24",
+    "dg:access": "",
+    "dg:status": "loaded",
+    "dg:uploadedBy": "71d8666e-2631-4b0c-8221-c60582f34a0b",
+    "distribution": [
+        {
+            "@type": "cr:FileObject",
+            "@id": "8472d05f-cd6f-4976-aa6d-5cebc63c4975",
+            "name": "mathe_assessment_dataset.csv",
+            "description": "",
+            "contentSize": "1057461 B",
+            "contentUrl": "s3://s3/dataset/mathe_assessment_dataset.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "73bf2ebca58714c19341c26f7d31f44a5882704f304b146d2db57f4a997fde0b"
+        }
+    ]
+}

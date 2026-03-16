@@ -1,0 +1,428 @@
+{
+    "@context": {
+        "@language": "en",
+        "@vocab": "https://schema.org/",
+        "cr": "http://mlcommons.org/croissant/",
+        "rai": "http://mlcommons.org/croissant/RAI/",
+        "dg": "http://datagems.eu/TBD",
+        "data": {
+            "@id": "cr:data",
+            "@type": "@json"
+        },
+        "dataType": {
+            "@id": "cr:dataType",
+            "@type": "@vocab"
+        },
+        "examples": {
+            "@id": "cr:examples",
+            "@type": "@json"
+        },
+        "conformsTo": "dct:conformsTo",
+        "citeAs": "cr:citeAs",
+        "column": "cr:column",
+        "extract": "cr:extract",
+        "field": "cr:field",
+        "fileProperty": "cr:fileProperty",
+        "fileObject": "cr:fileObject",
+        "fileSet": "cr:fileSet",
+        "format": "cr:format",
+        "includes": "cr:includes",
+        "isLiveDataset": "cr:isLiveDataset",
+        "jsonPath": "cr:jsonPath",
+        "key": "cr:key",
+        "md5": "cr:md5",
+        "parentField": "cr:parentField",
+        "path": "cr:path",
+        "recordSet": "cr:recordSet",
+        "references": "cr:references",
+        "regex": "cr:regex",
+        "repeated": "cr:repeated",
+        "replace": "cr:replace",
+        "sc": "https://schema.org/",
+        "separator": "cr:separator",
+        "source": "cr:source",
+        "subField": "cr:subField",
+        "transform": "cr:transform",
+        "access": "dg:access",
+        "uploadedBy": "dg:uploadedBy",
+        "wd": "https://www.wikidata.org/wiki/"
+    },
+    "@type": "sc:Dataset",
+    "@id": "8930240b-a0e8-46e7-ace8-aab2b42fcc01",
+    "name": "Mathematics Learning Assessment",
+    "description": "This dataset was extracted from the MathE platform, an online educational platform developed to support mathematics teaching and learning in higher education. It contains 546 student responses to questions on several mathematical topics. Each record corresponds to an individual answer and includes the following features: Student ID, Student Country, Question ID, Type of Answer (correct or incorrect), Question Level (basic or advanced based on the assessment of the contributing professor), Math Topic (broader mathematical area of the question), Math Subtopic, and Question Keywords. The data spans from February 2019 to December 2023.",
+    "sc:archivedAt": "s3://s3/dataset/8930240b-a0e8-46e7-ace8-aab2b42fcc01",
+    "conformsTo": "",
+    "citeAs": "ca",
+    "license": "CC0 1.0",
+    "url": "https://dados.ipb.pt//dataset.xhtml?persistentId=doi:10.34620/dadosipb/PW3OWY",
+    "dg:doi": "",
+    "version": "",
+    "dg:headline": "Dataset for Assessing Mathematics Learning in Higher Education.",
+    "dg:keywords": [
+        "math",
+        "student",
+        "higher education"
+    ],
+    "dg:fieldOfScience": [
+        "MATHEMATICS"
+    ],
+    "inLanguage": [
+        "en"
+    ],
+    "country": "PT",
+    "datePublished": "2025-05-24",
+    "dg:access": "",
+    "dg:status": "loaded",
+    "dg:uploadedBy": "71d8666e-2631-4b0c-8221-c60582f34a0b",
+    "distribution": [
+        {
+            "@type": "cr:FileObject",
+            "@id": "8472d05f-cd6f-4976-aa6d-5cebc63c4975",
+            "name": "mathe_assessment_dataset.csv",
+            "description": "",
+            "contentSize": "1057461 B",
+            "contentUrl": "s3://s3/dataset/mathe_assessment_dataset.csv",
+            "encodingFormat": "text/csv",
+            "sha256": "73bf2ebca58714c19341c26f7d31f44a5882704f304b146d2db57f4a997fde0b"
+        }
+    ],
+    "recordSet": [
+        {
+            "@type": "cr:RecordSet",
+            "@id": "20d566dd-1ff7-4496-94bd-8e12673206f6",
+            "name": "mathe_assessment_dataset",
+            "field": [
+                {
+                    "@type": "cr:Field",
+                    "@id": "662d6583-b2c6-4f30-b9eb-05e872f6c9de",
+                    "name": "Student ID",
+                    "description": "",
+                    "dataType": "sc:Integer",
+                    "source": {
+                        "fileObject": {
+                            "@id": "8472d05f-cd6f-4976-aa6d-5cebc63c4975"
+                        },
+                        "extract": {
+                            "column": "Student ID"
+                        }
+                    },
+                    "sample": [
+                        349,
+                        80,
+                        1557,
+                        451,
+                        1332,
+                        403,
+                        955,
+                        181,
+                        91,
+                        852
+                    ],
+                    "statistics": {
+                        "@id": "4f80d536-76db-43b8-bd89-1ac05e49da24",
+                        "@type": "dg:ColumnStatistics",
+                        "dg:rowCount": 9546,
+                        "dg:mean": 775.4022627278441,
+                        "dg:median": 885.0,
+                        "dg:standardDeviation": 460.59055918139757,
+                        "dg:min": 26.0,
+                        "dg:max": 1565.0,
+                        "dg:missingCount": 0,
+                        "dg:missingPercentage": 0.0,
+                        "dg:histogram": "[{\"binRange\": [24.461, 179.9], \"count\": 1871}, {\"binRange\": [179.9, 333.8], \"count\": 205}, {\"binRange\": [333.8, 487.7], \"count\": 1056}, {\"binRange\": [487.7, 641.6], \"count\": 811}, {\"binRange\": [641.6, 795.5], \"count\": 353}, {\"binRange\": [795.5, 949.4], \"count\": 831}, {\"binRange\": [949.4, 1103.3], \"count\": 1456}, {\"binRange\": [1103.3, 1257.2], \"count\": 1542}, {\"binRange\": [1257.2, 1411.1], \"count\": 899}, {\"binRange\": [1411.1, 1565.0], \"count\": 522}]",
+                        "dg:uniqueCount": 372
+                    }
+                },
+                {
+                    "@type": "cr:Field",
+                    "@id": "5e8b40e4-fb58-4f64-ac38-c7fc477649ba",
+                    "name": "Student Country",
+                    "description": "",
+                    "dataType": "sc:Text",
+                    "source": {
+                        "fileObject": {
+                            "@id": "8472d05f-cd6f-4976-aa6d-5cebc63c4975"
+                        },
+                        "extract": {
+                            "column": "Student Country"
+                        }
+                    },
+                    "sample": [
+                        "Portugal",
+                        "Lithuania",
+                        "Portugal",
+                        "Slovenia",
+                        "Slovenia",
+                        "Portugal",
+                        "Portugal",
+                        "Portugal",
+                        "Portugal",
+                        "Portugal"
+                    ],
+                    "statistics": {
+                        "@id": "a47ea631-f97f-4971-827a-e5ffd0193fb8",
+                        "@type": "dg:ColumnStatistics",
+                        "dg:rowCount": 9546,
+                        "dg:mean": null,
+                        "dg:median": null,
+                        "dg:standardDeviation": null,
+                        "dg:min": null,
+                        "dg:max": null,
+                        "dg:missingCount": 0,
+                        "dg:missingPercentage": 0.0,
+                        "dg:histogram": null,
+                        "dg:uniqueCount": 8
+                    }
+                },
+                {
+                    "@type": "cr:Field",
+                    "@id": "09644008-2b8e-4505-86f0-e073cad2bb12",
+                    "name": "Question ID",
+                    "description": "",
+                    "dataType": "sc:Integer",
+                    "source": {
+                        "fileObject": {
+                            "@id": "8472d05f-cd6f-4976-aa6d-5cebc63c4975"
+                        },
+                        "extract": {
+                            "column": "Question ID"
+                        }
+                    },
+                    "sample": [
+                        416,
+                        720,
+                        426,
+                        650,
+                        228,
+                        418,
+                        415,
+                        666,
+                        788,
+                        785
+                    ],
+                    "statistics": {
+                        "@id": "05b71260-73eb-41f2-aefa-0bab47add4dd",
+                        "@type": "dg:ColumnStatistics",
+                        "dg:rowCount": 9546,
+                        "dg:mean": 478.9123192960402,
+                        "dg:median": 428.0,
+                        "dg:standardDeviation": 249.2440614325178,
+                        "dg:min": 77.0,
+                        "dg:max": 1549.0,
+                        "dg:missingCount": 0,
+                        "dg:missingPercentage": 0.0,
+                        "dg:histogram": "[{\"binRange\": [75.528, 224.2], \"count\": 1039}, {\"binRange\": [224.2, 371.4], \"count\": 2127}, {\"binRange\": [371.4, 518.6], \"count\": 3692}, {\"binRange\": [518.6, 665.8], \"count\": 734}, {\"binRange\": [665.8, 813.0], \"count\": 950}, {\"binRange\": [813.0, 960.2], \"count\": 443}, {\"binRange\": [960.2, 1107.4], \"count\": 331}, {\"binRange\": [1107.4, 1254.6], \"count\": 204}, {\"binRange\": [1254.6, 1401.8], \"count\": 0}, {\"binRange\": [1401.8, 1549.0], \"count\": 26}]",
+                        "dg:uniqueCount": 833
+                    }
+                },
+                {
+                    "@type": "cr:Field",
+                    "@id": "edc90a70-d570-43cb-9a39-3e119ef88dc7",
+                    "name": "Type of Answer",
+                    "description": "",
+                    "dataType": "sc:Integer",
+                    "source": {
+                        "fileObject": {
+                            "@id": "8472d05f-cd6f-4976-aa6d-5cebc63c4975"
+                        },
+                        "extract": {
+                            "column": "Type of Answer"
+                        }
+                    },
+                    "sample": [
+                        0,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1,
+                        0,
+                        0
+                    ],
+                    "statistics": {
+                        "@id": "13db6c9a-4547-4cd5-ab58-9fb6c6bc8c76",
+                        "@type": "dg:ColumnStatistics",
+                        "dg:rowCount": 9546,
+                        "dg:mean": 0.46825895663104966,
+                        "dg:median": 0.0,
+                        "dg:standardDeviation": 0.4990176272811076,
+                        "dg:min": 0.0,
+                        "dg:max": 1.0,
+                        "dg:missingCount": 0,
+                        "dg:missingPercentage": 0.0,
+                        "dg:histogram": "[{\"binRange\": [-0.001, 0.1], \"count\": 5076}, {\"binRange\": [0.1, 0.2], \"count\": 0}, {\"binRange\": [0.2, 0.3], \"count\": 0}, {\"binRange\": [0.3, 0.4], \"count\": 0}, {\"binRange\": [0.4, 0.5], \"count\": 0}, {\"binRange\": [0.5, 0.6], \"count\": 0}, {\"binRange\": [0.6, 0.7], \"count\": 0}, {\"binRange\": [0.7, 0.8], \"count\": 0}, {\"binRange\": [0.8, 0.9], \"count\": 0}, {\"binRange\": [0.9, 1.0], \"count\": 4470}]",
+                        "dg:uniqueCount": 2
+                    }
+                },
+                {
+                    "@type": "cr:Field",
+                    "@id": "75214d8e-992c-4547-8530-69ffbb47213c",
+                    "name": "Question Level",
+                    "description": "",
+                    "dataType": "sc:Text",
+                    "source": {
+                        "fileObject": {
+                            "@id": "8472d05f-cd6f-4976-aa6d-5cebc63c4975"
+                        },
+                        "extract": {
+                            "column": "Question Level"
+                        }
+                    },
+                    "sample": [
+                        "Advanced",
+                        "Basic",
+                        "Basic",
+                        "Basic",
+                        "Basic",
+                        "Basic",
+                        "Basic",
+                        "Basic",
+                        "Advanced",
+                        "Basic"
+                    ],
+                    "statistics": {
+                        "@id": "3379470a-5a75-4e4b-a7fb-84de98c0c3da",
+                        "@type": "dg:ColumnStatistics",
+                        "dg:rowCount": 9546,
+                        "dg:mean": null,
+                        "dg:median": null,
+                        "dg:standardDeviation": null,
+                        "dg:min": null,
+                        "dg:max": null,
+                        "dg:missingCount": 0,
+                        "dg:missingPercentage": 0.0,
+                        "dg:histogram": null,
+                        "dg:uniqueCount": 2
+                    }
+                },
+                {
+                    "@type": "cr:Field",
+                    "@id": "44c0d825-6a10-462c-93ef-59d4ddd025eb",
+                    "name": "Topic",
+                    "description": "",
+                    "dataType": "sc:Text",
+                    "source": {
+                        "fileObject": {
+                            "@id": "8472d05f-cd6f-4976-aa6d-5cebc63c4975"
+                        },
+                        "extract": {
+                            "column": "Topic"
+                        }
+                    },
+                    "sample": [
+                        "Linear Algebra",
+                        "Fundamental Mathematics",
+                        "Differential Equations",
+                        "Statistics",
+                        "Linear Algebra",
+                        "Statistics",
+                        "Differentiation",
+                        "Complex Numbers",
+                        "Numerical Methods",
+                        "Fundamental Mathematics"
+                    ],
+                    "statistics": {
+                        "@id": "004685f5-367a-4755-88b3-bd57b0bfb91b",
+                        "@type": "dg:ColumnStatistics",
+                        "dg:rowCount": 9546,
+                        "dg:mean": null,
+                        "dg:median": null,
+                        "dg:standardDeviation": null,
+                        "dg:min": null,
+                        "dg:max": null,
+                        "dg:missingCount": 0,
+                        "dg:missingPercentage": 0.0,
+                        "dg:histogram": null,
+                        "dg:uniqueCount": 14
+                    }
+                },
+                {
+                    "@type": "cr:Field",
+                    "@id": "bc529aef-10a8-43d7-ad0a-67056256efd0",
+                    "name": "Subtopic",
+                    "description": "",
+                    "dataType": "sc:Text",
+                    "source": {
+                        "fileObject": {
+                            "@id": "8472d05f-cd6f-4976-aa6d-5cebc63c4975"
+                        },
+                        "extract": {
+                            "column": "Subtopic"
+                        }
+                    },
+                    "sample": [
+                        "Vector Spaces",
+                        "Vector Spaces",
+                        "Vector Spaces",
+                        "Vector Spaces",
+                        "Elementary Geometry",
+                        "Vector Spaces",
+                        "Vector Spaces",
+                        "Numerical Methods",
+                        "Numerical Methods",
+                        "Vector Spaces"
+                    ],
+                    "statistics": {
+                        "@id": "67be973c-4a50-436b-ae17-74f8aed448c9",
+                        "@type": "dg:ColumnStatistics",
+                        "dg:rowCount": 9546,
+                        "dg:mean": null,
+                        "dg:median": null,
+                        "dg:standardDeviation": null,
+                        "dg:min": null,
+                        "dg:max": null,
+                        "dg:missingCount": 0,
+                        "dg:missingPercentage": 0.0,
+                        "dg:histogram": null,
+                        "dg:uniqueCount": 24
+                    }
+                },
+                {
+                    "@type": "cr:Field",
+                    "@id": "cf6f629b-e62e-4b90-9449-8d8671daa9ed",
+                    "name": "Keywords",
+                    "description": "",
+                    "dataType": "sc:Text",
+                    "source": {
+                        "fileObject": {
+                            "@id": "8472d05f-cd6f-4976-aa6d-5cebc63c4975"
+                        },
+                        "extract": {
+                            "column": "Keywords"
+                        }
+                    },
+                    "sample": [
+                        "Inconsistent system,Solution of linear system,Undetermined solution of linear system,Consistent system,Square linear system",
+                        "Gradient,First order,Directional derivative",
+                        "Euclidean spaces,Orthogonal basis",
+                        "Injective linear application,Invertible linear operator,Range,Kernel,Isomorphism",
+                        "Linear independence,Span,Linear dependence",
+                        "Frequency,Sample,Stem and Leaf diagram,Variance,Standard deviation,Relative frequency",
+                        "Linear combination,Subspace,Span",
+                        "Platonic solids",
+                        "Linear differential equation",
+                        "Symmetry"
+                    ],
+                    "statistics": {
+                        "@id": "701ff524-075f-465e-847d-74abf43f8d5a",
+                        "@type": "dg:ColumnStatistics",
+                        "dg:rowCount": 9546,
+                        "dg:mean": null,
+                        "dg:median": null,
+                        "dg:standardDeviation": null,
+                        "dg:min": null,
+                        "dg:max": null,
+                        "dg:missingCount": 0,
+                        "dg:missingPercentage": 0.0,
+                        "dg:histogram": null,
+                        "dg:uniqueCount": 365
+                    }
+                }
+            ],
+            "examples": "{\"Student ID\": [647, 41, 340, 641, 669, 697, 720, 675, 663, 28, 953, 636, 639, 684, 683, 725, 57, 690, 675, 679, 663, 638, 953, 637, 658, 647, 657, 674, 41, 41], \"Student Country\": [\"Ireland\", \"Portugal\", \"Portugal\", \"Italy\", \"Portugal\", \"Portugal\", \"Portugal\", \"Portugal\", \"Portugal\", \"Portugal\", \"Lithuania\", \"Italy\", \"Italy\", \"Ireland\", \"Ireland\", \"Portugal\", \"Portugal\", \"Portugal\", \"Portugal\", \"Portugal\", \"Portugal\", \"Italy\", \"Lithuania\", \"Italy\", \"Ireland\", \"Ireland\", \"Ireland\", \"Ireland\", \"Portugal\", \"Portugal\"], \"Question ID\": [77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 78, 79, 79, 79, 79, 79, 79], \"Type of Answer\": [0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1], \"Question Level\": [\"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\", \"Basic\"], \"Topic\": [\"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\"], \"Subtopic\": [\"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\", \"Statistics\"], \"Keywords\": [\"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\", \"Stem and Leaf diagram,Relative frequency,Sample,Frequency\"]}"
+        }
+    ]
+}
