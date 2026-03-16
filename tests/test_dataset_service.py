@@ -3,7 +3,15 @@ All tests that involve complex ingestion pipeline.
 """
 import json
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
+import pytest
+
+from moma_management.domain.exceptions import (
+    ConversionError,
+    NotFoundError,
+    ValidationError,
+)
 from moma_management.services.dataset import DatasetService
 
 RECORDSET_LABEL = "cr:RecordSet"
@@ -98,3 +106,46 @@ def test_layered_ingestion_heavy_light(layered_profile: tuple[Path, Path], datas
     new = dataset_service.get(heavy_dataset.root_id)
 
     assert new == old
+
+
+# ---------------------------------------------------------------------------
+# Error cases
+# ---------------------------------------------------------------------------
+
+
+def test_convert_invalid_croissant_raises_conversion_error(dataset_service: DatasetService):
+    """A mapping engine failure must be wrapped in ConversionError."""
+    with patch("moma_management.services.dataset.croissant_to_pgjson", side_effect=ValueError("bad input")):
+        with pytest.raises(ConversionError):
+            dataset_service.convert({})
+
+
+def test_validate_invalid_pgjson_raises_validation_error(dataset_service: DatasetService):
+    """Structurally invalid PG-JSON must raise ValidationError."""
+    with pytest.raises(ValidationError):
+        dataset_service.validate({"nodes": "not-a-list"})
+
+
+def test_get_missing_dataset_raises_not_found(dataset_service: DatasetService):
+    """Getting a non-existent dataset ID must raise NotFoundError."""
+    with pytest.raises(NotFoundError):
+        dataset_service.get("does-not-exist")
+
+
+def test_delete_missing_dataset_raises_not_found(dataset_service: DatasetService):
+    """Deleting a non-existent dataset ID must raise NotFoundError."""
+    with pytest.raises(NotFoundError):
+        dataset_service.delete("does-not-exist")
+
+
+def test_ingest_repo_error_propagates(mapping_file: Path):
+    """A repository failure during ingest must propagate out of the service."""
+    repo = MagicMock()
+    repo.create.side_effect = RuntimeError("Neo4j is down")
+    svc = DatasetService(repo=repo, mapping_file=mapping_file)
+    light_profile = next(
+        (Path(__file__).parent.parent / "assets" /
+         "profiles" / "light").glob("*.json")
+    )
+    with pytest.raises(RuntimeError, match="Neo4j is down"):
+        svc.ingest(json.loads(light_profile.read_text()))
