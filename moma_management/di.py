@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Generator, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 from neo4j import Driver, GraphDatabase, Session
 
@@ -15,6 +16,7 @@ from moma_management.services.authorization import AuthorizationService, Dataset
 from moma_management.services.dataset import DatasetService
 from moma_management.services.node import NodeService
 
+bearer_scheme = HTTPBearer(auto_error=False)
 logger = logging.getLogger(__name__)
 
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
@@ -101,19 +103,20 @@ def require_permission(action: DatasetAction):
 
     async def _check(
         request: Request,
+        credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
         authentication: Optional[Authentication] = Depends(
             get_authentication_service),
         authorization: Optional[AuthorizationService] = Depends(
             get_authorization_service),
     ) -> dict | None:
-        if authentication is None:
-            return None  # unprotected mode
 
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
+        if authentication is None:
+            return None  # No authentication service configured, skip auth checks
+
+        if credentials is None:
             raise HTTPException(status_code=401, detail="Not authenticated")
 
-        token = auth_header.removeprefix("Bearer ")
+        token = credentials.credentials
 
         try:
             user = authentication.validate(token)
