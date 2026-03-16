@@ -12,7 +12,8 @@ async def validate_dataset(
     svc: DatasetService = Depends(get_dataset_service),
 ) -> Dataset:
     """
-        Validate a dataset profile against the MoMa graph schema.
+    Validate a Croissant profile against the MoMa graph schema without persisting it.
+    Returns the converted PG-JSON graph if valid, or a 500 error with details if validation fails.
     """
     try:
         return svc.validate(input_data)

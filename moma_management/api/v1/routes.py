@@ -8,4 +8,13 @@ router = APIRouter()
 
 router.include_router(dataset_routes, prefix="/datasets")
 router.include_router(node_routes, prefix="/nodes")
-router.add_api_route("/health", health_check, methods=["GET"])
+router.add_api_route(
+    "/health",
+    health_check,
+    methods=["GET"],
+    tags=["health"],
+    summary="Health check",
+    responses={
+        200: {"description": "Service is healthy"},
+    },
+)

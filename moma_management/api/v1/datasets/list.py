@@ -18,17 +18,27 @@ from moma_management.services.dataset import DatasetService
 
 
 def _dataset_filters(
-    nodeIds: List[str] = Query(default=[]),
-    properties: List[DatasetProperty] = Query(default=[]),
-    types: List[NodeLabel] = Query(default=[]),
-    mimeTypes: List[MimeType] = Query(default=[]),
-    orderBy: List[DatasetSortField] = Query(default=[]),
-    direction: SortDirection = Query(default=SortDirection.ASC),
-    publishedFrom: date = Query(default=None),
-    publishedTo: date = Query(default=None),
-    status: Status = Query(default=None),
-    page: int = Query(default=1, ge=1),
-    pageSize: int = Query(default=25, ge=1, le=100),
+    nodeIds: List[str] = Query(
+        default=[], description="Filter results to only datasets whose subgraph contains nodes with these IDs."),
+    properties: List[DatasetProperty] = Query(
+        default=[], description="Dataset root-node properties to include in each result item. Returns all properties if empty."),
+    types: List[NodeLabel] = Query(
+        default=[], description="Filter datasets by the label types of their connected file nodes."),
+    mimeTypes: List[MimeType] = Query(
+        default=[], description="Filter datasets by the MIME types of their file objects."),
+    orderBy: List[DatasetSortField] = Query(
+        default=[], description="One or more dataset properties to sort results by. Applied left-to-right."),
+    direction: SortDirection = Query(
+        default=SortDirection.ASC, description="Sort direction applied to all `orderBy` fields."),
+    publishedFrom: date = Query(
+        default=None, description="Inclusive lower bound on `datePublished` (ISO 8601 date, e.g. `2024-01-01`)."),
+    publishedTo: date = Query(
+        default=None, description="Inclusive upper bound on `datePublished` (ISO 8601 date, e.g. `2024-12-31`)."),
+    status: Status = Query(
+        default=None, description="Filter datasets by publication status."),
+    page: int = Query(default=1, ge=1, description="Page number (1-indexed)."),
+    pageSize: int = Query(default=25, ge=1, le=100,
+                          description="Number of results per page (1–100)."),
 ) -> DatasetFilter:
     return DatasetFilter(
         nodeIds=nodeIds,

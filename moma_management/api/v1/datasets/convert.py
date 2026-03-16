@@ -12,9 +12,9 @@ async def convert_profile(
     svc: DatasetService = Depends(get_dataset_service),
 ) -> Dataset:
     """
-        Ingest entire profiling (basic, light, heavy) or only the basic part into the MoMa repository.
-        Accepts a Croissant-format JSON body, converts it to PG-JSON according to
-        the MoMa graph schema, and persists the result to Neo4j.
+    Convert a Croissant-format profile to a PG-JSON MoMa graph without persisting it.
+    Accepts a Croissant-format JSON body, converts it to PG-JSON according to
+    the MoMa graph schema, and returns the result without storing it in Neo4j.
     """
 
     try:

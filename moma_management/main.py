@@ -19,11 +19,28 @@ ROOT_PATH = getenv("ROOT_PATH", "")
 
 app = FastAPI(
     title="MoMa API",
-    description="API for managing MoMa I/O",
+    description="""
+## MoMa Management API
+
+REST API for ingesting, querying, and managing **MoMa** (Model of Models and Artifacts) graph datasets.
+""",
     lifespan=container_lifespan,
     version=project_version,
     root_path=ROOT_PATH,
-
+    openapi_tags=[
+        {
+            "name": "datasets",
+            "description": "Ingest, retrieve, convert, validate, and delete dataset profiles.",
+        },
+        {
+            "name": "nodes",
+            "description": "Retrieve and update individual graph nodes within a dataset subgraph.",
+        },
+        {
+            "name": "health",
+            "description": "Service liveness probe.",
+        },
+    ],
 )
 
 
