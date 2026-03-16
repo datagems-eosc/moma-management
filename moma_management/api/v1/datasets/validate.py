@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 
 from moma_management.di import get_dataset_service
 from moma_management.domain.dataset import Dataset
@@ -12,11 +12,7 @@ async def validate_dataset(
     svc: DatasetService = Depends(get_dataset_service),
 ) -> Dataset:
     """
-    Validate a Croissant profile against the MoMa graph schema without persisting it.
-    Returns the converted PG-JSON graph if valid, or a 500 error with details if validation fails.
+    Validate a PG-JSON dataset against the MoMa graph schema without persisting it.
+    Returns the validated Dataset if valid, or a 422 error with details if validation fails.
     """
-    try:
-        return svc.validate(input_data)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"An error occurred: {str(e)}")
+    return svc.validate(input_data)

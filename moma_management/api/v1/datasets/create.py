@@ -1,6 +1,6 @@
 from typing import Any, Dict, Never
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 
 from moma_management.di import get_dataset_service, require_permission
 from moma_management.domain.dataset import Dataset
@@ -14,11 +14,6 @@ async def create_dataset(
     _auth: Never = Depends(require_permission(DatasetAction.manage)),
 ) -> None:
     """
-        Create a new dataset
+    Create a new dataset.
     """
-
-    try:
-        return svc.create(candidate)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"An error occurred: {str(e)}")
+    return svc.create(candidate)

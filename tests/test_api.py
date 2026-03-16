@@ -410,7 +410,7 @@ class TestListEndpoint:
         with http_requests.Session() as session:
             for profile_path in sorted(PROFILES_DIR.glob("*.json")):
                 resp = session.post(
-                    f"{api_server}/datasets",
+                    f"{api_server}/datasets/croissant",
                     json=json.loads(profile_path.read_text()),
                     headers={"Content-Type": "application/json"},
                     timeout=30,

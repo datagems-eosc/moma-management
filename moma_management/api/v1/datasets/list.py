@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List, Never
 
-from fastapi import Depends, HTTPException, Query
+from fastapi import Depends, Query
 
 from moma_management.di import get_dataset_service, require_permission
 from moma_management.domain.filters import (
@@ -64,8 +64,4 @@ async def list_datasets(
     List datasets with optional filtering, sorting, and pagination criteria.
     """
 
-    try:
-        return svc.list(filters)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"An error occurred: {str(e)}")
+    return svc.list(filters)

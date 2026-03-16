@@ -1,6 +1,6 @@
 from typing import Any, Dict, Never
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 
 from moma_management.di import get_node_service, require_permission
 from moma_management.domain.generated.nodes.node_schema import Node
@@ -19,14 +19,6 @@ async def update_node(
     Only the provided keys are updated; all other properties are left unchanged.
     Returns 404 if the node does not exist.
     """
-    try:
-        result = svc.update(Node(id=id, labels=[], properties=properties))
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"An error occurred: {str(e)}")
-
-    if result.get("updated", 0) == 0:
-        raise HTTPException(
-            status_code=404, detail=f"Node '{id}' not found.")
+    return svc.update(Node(id=id, labels=[], properties=properties))
 
     return result

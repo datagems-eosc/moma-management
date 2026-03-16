@@ -2,6 +2,7 @@
 from fastapi import APIRouter
 
 from .convert import convert_profile
+from .create import create_dataset
 from .delete import delete_dataset
 from .get import get_dataset
 from .ingest import ingest_profile
@@ -14,16 +15,29 @@ router = APIRouter(
 
 # CRUD
 router.add_api_route(
-    "/",
+    "/croissant",
     ingest_profile,
     methods=["POST"],
     summary="Ingest a dataset profile",
     responses={
         401: {"description": "Unauthorized"},
         403: {"description": "Forbidden"},
+        422: {"description": "Conversion or validation error"},
         500: {"description": "Internal server error"},
     },
 )
+router.add_api_route(
+    "/",
+    create_dataset,
+    methods=["POST"],
+    summary="Create a new dataset",
+    responses={
+        401: {"description": "Unauthorized"},
+        403: {"description": "Forbidden"},
+        500: {"description": "Internal server error"},
+    },
+)
+
 router.add_api_route(
     "/",
     list_datasets,
@@ -57,6 +71,7 @@ router.add_api_route(
         204: {"description": "Dataset deleted successfully"},
         401: {"description": "Unauthorized"},
         403: {"description": "Forbidden"},
+        404: {"description": "Dataset not found"},
         500: {"description": "Internal server error"},
     },
 )
@@ -69,6 +84,7 @@ router.add_api_route(
     methods=["POST"],
     summary="Convert a Croissant profile to PG-JSON",
     responses={
+        422: {"description": "Conversion or validation error"},
         500: {"description": "Internal server error"},
     },
 )
@@ -78,6 +94,7 @@ router.add_api_route(
     methods=["POST"],
     summary="Validate a Croissant profile",
     responses={
-        500: {"description": "Validation or conversion error"},
+        422: {"description": "Validation error"},
+        500: {"description": "Internal server error"},
     },
 )

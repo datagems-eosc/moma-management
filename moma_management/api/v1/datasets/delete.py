@@ -1,6 +1,6 @@
 from typing import Never
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 
 from moma_management.di import get_dataset_service, require_permission
 from moma_management.services.authorization import DatasetAction
@@ -15,9 +15,4 @@ async def delete_dataset(
     """
     Delete a dataset and its connected subgraph by dataset ID.
     """
-
-    try:
-        svc.delete(id)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"An error occurred: {str(e)}")
+    svc.delete(id)

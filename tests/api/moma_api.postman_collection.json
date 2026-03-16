@@ -45,12 +45,19 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Content-Type", "value": "application/json"}
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{{profileBody}}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/datasets/convert"
@@ -75,10 +82,16 @@
             }
           ],
           "_pytest_capture": [
-            {"var": "convertedBody", "from_response": "entire_body"}
+            {
+              "var": "convertedBody",
+              "from_response": "entire_body"
+            }
           ],
           "_pytest_assert": [
-            {"key": "nodes", "op": "non_empty_list"}
+            {
+              "key": "nodes",
+              "op": "non_empty_list"
+            }
           ]
         },
         {
@@ -87,12 +100,19 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Content-Type", "value": "application/json"}
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{{convertedBody}}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/datasets/validate"
@@ -113,7 +133,10 @@
             }
           ],
           "_pytest_assert": [
-            {"key": "nodes", "op": "non_empty_list"}
+            {
+              "key": "nodes",
+              "op": "non_empty_list"
+            }
           ]
         },
         {
@@ -122,15 +145,22 @@
           "request": {
             "method": "POST",
             "header": [
-              {"key": "Content-Type", "value": "application/json"}
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{{profileBody}}",
-              "options": {"raw": {"language": "json"}}
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/datasets"
+              "raw": "{{baseUrl}}/datasets/croissant"
             }
           },
           "event": [
@@ -151,10 +181,16 @@
             }
           ],
           "_pytest_capture": [
-            {"var": "rootId", "from_response": "root_dataset_id"}
+            {
+              "var": "rootId",
+              "from_response": "root_dataset_id"
+            }
           ],
           "_pytest_assert": [
-            {"key": "nodes", "op": "non_empty_list"}
+            {
+              "key": "nodes",
+              "op": "non_empty_list"
+            }
           ]
         },
         {
@@ -182,7 +218,11 @@
             }
           ],
           "_pytest_assert": [
-            {"key": "total", "op": "gte", "value": 1}
+            {
+              "key": "total",
+              "op": "gte",
+              "value": 1
+            }
           ]
         },
         {
@@ -210,7 +250,10 @@
             }
           ],
           "_pytest_assert": [
-            {"key": "nodes", "op": "non_empty_list"}
+            {
+              "key": "nodes",
+              "op": "non_empty_list"
+            }
           ]
         },
         {

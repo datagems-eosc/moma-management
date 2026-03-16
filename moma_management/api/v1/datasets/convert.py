@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 
 from moma_management.di import get_dataset_service
 from moma_management.domain.dataset import Dataset
@@ -16,9 +16,4 @@ async def convert_profile(
     Accepts a Croissant-format JSON body, converts it to PG-JSON according to
     the MoMa graph schema, and returns the result without storing it in Neo4j.
     """
-
-    try:
-        return svc.convert(input_data)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"An error occurred: {str(e)}")
+    return svc.convert(input_data)

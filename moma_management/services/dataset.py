@@ -1,12 +1,21 @@
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
+from pydantic import ValidationError as PydanticValidationError
 from yaml import safe_load
 
 from moma_management.domain.dataset import Dataset
+from moma_management.domain.exceptions import (
+    ConversionError,
+    NotFoundError,
+    ValidationError,
+)
 from moma_management.domain.filters import DatasetFilter
 from moma_management.domain.mapping_engine import croissant_to_pgjson
 from moma_management.repository.dataset.dataset_repository import DatasetRepository
+
+logger = logging.getLogger(__name__)
 
 
 class DatasetService:
@@ -31,38 +40,59 @@ class DatasetService:
         """
         Convert a Croissant-format JSON body to PG-JSON according to the MoMa graph schema.
         Does not persist the result to Neo4j.
+
+        Raises:
+            ConversionError: if the Croissant profile cannot be mapped to PG-JSON.
+            ValidationError: if the resulting PG-JSON does not conform to the MoMa schema.
         """
-        mapping = safe_load(self._mapping_file.open("r"))
+        try:
+            mapping = safe_load(self._mapping_file.open("r"))
+            dataset = croissant_to_pgjson(candidate, mapping)
+        except Exception as e:
+            logger.exception("Croissant conversion failed")
+            raise ConversionError(
+                f"Failed to convert Croissant profile: {e}") from e
 
-        # TODO: This should throw if the croissant isn't convertible
-        dataset = croissant_to_pgjson(candidate, mapping)
-
-        # TODO: This throws an error if the dataset isn't valid
-        valid_dataset = self.validate(dataset)
-
-        return valid_dataset
+        return self.validate(dataset)
 
     def validate(self, pg_json: Dict[str, Any]) -> Dataset:
         """
         Validate a PG-JSON dataset against the MoMa graph schema.
+
+        Raises:
+            ValidationError: if *pg_json* does not conform to the MoMa Dataset schema.
         """
-        return Dataset.model_validate(pg_json)
+        try:
+            return Dataset.model_validate(pg_json)
+        except PydanticValidationError as e:
+            raise ValidationError(
+                f"PG-JSON failed schema validation: {e}") from e
 
     def ingest(self, candidate: Dict[str, Any]) -> Dataset:
         """
-        Ingest a dataset profile into the MoMa repository.  
+        Ingest a dataset profile into the MoMa repository.
         Accepts a Croissant-format JSON body, converts it to PG-JSON according to
         the MoMa graph schema, and persists the result to Neo4j.
+
+        Raises:
+            ConversionError: if the Croissant profile cannot be converted.
+            ValidationError: if the converted PG-JSON fails schema validation.
         """
         dataset = self.convert(candidate)
         self._repo.create(dataset)
         return dataset
 
-    def get(self, dataset_id: str) -> Optional[Dataset]:
+    def get(self, dataset_id: str) -> Dataset:
         """
         Retrieve the full dataset subgraph (nodes + edges) by dataset ID.
+
+        Raises:
+            NotFoundError: if no dataset with *dataset_id* exists.
         """
-        return self._repo.get(dataset_id)
+        result = self._repo.get(dataset_id)
+        if result is None:
+            raise NotFoundError(f"Dataset '{dataset_id}' not found.")
+        return result
 
     def list(self, filters: DatasetFilter) -> List[Dataset]:
         """
@@ -73,5 +103,11 @@ class DatasetService:
     def delete(self, id: str) -> int:
         """
         Delete a dataset and its connected subgraph by dataset ID.
+
+        Raises:
+            NotFoundError: if no dataset with *id* exists.
         """
-        return self._repo.delete(id)
+        deleted = self._repo.delete(id)
+        if deleted == 0:
+            raise NotFoundError(f"Dataset '{id}' not found.")
+        return deleted

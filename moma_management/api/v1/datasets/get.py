@@ -1,6 +1,6 @@
 from typing import Never
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 
 from moma_management.di import get_dataset_service, require_permission
 from moma_management.domain.dataset import Dataset
@@ -16,15 +16,4 @@ async def get_dataset(
     """
     Retrieve the full dataset subgraph (nodes + edges) by dataset ID.
     """
-
-    try:
-        result = svc.get(id)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"An error occurred: {str(e)}")
-
-    if result is None:
-        raise HTTPException(
-            status_code=404, detail=f"Dataset '{id}' not found.")
-
-    return result
+    return svc.get(id)

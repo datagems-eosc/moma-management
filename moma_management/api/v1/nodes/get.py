@@ -1,6 +1,6 @@
 from typing import Never
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 
 from moma_management.di import get_node_service, require_permission
 from moma_management.domain.generated.nodes.node_schema import Node
@@ -16,14 +16,4 @@ async def get_node(
     """
     Retrieve a single node by its ID.
     """
-    try:
-        result = svc.get(id)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"An error occurred: {str(e)}")
-
-    if result is None:
-        raise HTTPException(
-            status_code=404, detail=f"Node '{id}' not found.")
-
-    return result
+    return svc.get(id)
