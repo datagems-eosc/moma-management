@@ -1,3 +1,4 @@
+import base64
 import logging
 import threading
 import time
@@ -9,16 +10,29 @@ logger = logging.getLogger(__name__)
 
 
 class Authentication:
-    """
-    """
+    """Handles JWT validation and OIDC token exchange against a Keycloak realm."""
 
-    def __init__(self, issuer: str, audience: str | None = None, ttl: int = 300) -> None:
-        self._issuer = issuer
-        self._audience = audience
+    def __init__(
+        self,
+        issuer: str,
+        ttl: int = 300,
+        client_id: str | None = None,
+        client_secret: str | None = None,
+        exchange_scope: str | None = None,
+    ) -> None:
+        self._issuer = issuer.rstrip("/")
         self._ttl = ttl
+        self._client_id = client_id
+        self._client_secret = client_secret
+        self._exchange_scope = exchange_scope
         self._lock = threading.Lock()
         self._jwks: dict | None = None
         self._fetched_at: float = 0.0
+
+        if not (self._client_id and self._client_secret and self._exchange_scope):
+            raise ValueError(
+                "Token exchange requires client_id, client_secret and exchange_scope"
+            )
 
     def _get_jwks(self) -> dict:
         """Return the JWKS, refreshing the cache when stale."""
@@ -44,6 +58,39 @@ class Authentication:
             self._get_jwks(),
             algorithms=["RS256"],
             issuer=self._issuer,
-            audience=self._audience,
-            options={"verify_aud": self._audience is not None},
+            audience=self._client_id,
         )
+
+    def exchange_token(self, subject_token: str) -> str:
+        """Exchange *subject_token* for a dg-app-api scoped token via the OIDC Token Exchange flow.
+
+        Raises
+        ------
+        ValueError
+            When ``client_id``, ``client_secret`` or ``exchange_scope`` are not configured.
+        requests.HTTPError
+            When the AAI service returns an error response.
+        """
+
+        credentials = base64.b64encode(
+            f"{self._client_id}:{self._client_secret}".encode()
+        ).decode()
+        url = f"{self._issuer}/protocol/openid-connect/token"
+        logger.debug("Exchanging token via %s", url)
+        resp = requests.post(
+            url,
+            headers={
+                "Authorization": f"Basic {credentials}",
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            data={
+                "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
+                "subject_token": subject_token,
+                "subject_token_type": "urn:ietf:params:oauth:token-type:access_token",
+                "requested_token_type": "urn:ietf:params:oauth:token-type:access_token",
+                "scope": self._exchange_scope,
+            },
+            timeout=10,
+        )
+        resp.raise_for_status()
+        return resp.json()["access_token"]

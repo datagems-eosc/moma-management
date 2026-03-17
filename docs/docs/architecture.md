@@ -52,8 +52,8 @@ Authentication and authorization are enforced as FastAPI dependencies injected i
 
 - **`DatasetService`** – Orchestrates the conversion of Croissant profiles to PG-JSON and delegates persistence to the repository.
 - **`NodeService`** – Retrieves and patches individual Neo4j nodes.
-- **`Authentication`** – Validates RS256 JWTs against JWKS published by the configured OIDC issuer (with in-memory cache).
-- **`AuthorizationService`** – Delegates per-dataset permission checks to an external permissions gateway over HTTP.
+- **`Authentication`** – Validates RS256 JWTs against JWKS published by the configured OIDC issuer (with in-memory cache). Optionally exchanges tokens using RFC 8693 for scope-specific credentials.
+- **`AuthorizationService`** – Delegates per-dataset permission checks to an external permissions gateway over HTTP using the original or exchanged Bearer token.
 
 ### Domain layer (`moma_management/domain/`)
 
@@ -64,6 +64,38 @@ Authentication and authorization are enforced as FastAPI dependencies injected i
 ### Repository layer (`moma_management/repository/`)
 
 Defines abstract interfaces (`DatasetRepository`, `NodeRepository`) with Neo4j-backed implementations. All graph I/O uses the official `neo4j` Python driver with PG-JSON serialization helpers provided by `Neo4jPGSONMixin`.
+
+## Authentication flow
+
+When a request arrives at a protected endpoint:
+
+```
+Client                  API                OIDC Issuer      Permissions Gateway
+  │                      │                     │                    │
+  │ Authorization: Bearer │                     │                    │
+  ├─────────────────────►│                     │                    │
+  │     (JWT token)      │                     │                    │
+  │                      │ Validate JWT        │                    │
+  │                      ├────────────────────►│                    │
+  │                      │◄─ Fetch JWKS        │                    │
+  │                      │                     │                    │
+  │                      │ (Optional) Exchange token                 │
+  │                      │ for scope-specific credentials            │
+  │                      │                     │                    │
+  │                      │ POST /authz/check   │                    │
+  │                      ├───────────────────────────────────────►│
+  │                      │ with action & dataset ID                 │
+  │                      │◄─ Permission granted                     │
+  │                      │                    │                    │
+  │◄─────────────────────┤                    │                    │
+  │  Response            │                    │                    │
+```
+
+1. **JWT Validation** – Verifies signature, issuer, audience, and expiration claims.
+2. **Token Exchange** – If configured, exchanges the user token for an application-scoped token.
+3. **Permission Check** – Queries the gateway to verify authorization for the requested action.
+
+See [Security](security.md) for details.
 
 ## Data flow – dataset ingestion
 

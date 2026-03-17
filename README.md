@@ -56,9 +56,14 @@ Configuration is managed entirely through environment variables:
 | `MAPPING_FILE`            | no       | `moma_management/domain/mapping.yml` | Path to the Croissant → PG-JSON field mapping                            |
 | `ROOT_PATH`               | no       | *(empty)*                            | ASGI root path (useful when behind a reverse proxy)                      |
 | `OIDC_ISSUER`             | no       | *(empty)*                            | OIDC issuer URL for JWT validation (auth disabled if unset)              |
+| `OIDC_CLIENT_ID`          | no*      | *(empty)*                            | OIDC client ID for token exchange¹                                       |
+| `OIDC_CLIENT_SECRET`      | no*      | *(empty)*                            | OIDC client secret for token exchange¹                                   |
+| `OIDC_EXCHANGE_SCOPE`     | no*      | *(empty)*                            | Scope for exchanged tokens (e.g., `dg-app-api`)¹                         |
 | `OIDC_AUDIENCE`           | no       | *(empty)*                            | Expected JWT audience claim (optional)                                   |
-| `JWKS_TTL_SECONDS`        | no       | `300`                                | How long to cache the JWKS from the OIDC issuer                          |
+| `JWKS_TTL_SECONDS`        | no       | `300`                                | How long to cache the JWKS from the OIDC issuer (seconds)                |
 | `PERMISSIONS_GATEWAY_URL` | no       | *(empty)*                            | External gateway URL for dataset-level authorization (disabled if unset) |
+
+*¹ These three variables must be set together to enable token exchange. Required only if using token exchange for the permissions gateway.*
 
 ## API Endpoints
 
@@ -233,6 +238,18 @@ Distribution:
     # myCroissantProp is the name of the property we want to map to in the croissant format
     myProp:         myCroissantProp
 ```
+
+## Authentication & Authorization
+
+The MoMa Management API supports optional JWT-based authentication and authorization:
+
+- **Authentication** – When `OIDC_ISSUER` is set, all endpoints require a valid Bearer token (JWT). Tokens are validated using RS256 signatures from the OIDC issuer's JWKS endpoint.
+- **Token Exchange** – If `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, and `OIDC_EXCHANGE_SCOPE` are configured, incoming tokens are exchanged for a scope-specific token to be used with the permissions gateway.
+- **Authorization** – When `PERMISSIONS_GATEWAY_URL` is set, the service queries the gateway to verify the caller's permission for each dataset operation (`browse`, `edit`, `delete`).
+
+**Development mode:** Leave `OIDC_ISSUER` and `PERMISSIONS_GATEWAY_URL` unset to disable both authentication and authorization (useful for local testing).
+
+See [Security](docs/docs/security.md) for details. The [auth.http](auth.http) file provides examples for testing auth flows locally.
 
 ## Documentation
 

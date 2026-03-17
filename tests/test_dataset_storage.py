@@ -175,6 +175,27 @@ class TestListMethod:
         assert result["total"] == 0
         assert result["datasets"] == []
 
+    def test_filter_by_nodeid_excludes_other_datasets(self, populated_repository):
+        """Verify that filtering by nodeId returns only the correct dataset and excludes others."""
+        result = _list(populated_repository, nodeIds=["ds-beta"])
+        
+        # Verify only one dataset is returned
+        assert result["total"] == 1
+        assert len(result["datasets"]) == 1
+        
+        # Extract all dataset node IDs from the result
+        returned_ids = {
+            n.id for ds in result["datasets"]
+            for n in ds.nodes if "sc:Dataset" in n.labels
+        }
+        
+        # Verify that only ds-beta is returned
+        assert returned_ids == {"ds-beta"}
+        
+        # Explicitly verify that other datasets are NOT in the results
+        assert "ds-alpha" not in returned_ids
+        assert "ds-gamma" not in returned_ids
+
     # -- filter by status ----------------------------------------------------
 
     def test_published_status(self, populated_repository):

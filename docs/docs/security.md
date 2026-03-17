@@ -25,7 +25,21 @@ The relevant configuration variables are described in the [Configuration](config
 
 ## Authorization
 
+### Gateway-based authorization
+
 When an authenticated request reaches the service, the caller's permission to perform the requested action is verified by delegating to an **external permissions gateway** (`PERMISSIONS_GATEWAY_URL`). The gateway is queried with the dataset ID and the original Bearer token, and must confirm the action is permitted before the operation proceeds.
+
+### Token Exchange
+
+If token exchange is configured (`OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, and `OIDC_EXCHANGE_SCOPE`), the service will:
+
+1. Validate the incoming Bearer token using the OIDC issuer's keys.
+2. Exchange the token using [RFC 8693 Token Exchange](https://tools.ietf.org/html/rfc8693) to obtain a scope-specific token (e.g., `dg-app-api` scoped).
+3. Use the exchanged token when querying the permissions gateway.
+
+This allows clients to use their user-level credentials while the service communicates with the gateway using application-scoped credentials.
+
+### Action verification
 
 The following action verbs are checked per endpoint:
 
@@ -40,3 +54,19 @@ The following action verbs are checked per endpoint:
 ## Secrets
 
 Sensitive configuration values (`NEO4J_PASSWORD`, `OIDC_ISSUER`, etc.) should be supplied via a secrets manager in production rather than plain environment variables or committed `.env` files. See the [Configuration](configuration.md) section for details.
+
+## Testing authentication locally
+
+The [auth.http](https://github.com/datagems-eosc/moma-management/blob/main/auth.http) file in the repository provides HTTP request examples for testing the auth flows locally. It demonstrates:
+
+- User login with password grant
+- Token exchange using RFC 8693
+- Querying protected endpoints with Bearer tokens
+
+To use it:
+
+1. Install the [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) extension for VS Code.
+2. Copy `.env.example` to `.env` and populate with your test credentials.
+3. Open `auth.http` and execute requests using the `Send Request` action.
+
+These requests help validate that your OIDC issuer and token exchange configuration are working correctly.

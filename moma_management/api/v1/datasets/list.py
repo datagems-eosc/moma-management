@@ -1,9 +1,9 @@
 from datetime import date
-from typing import List, Never
+from typing import List
 
 from fastapi import Depends, Query
 
-from moma_management.di import get_dataset_service, require_permission
+from moma_management.di import get_allowed_datasets_ids, get_dataset_service
 from moma_management.domain.filters import (
     DatasetFilter,
     DatasetProperty,
@@ -13,7 +13,6 @@ from moma_management.domain.filters import (
     SortDirection,
 )
 from moma_management.domain.generated.nodes.dataset_schema import Status
-from moma_management.services.authorization import DatasetAction
 from moma_management.services.dataset import DatasetService
 
 
@@ -58,10 +57,18 @@ def _dataset_filters(
 async def list_datasets(
     filters: DatasetFilter = Depends(_dataset_filters),
     svc: DatasetService = Depends(get_dataset_service),
-    _auth: Never = Depends(require_permission(DatasetAction.browse)),
+    accessible_ids: list[str] | None = Depends(get_allowed_datasets_ids()),
 ) -> dict:
     """
     List datasets with optional filtering, sorting, and pagination criteria.
+    Only datasets the authenticated user has the ``dg_ds-browse`` role for are returned.
     """
+    if accessible_ids is not None:
+        # Intersect caller-visible IDs with any existing nodeIds filter.
+        if filters.nodeIds:
+            merged = [id_ for id_ in filters.nodeIds if id_ in accessible_ids]
+        else:
+            merged = accessible_ids
+        filters = filters.model_copy(update={"nodeIds": merged})
 
     return svc.list(filters)

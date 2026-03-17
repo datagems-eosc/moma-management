@@ -2,7 +2,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Generator, Optional
+from typing import AsyncGenerator, Generator, List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -12,7 +12,12 @@ from neo4j import Driver, GraphDatabase, Session
 from moma_management.repository import DatasetRepository, Neo4jDatasetRepository
 from moma_management.repository.node import Neo4jNodeRepository, NodeRepository
 from moma_management.services.authentication import Authentication
-from moma_management.services.authorization import AuthorizationService, DatasetAction
+from moma_management.services.authorization import (
+    DatagemsAuthorizationService,
+    DatasetRole,
+    GatewayError,
+    UserError,
+)
 from moma_management.services.dataset import DatasetService
 from moma_management.services.node import NodeService
 
@@ -73,14 +78,14 @@ def get_node_service(repo: NodeRepository = Depends(get_node_repo)) -> NodeServi
     return NodeService(repo)
 
 
-def get_authorization_service() -> Optional[AuthorizationService]:
+def get_authorization_service() -> Optional[DatagemsAuthorizationService]:
     """Return the dataset authorization service."""
     if not os.getenv("PERMISSIONS_GATEWAY_URL"):
         logger.warning(
             "PERMISSIONS_GATEWAY_URL not set, authorization disabled"
         )
         return None
-    return AuthorizationService(gateway_url=os.getenv("PERMISSIONS_GATEWAY_URL", ""))
+    return DatagemsAuthorizationService(gateway_url=os.getenv("PERMISSIONS_GATEWAY_URL", ""))
 
 
 def get_authentication_service() -> Optional[Authentication]:
@@ -93,48 +98,129 @@ def get_authentication_service() -> Optional[Authentication]:
 
     return Authentication(
         issuer=os.getenv("OIDC_ISSUER", ""),
-        audience=os.getenv("OIDC_AUDIENCE") or None,
         ttl=int(os.getenv("JWKS_TTL_SECONDS", "300")),
+        client_id=os.getenv("OIDC_CLIENT_ID") or None,
+        client_secret=os.getenv("OIDC_CLIENT_SECRET") or None,
+        exchange_scope=os.getenv("OIDC_EXCHANGE_SCOPE"),
     )
 
 
-def require_permission(action: DatasetAction):
-    """Ensure the request is authenticated and authorized for the specified dataset action."""
+def _authenticate(
+    credentials: HTTPAuthorizationCredentials | None,
+    authentication: Authentication,
+) -> tuple[str, dict]:
+    """Validate bearer credentials and return (raw_token, JWT claims). Raises 401 on failure."""
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    token = credentials.credentials
+    try:
+        return token, authentication.validate(token)
+    except JWTError as exc:
+        logger.warning("JWT validation failed: %s", exc)
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    except Exception:
+        logger.exception("Unexpected error during token validation")
+        raise HTTPException(status_code=401, detail="Token validation failed")
+
+
+def _exchange(authentication: Authentication, token: str) -> str:
+    """Exchange *token* for a dg-app-api scoped token. Raises 502 on failure."""
+    try:
+        return authentication.exchange_token(token)
+    except Exception:
+        logger.exception("Token exchange failed")
+        raise HTTPException(status_code=502, detail="Token exchange failed")
+
+
+def require_permission(action: DatasetRole):
+    """Validate the caller's token and enforce *action* on the requested dataset.
+
+    Flow:
+    1. Validate the incoming Bearer token (RS256, issuer check).
+    2. Exchange it for a ``dg-app-api`` scoped token via Token Exchange.
+    3. Query the permissions gateway to verify the caller holds the required role.
+    """
 
     async def _check(
         request: Request,
         credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
         authentication: Optional[Authentication] = Depends(
             get_authentication_service),
-        authorization: Optional[AuthorizationService] = Depends(
+        authorization: Optional[DatagemsAuthorizationService] = Depends(
             get_authorization_service),
     ) -> dict | None:
-
         if authentication is None:
-            return None  # No authentication service configured, skip auth checks
-
-        if credentials is None:
-            raise HTTPException(status_code=401, detail="Not authenticated")
-
-        token = credentials.credentials
-
-        try:
-            user = authentication.validate(token)
-        except JWTError:
-            raise HTTPException(
-                status_code=401, detail="Invalid or expired token")
-        except Exception:
-            logger.exception("Unexpected token validation error")
-            raise HTTPException(
-                status_code=401, detail="Token validation failed")
-
-        if authorization is None:
-            return user
+            return None
+        token, user = _authenticate(credentials, authentication)
 
         dataset_id = request.path_params.get("id")
-        if dataset_id:
-            authorization.check(dataset_id, action, token)
+
+        # Only CREATE is allowed without a dataset ID
+        if not dataset_id and action != DatasetRole.CREATE:
+            # This is a sefety measure to prevent accidental exposure of dataset ids when the path parameter is missing.
+            raise ValueError("Dataset ID not found in path parameters")
+
+        gw_token = _exchange(authentication, token)
+        try:
+            ok = authorization.has_dataset_permission(
+                gw_token, action, dataset_id)
+            if not ok:
+                raise HTTPException(
+                    status_code=403, detail="Forbidden: insufficient permissions")
+
+        except UserError as exc:
+            logger.warning(
+                "Authorization failed: %s %s: %s",
+                exc.status_code,
+                exc.text,
+            )
+            raise HTTPException(
+                status_code=exc.status_code, detail=f"Gateway error. {exc.text}")
+        except GatewayError:
+            raise HTTPException(
+                status_code=502, detail="Permission gateway unavailable. Please see logs for details.")
 
         return user
+
+    return _check
+
+
+def get_allowed_datasets_ids() -> AsyncGenerator[List[str]]:
+    """Authenticate the caller and return the dataset IDs they are allowed to browse.
+
+    Returns ``None`` when authentication is disabled (no filtering applied).
+    Returns an empty list when authentication is enabled but the gateway reports
+    no accessible datasets, effectively returning an empty listing.
+    """
+
+    async def _check(
+        credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+        authentication: Optional[Authentication] = Depends(
+            get_authentication_service),
+        authorization: Optional[DatagemsAuthorizationService] = Depends(
+            get_authorization_service),
+    ) -> list[str] | None:
+
+        if authentication is None:
+            return None  # Auth disabled – return everything
+        token, _ = _authenticate(credentials, authentication)
+
+        gateway_token = _exchange(authentication, token)
+        if authorization is None:
+            return None  # Authz disabled – RBAC disabled
+
+        try:
+            return authorization.get_browseable_dataset_ids(gateway_token)
+        except GatewayError:
+            raise HTTPException(
+                status_code=502, detail="Permission gateway unavailable")
+        except UserError as exc:
+            logger.warning(
+                "Authorization failed: %s %s: %s",
+                exc.status_code,
+                exc.text,
+            )
+            raise HTTPException(
+                status_code=exc.status_code, detail=f"Gateway error. {exc.text}")
 
     return _check
