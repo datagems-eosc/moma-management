@@ -87,7 +87,7 @@ def api_server():
     deadline = time.time() + 30
     while time.time() < deadline:
         try:
-            http_requests.get(f"{base_url}/health", timeout=1)
+            http_requests.get(f"{base_url}/api/v1/health", timeout=1)
             break
         except Exception:
             time.sleep(0.3)
@@ -358,7 +358,7 @@ def _paginate_all(
     page = 1
     while True:
         resp = session.get(
-            f"{base_url}/datasets",
+            f"{base_url}/api/v1/datasets",
             params={"page": page, "pageSize": page_size, **filter_params},
             timeout=30,
         )
@@ -410,7 +410,7 @@ class TestListEndpoint:
         with http_requests.Session() as session:
             for profile_path in sorted(PROFILES_DIR.glob("*.json")):
                 resp = session.post(
-                    f"{api_server}/datasets/croissant",
+                    f"{api_server}/api/v1/datasets/croissant",
                     json=json.loads(profile_path.read_text()),
                     headers={"Content-Type": "application/json"},
                     timeout=30,
@@ -427,7 +427,8 @@ class TestListEndpoint:
         yield api_server, root_ids
         with http_requests.Session() as session:
             for root_id in root_ids:
-                session.delete(f"{api_server}/datasets/{root_id}", timeout=30)
+                session.delete(
+                    f"{api_server}/api/v1/datasets/{root_id}", timeout=30)
 
     # -- GH#15 core: total == actual count when paginating with pageSize=1 --
 
@@ -468,13 +469,13 @@ class TestListEndpoint:
         base_url, _ = ingested_datasets
         with http_requests.Session() as session:
             t1 = session.get(
-                f"{base_url}/datasets", params={"pageSize": 1}, timeout=30
+                f"{base_url}/api/v1/datasets", params={"pageSize": 1}, timeout=30
             ).json()["total"]
             t5 = session.get(
-                f"{base_url}/datasets", params={"pageSize": 5}, timeout=30
+                f"{base_url}/api/v1/datasets", params={"pageSize": 5}, timeout=30
             ).json()["total"]
             t100 = session.get(
-                f"{base_url}/datasets", params={"pageSize": 100}, timeout=30
+                f"{base_url}/api/v1/datasets", params={"pageSize": 100}, timeout=30
             ).json()["total"]
         assert t1 == t5 == t100, (
             f"total differs across page sizes: "
@@ -508,12 +509,12 @@ class TestListEndpoint:
         base_url, _ = ingested_datasets
         with http_requests.Session() as session:
             first = session.get(
-                f"{base_url}/datasets",
+                f"{base_url}/api/v1/datasets",
                 params={"pageSize": 100, "page": 1},
                 timeout=30,
             ).json()
             beyond = session.get(
-                f"{base_url}/datasets",
+                f"{base_url}/api/v1/datasets",
                 params={"pageSize": 100, "page": 9999},
                 timeout=30,
             ).json()

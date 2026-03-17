@@ -56,7 +56,7 @@ async def root():
     return {"message": "MoMa API is up and running"}
 
 
-app.include_router(router)
+app.include_router(router, prefix="/api/v1")
 
 
 @app.exception_handler(NotFoundError)
