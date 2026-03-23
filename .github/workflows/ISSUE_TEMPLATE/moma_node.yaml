@@ -1,0 +1,109 @@
+# yaml-language-server: $schema=https://www.schemastore.org/github-issue-forms.json
+---
+name: New MoMa Node
+description: Request the addition of a new node type to the MoMa model
+title: "[MoMa Node]: "
+labels: [moma-model]
+body:
+  - type: markdown
+    attributes:
+      value: "## Node definition"
+  - type: input
+    attributes:
+      label: Node name
+      description: The name of the new node type (PascalCase, e.g. `Distribution`).
+      placeholder: MyNewNode
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Node properties
+      description: |
+        List each property with its type and whether it is required.
+        Use the table format below.
+      placeholder: |
+        | Property name   | Type    | Required | Description              |
+        | --------------- | ------- | -------- | ------------------------ |
+        | id              | string  | yes      | Unique identifier        |
+        | type            | string  | yes      | Must equal "MyNewNode"   |
+        | myProp          | string  | no       | Short description        |
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: JSON Schema (`domain/schema/nodes/<node>.schema.json`)
+      description: |
+        Provide the JSON Schema definition for the new node.
+        This file must be created under `domain/schema/nodes/`.
+      placeholder: |
+        {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "title": "MyNewNode",
+          "type": "object",
+          "properties": {
+            "id":   { "type": "string" },
+            "type": { "type": "string", "enum": ["MyNewNode"] },
+            "myProp": { "type": "string" }
+          },
+          "required": ["id", "type"]
+        }
+      render: json
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: "## Croissant mapping"
+  - type: textarea
+    attributes:
+      label: Croissant source type
+      description: Which Croissant type does this node map from? Include the full `@type` value if applicable.
+      placeholder: "e.g. `sc:FileObject`, `sc:FileSet`, `cr:RecordSet` …"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Mapping block (`domain/mapping.yml`)
+      description: |
+        Provide the YAML snippet to add under `domain/mapping.yml`.
+        Keys are MoMa property names; values are the corresponding Croissant field names.
+      placeholder: |
+        MyNewNode:
+          properties:
+            type:   "@type"
+            myProp: myCroissantProp
+      render: yaml
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: "## Graph relationships"
+  - type: textarea
+    attributes:
+      label: Relationships to other nodes
+      description: |
+        Describe how this node connects to existing nodes in the graph.
+        Specify direction and relationship label.
+      placeholder: |
+        - (MyNewNode)-[:PART_OF]->(Dataset)
+        - (Distribution)-[:HAS_MY_NODE]->(MyNewNode)
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: "## Additional context"
+  - type: textarea
+    attributes:
+      label: Motivation / use case
+      description: Why is this node needed? Which datasets or features require it?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: Links, references, or any other relevant information.
+      placeholder: |
+        Links? References? Anything that will give us more context about the requested node!
+
+        Tip: You can attach images or files by clicking this area to highlight it and then dragging files in.
+    validations:
+      required: false
