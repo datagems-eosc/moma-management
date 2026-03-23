@@ -163,7 +163,7 @@ def populated_repository(
                 Node(
                     id=file_id,
                     # cr:FileObject → matches allowedLabels in list()
-                    labels=["cr:FileObject"] + file_node_extra_labels,
+                    labels=["cr:FileObject", "Data"] + file_node_extra_labels,
                     properties={},
                 ),
             ],
@@ -224,7 +224,8 @@ def mixed_date_repository(
                     properties={"datePublished": date_published,
                                 "status": "published"},
                 ),
-                Node(id=file_id, labels=["cr:FileObject"], properties={}),
+                Node(id=file_id, labels=[
+                     "cr:FileObject", "Data"], properties={}),
             ],
             edges=[Edge(**{"from": ds_id, "to": file_id,
                         "labels": ["distribution"]})],
@@ -288,7 +289,7 @@ def mixed_types_repository(
         for suffix, extra_labels in file_specs:
             fid = f"{ds_id}-{suffix}"
             nodes.append(
-                Node(id=fid, labels=["cr:FileObject"] + extra_labels, properties={}))
+                Node(id=fid, labels=["cr:FileObject", "Data"] + extra_labels, properties={}))
             edges.append(
                 Edge(**{"from": ds_id, "to": fid, "labels": ["distribution"]}))
         return Dataset(nodes=nodes, edges=edges)

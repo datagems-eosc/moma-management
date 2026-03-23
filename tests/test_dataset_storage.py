@@ -46,7 +46,6 @@ def _with_normalised_dates(dataset: Dataset) -> Dataset:
                     node.properties[key] = _to_iso_date(node.properties[key])
     return cloned
 
-
 # ---------------------------------------------------------------------------
 # Round-trip / deletion (existing tests, unchanged)
 # ---------------------------------------------------------------------------
@@ -178,20 +177,20 @@ class TestListMethod:
     def test_filter_by_nodeid_excludes_other_datasets(self, populated_repository):
         """Verify that filtering by nodeId returns only the correct dataset and excludes others."""
         result = _list(populated_repository, nodeIds=["ds-beta"])
-        
+
         # Verify only one dataset is returned
         assert result["total"] == 1
         assert len(result["datasets"]) == 1
-        
+
         # Extract all dataset node IDs from the result
         returned_ids = {
             n.id for ds in result["datasets"]
             for n in ds.nodes if "sc:Dataset" in n.labels
         }
-        
+
         # Verify that only ds-beta is returned
         assert returned_ids == {"ds-beta"}
-        
+
         # Explicitly verify that other datasets are NOT in the results
         assert "ds-alpha" not in returned_ids
         assert "ds-gamma" not in returned_ids
@@ -513,10 +512,10 @@ class TestMimeTypeFullSubgraph:
             ds for ds in result["datasets"] if self._root_id(ds) == "ds-mixed"
         )
         label_sets = self._file_labels(mixed)
-        assert frozenset(["cr:FileObject", "CSV"]) in label_sets, (
+        assert frozenset(["cr:FileObject", "CSV", "Data"]) in label_sets, (
             "CSV file node missing from ds-mixed when filtered by text/csv"
         )
-        assert frozenset(["cr:FileObject", "PDFSet"]) in label_sets, (
+        assert frozenset(["cr:FileObject", "PDFSet", "Data"]) in label_sets, (
             "PDF file node incorrectly stripped from ds-mixed when filtered by text/csv"
         )
 
@@ -532,10 +531,10 @@ class TestMimeTypeFullSubgraph:
             ds for ds in result["datasets"] if self._root_id(ds) == "ds-mixed"
         )
         label_sets = self._file_labels(mixed)
-        assert frozenset(["cr:FileObject", "PDFSet"]) in label_sets, (
+        assert frozenset(["cr:FileObject", "PDFSet", "Data"]) in label_sets, (
             "PDF file node missing from ds-mixed when filtered by application/pdf"
         )
-        assert frozenset(["cr:FileObject", "CSV"]) in label_sets, (
+        assert frozenset(["cr:FileObject", "CSV", "Data"]) in label_sets, (
             "CSV file node incorrectly stripped from ds-mixed when filtered by application/pdf"
         )
 
@@ -569,11 +568,11 @@ def test_prevent_ap_or_ml_traversal(
         for edge_type in Neo4jDatasetRepository.FORBIDDEN_EDGES
     }
 
-    dataset = Dataset(
+    dataset = Dataset.model_construct(
         nodes=[
             Node(id=ds_id, labels=["sc:Dataset"],
                  properties={"status": "published"}),
-            Node(id=blue_id, labels=["cr:FileObject"], properties={}),
+            Node(id=blue_id, labels=["cr:FileObject", "Data"], properties={}),
             *[
                 Node(id=node_id, labels=["Operator"], properties={})
                 for node_id in orange_nodes.values()

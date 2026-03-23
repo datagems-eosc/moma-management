@@ -1,15 +1,18 @@
+import json
 from collections import defaultdict
 from typing import Iterator, Self, Set, Tuple, cast
 
 from deepdiff import DeepDiff
 from pydantic import model_validator
 
+from moma_management.domain import EDGE_CONSTRAINTS_PATH
 from moma_management.domain.generated.moma_schema import MoMaGraphModel
 from moma_management.domain.generated.nodes import node_schema
 
+_CONSTRAINTS: list[dict] = json.loads(EDGE_CONSTRAINTS_PATH.read_text())
+
 
 class Dataset(MoMaGraphModel):
-
     @property
     def root_id(self) -> str:
         """Return the id of the sc:Dataset root node."""
@@ -23,8 +26,7 @@ class Dataset(MoMaGraphModel):
         # Check that the root node is truly a root (no edges lead to it)
         edges_to_root = [e for e in self.edges if e.to == self.root_id]
         if edges_to_root:
-            edge_sources = ", ".join(
-                f"({e.from_} -> {e.to})" for e in edges_to_root)
+            edge_sources = ", ".join(f"({e.from_} -> {e.to})" for e in edges_to_root)
             raise ValueError(
                 f"The root '{ROOT_LABEL}' node is not a root. "
                 f"The following edges lead to it: {edge_sources}"
@@ -53,6 +55,40 @@ class Dataset(MoMaGraphModel):
                 )
         return self
 
+    @model_validator(mode="after")
+    def check_edge_constraints(self: Self) -> Self:
+        """
+        Check that all edges in the graph are valids
+        """
+        node_labels: dict[str, list[str]] = {n.id: n.labels for n in self.nodes}
+        violations: list[str] = []
+
+        for edge in self.edges:
+            from_labels = node_labels.get(edge.from_, [])
+            to_labels = node_labels.get(edge.to, [])
+            edge_label = edge.labels[0] if edge.labels else ""
+
+            allowed = any(
+                c["label"] == edge_label
+                and c["fromLabel"] in from_labels
+                and c["toLabel"] in to_labels
+                for c in _CONSTRAINTS
+            )
+
+            if not allowed:
+                violations.append(
+                    f"({edge.from_}){from_labels} -[{edge_label}]-> "
+                    f"({edge.to}){to_labels}"
+                )
+
+        if violations:
+            raise ValueError(
+                "Edges violate graph constraints:\n"
+                + "\n".join(f"  {v}" for v in violations)
+            )
+
+        return self
+
     def find_all(self, label: str) -> Iterator[node_schema.Node]:
         """Return all nodes with a given label."""
         yield from (n for n in self.nodes if label in n.labels)
@@ -70,7 +106,8 @@ class Dataset(MoMaGraphModel):
             if getattr(n, "labels", None):
                 n.labels = sorted(n.labels)
             n.properties = {
-                k: v for k, v in n.properties.items()
+                k: v
+                for k, v in n.properties.items()
                 if v is not None and not (isinstance(v, list) and len(v) == 0)
             }
         self.nodes.sort(key=lambda n: n.id)
@@ -102,8 +139,7 @@ class Dataset(MoMaGraphModel):
         Yields all node IDs reachable from start.
         """
         visited: Set[str] = set()
-        stack: list[Tuple[str, str | None]] = [
-            (start_id, None)]  # (node, parent)
+        stack: list[Tuple[str, str | None]] = [(start_id, None)]  # (node, parent)
 
         # Build undirected adjacency list
         adj: dict[str, list[str]] = defaultdict(list)

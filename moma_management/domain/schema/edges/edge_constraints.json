@@ -1,0 +1,62 @@
+[
+    {
+        "fromLabel": "sc:Dataset",
+        "label": "distribution",
+        "toLabel": "Data",
+        "description": "Dataset → any distribution file"
+    },
+    {
+        "fromLabel": "sc:Dataset",
+        "label": "recordSet",
+        "toLabel": "cr:RecordSet",
+        "description": "Dataset → record set"
+    },
+    {
+        "fromLabel": "Data",
+        "label": "containedIn",
+        "toLabel": "Data",
+        "description": "Generic containedIn fallback — covers all Data sub-type pairs (e.g. Table → RelationalDatabase) as produced by the mapping engine"
+    },
+    {
+        "fromLabel": "RelationalDatabase",
+        "label": "containedIn",
+        "toLabel": "Table",
+        "description": "Relational database contains tables"
+    },
+    {
+        "fromLabel": "CsvSet",
+        "label": "containedIn",
+        "toLabel": "CSV",
+        "description": "CSV set contains CSV files"
+    },
+    {
+        "fromLabel": "cr:RecordSet",
+        "label": "field",
+        "toLabel": "Column",
+        "description": "RecordSet → column field"
+    },
+    {
+        "fromLabel": "cr:RecordSet",
+        "label": "field",
+        "toLabel": "PDF",
+        "description": "RecordSet → PDF field"
+    },
+    {
+        "fromLabel": "Column",
+        "label": "source/fileObject",
+        "toLabel": "Data",
+        "description": "Column sourced from a FileObject (Table or CSV)"
+    },
+    {
+        "fromLabel": "PDF",
+        "label": "source/fileSet",
+        "toLabel": "Data",
+        "description": "PDF field sourced from a FileSet"
+    },
+    {
+        "fromLabel": "Column",
+        "label": "statistics",
+        "toLabel": "Statistics",
+        "description": "Column → its column statistics"
+    }
+]
