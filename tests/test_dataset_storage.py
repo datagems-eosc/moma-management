@@ -195,6 +195,26 @@ class TestListMethod:
         assert "ds-alpha" not in returned_ids
         assert "ds-gamma" not in returned_ids
 
+    def test_filter_by_subgraph_child_node_id(self, populated_repository):
+        """Filtering by a child node ID (not the root sc:Dataset) must return the parent dataset.
+
+        Each seeded dataset has a connected file node whose ID follows the pattern
+        ``<dataset-id>-file``.  Passing that child ID via nodeIds must resolve the
+        owning dataset, confirming that the filter inspects ALL nodes in the
+        subgraph and not only the dataset root node.
+        """
+        # "ds-alpha-file" is the cr:FileObject connected to "ds-alpha"
+        result = _list(populated_repository, nodeIds=["ds-alpha-file"])
+
+        assert result["total"] == 1, (
+            "Expected the parent dataset to be returned when filtering by a child node ID"
+        )
+        returned_dataset_ids = {
+            n.id for ds in result["datasets"]
+            for n in ds.nodes if "sc:Dataset" in n.labels
+        }
+        assert returned_dataset_ids == {"ds-alpha"}
+
     # -- filter by status ----------------------------------------------------
 
     def test_published_status(self, populated_repository):

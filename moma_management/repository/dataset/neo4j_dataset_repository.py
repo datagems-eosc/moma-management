@@ -127,7 +127,14 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
 
             count_query = """//cypher
             MATCH (n:`sc:Dataset`)
-            WHERE ($nodeIds = [] OR n.id IN $nodeIds)
+            WHERE (
+                $nodeIds = []
+                OR EXISTS {
+                    MATCH path=(n)-[*0..4]-(m)
+                    WHERE m.id IN $nodeIds
+                    AND NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
+                }
+            )
             AND ($publishedDateFrom IS NULL OR date(n.datePublished) >= $publishedDateFrom)
             AND ($publishedDateTo IS NULL OR date(n.datePublished) <= $publishedDateTo)
             AND ($status IS NULL OR n.status = $status)
@@ -172,7 +179,14 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
 
             query = f"""//cypher
             MATCH (n:`sc:Dataset`)
-            WHERE ($nodeIds = [] OR n.id IN $nodeIds)
+            WHERE (
+                $nodeIds = []
+                OR EXISTS {{
+                    MATCH path=(n)-[*0..4]-(m)
+                    WHERE m.id IN $nodeIds
+                    AND NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
+                }}
+            )
             AND ($publishedDateFrom IS NULL OR date(n.datePublished) >= $publishedDateFrom)
             AND ($publishedDateTo IS NULL OR date(n.datePublished) <= $publishedDateTo)
             AND ($status IS NULL OR n.status = $status)
