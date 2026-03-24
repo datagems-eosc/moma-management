@@ -34,7 +34,7 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
         Delete a dataset and its full connected subgraph by id.
         """
         query = """//cypher
-            MATCH (d {id: $datasetId})
+            MATCH (d:`sc:Dataset` {id: $datasetId})
             OPTIONAL MATCH path=(d)-[*1..10]-(m)
             WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
             WITH d, collect(DISTINCT m) AS related
@@ -52,7 +52,7 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
         Retrieve the dataset with the given ID
         """
         query = """//cypher
-            MATCH (root {id: $datasetId})
+            MATCH (root:`sc:Dataset` {id: $datasetId})
             OPTIONAL MATCH path=(root)-[*1..4]-(m)
             WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
             RETURN root, m, relationships(path) AS r

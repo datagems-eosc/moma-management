@@ -138,6 +138,32 @@ def test_delete_missing_dataset_raises_not_found(dataset_service: DatasetService
         dataset_service.delete("does-not-exist")
 
 
+def test_get_non_dataset_node_raises_not_found(
+    dataset_service: DatasetService,
+    dataset_repository,
+):
+    """Getting an ID that exists in the graph but is NOT a sc:Dataset must raise NotFoundError."""
+    non_dataset_id = "non-dataset-node-get"
+    dataset_repository._session.run(
+        "CREATE (n:SomeLabel {id: $id})", id=non_dataset_id
+    )
+    with pytest.raises(NotFoundError):
+        dataset_service.get(non_dataset_id)
+
+
+def test_delete_non_dataset_node_raises_not_found(
+    dataset_service: DatasetService,
+    dataset_repository,
+):
+    """Deleting an ID that exists in the graph but is NOT a sc:Dataset must raise NotFoundError."""
+    non_dataset_id = "non-dataset-node-delete"
+    dataset_repository._session.run(
+        "CREATE (n:SomeLabel {id: $id})", id=non_dataset_id
+    )
+    with pytest.raises(NotFoundError):
+        dataset_service.delete(non_dataset_id)
+
+
 def test_ingest_repo_error_propagates(mapping_file: Path):
     """A repository failure during ingest must propagate out of the service."""
     repo = MagicMock()
