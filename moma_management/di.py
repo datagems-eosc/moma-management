@@ -186,7 +186,12 @@ def require_permission(action: DatasetRole, *, id_type: IdType = IdType.Dataset)
             # For nodes, we needs to check the dataset they belongs to
             case IdType.Node:
                 result = dataset_svc.list(DatasetFilter(nodeIds=[path_id]))
-                dataset_ids = [d.root_id for d in result.get("datasets", [])]
+                dataset_ids = [
+                    n.id
+                    for d in result.get("datasets", [])
+                    for n in d.nodes
+                    if "sc:Dataset" in n.labels
+                ]
                 if not dataset_ids:
                     raise HTTPException(
                         status_code=404, detail=f"Node '{path_id}' not found."
@@ -231,7 +236,7 @@ def require_permission(action: DatasetRole, *, id_type: IdType = IdType.Dataset)
 
         if not allowed:
             raise HTTPException(
-                status_code=403, detail="Forbidden: insufficient permissions"
+                status_code=403, detail="Forbidden: insufficient permissions or not a dataset id"
             )
 
         return user
