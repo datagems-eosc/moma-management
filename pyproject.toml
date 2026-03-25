@@ -52,6 +52,6 @@ py-modules = ["moma_management"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-n 8"
+addopts = "-n auto"
 
 
