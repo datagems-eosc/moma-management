@@ -14,6 +14,8 @@ async def create_dataset(
     _auth: Never = Depends(require_permission(DatasetRole.CREATE)),
 ) -> None:
     """
-    Create a new dataset.
+    Create a new dataset in the MoMa graph repository.
+
+    **Required permission:** realm role `dg_admin` or `dg_dataset-uploader`.
     """
     return svc.create(candidate)

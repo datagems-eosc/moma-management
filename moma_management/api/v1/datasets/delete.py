@@ -14,5 +14,8 @@ async def delete_dataset(
 ) -> None:
     """
     Delete a dataset and its connected subgraph by dataset ID.
+
+    **Required permission:** dataset grant `dg_ds-delete`, or realm role
+    `dg_admin` / `dg_dataset-curator`.
     """
     svc.delete(id)

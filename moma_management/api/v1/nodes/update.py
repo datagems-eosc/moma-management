@@ -16,8 +16,11 @@ async def update_node(
         DatasetRole.EDIT, id_type=IdType.Node)),
 ) -> dict:
     """
-    Merge the supplied properties onto the existing node identified by *id*.
+    Merge the supplied properties onto the existing node identified by `id`.
     Only the provided keys are updated; all other properties are left unchanged.
-    Returns 404 if the node does not exist.
+
+    **Required permission:** dataset grant `dg_ds-edit` on the parent dataset, or realm
+    role `GLOBAL_dg_admin` / `GLOBAL_dg_dataset-curator`.
+    Returns 404 (not 403) on permission denial to prevent dataset enumeration.
     """
     return svc.update(Node(id=id, labels=[], properties=properties))

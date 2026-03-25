@@ -61,7 +61,11 @@ async def list_datasets(
 ) -> dict:
     """
     List datasets with optional filtering, sorting, and pagination criteria.
-    Only datasets the authenticated user has the ``dg_ds-browse`` role for are returned.
+
+    Only datasets the authenticated user holds the `dg_ds-browse` grant for are returned.
+    Realm roles `dg_admin` and `dg_dataset-curator` bypass individual dataset
+    grants and allow browsing all datasets. When authentication is disabled, all datasets
+    are returned regardless of grants.
     """
     if accessible_ids is not None:
         # Intersect caller-visible IDs with any existing nodeIds filter.

@@ -16,5 +16,7 @@ async def ingest_profile(
     Ingest entire profiling (basic, light, heavy) or only the basic part into the MoMa repository.
     Accepts a Croissant-format JSON body, converts it to PG-JSON according to
     the MoMa graph schema, and persists the result to Neo4j.
+
+    **Required permission:** realm role `dg_admin` or `dg_dataset-uploader`.
     """
     return svc.ingest(input_data)

@@ -14,5 +14,7 @@ async def validate_dataset(
     """
     Validate a PG-JSON dataset against the MoMa graph schema without persisting it.
     Returns the validated Dataset if valid, or a 422 error with details if validation fails.
+
+    This endpoint requires no authentication.
     """
     return svc.validate(input_data)

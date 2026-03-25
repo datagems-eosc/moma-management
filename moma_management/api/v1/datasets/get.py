@@ -15,5 +15,8 @@ async def get_dataset(
 ) -> Dataset:
     """
     Retrieve the full dataset subgraph (nodes + edges) by dataset ID.
+
+    **Required permission:** dataset grant `dg_ds-browse`, or realm role
+    `dg_admin` / `dg_dataset-curator`.
     """
     return svc.get(id)
