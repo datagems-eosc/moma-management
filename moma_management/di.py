@@ -1,6 +1,7 @@
 import logging
 import os
 from contextlib import asynccontextmanager
+from enum import Enum
 from pathlib import Path
 from typing import AsyncGenerator, Generator, List, Optional
 
@@ -9,6 +10,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 from neo4j import Driver, GraphDatabase, Session
 
+from moma_management.domain.filters import DatasetFilter
 from moma_management.repository import DatasetRepository, Neo4jDatasetRepository
 from moma_management.repository.node import Neo4jNodeRepository, NodeRepository
 from moma_management.services.authentication import Authentication
@@ -84,7 +86,8 @@ def get_node_service(repo: NodeRepository = Depends(get_node_repo)) -> NodeServi
 def get_authorization_service() -> Optional[DatagemsAuthorizationService]:
     """Return the dataset authorization service."""
     if not os.getenv("PERMISSIONS_GATEWAY_URL"):
-        logger.warning("PERMISSIONS_GATEWAY_URL not set, authorization disabled")
+        logger.warning(
+            "PERMISSIONS_GATEWAY_URL not set, authorization disabled")
         return None
     return DatagemsAuthorizationService(
         gateway_url=os.getenv("PERMISSIONS_GATEWAY_URL", "")
@@ -133,42 +136,84 @@ def _exchange(authentication: Authentication, token: str) -> str:
         raise HTTPException(status_code=502, detail="Token exchange failed")
 
 
-def require_permission(action: DatasetRole):
-    """Validate the caller's token and enforce *action* on the requested dataset.
+class IdType(str, Enum):
+    """Describes what kind of resource the ``id`` path parameter refers to."""
+    Dataset = "Dataset"
+    Node = "Node"
 
-    Flow:
-    1. Validate the incoming Bearer token (RS256, issuer check).
-    2. Exchange it for a ``dg-app-api`` scoped token via Token Exchange.
-    3. Query the permissions gateway to verify the caller holds the required role.
+
+def require_permission(action: DatasetRole, *, id_type: IdType = IdType.Dataset):
+    """Validate the caller's token and enforce *action*.
+
+    ``id_type=IdType.Dataset`` (default): the ``id`` path parameter is a
+    dataset ID and is passed directly to the permissions gateway.  A missing ID
+    is only acceptable for ``DatasetRole.CREATE``.
+
+    ``id_type=IdType.Node``: the ``id`` path parameter is a node ID.  The
+    parent dataset(s) are resolved first via a subgraph lookup, and the caller
+    must hold *action* on at least one of them.  404 (rather than 403) is
+    returned on denial to avoid leaking whether the node lives in an
+    inaccessible dataset.
     """
 
     async def _check(
         request: Request,
-        credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-        authentication: Optional[Authentication] = Depends(get_authentication_service),
+        credentials: HTTPAuthorizationCredentials | None = Depends(
+            bearer_scheme),
+        authentication: Optional[Authentication] = Depends(
+            get_authentication_service),
         authorization: Optional[DatagemsAuthorizationService] = Depends(
             get_authorization_service
         ),
+        dataset_svc: DatasetService = Depends(get_dataset_service),
     ) -> dict | None:
+
+        # Auth disabled -> Skip
         if authentication is None:
             return None
+
         token, user = _authenticate(credentials, authentication)
 
-        dataset_id = request.path_params.get("id")
+        # Authorization disabled -> Skip grants
+        if authorization is None:
+            return user
 
-        # Only CREATE is allowed without a dataset ID
-        if not dataset_id and action != DatasetRole.CREATE:
-            # This is a sefety measure to prevent accidental exposure of dataset ids when the path parameter is missing.
-            raise ValueError("Dataset ID not found in path parameters")
+        # Now, we have to know if the user can perform the requested action.
+        # A permission can be either asked for datasets or nodes within datasets
+        path_id = request.path_params.get("id")
+        dataset_ids = []
+        match id_type:
+            # For nodes, we needs to check the dataset they belongs to
+            case IdType.Node:
+                result = dataset_svc.list(DatasetFilter(nodeIds=[path_id]))
+                dataset_ids = [d.root_id for d in result.get("datasets", [])]
+                if not dataset_ids:
+                    raise HTTPException(
+                        status_code=404, detail=f"Node '{path_id}' not found."
+                    )
 
+            # For dataset, we can retrieve the ID from the request path.
+            # The only exception is for dataset creation
+            case IdType.Dataset:
+                if not path_id and action != DatasetRole.CREATE:
+                    raise ValueError("Dataset ID not found in path parameters")
+                dataset_ids = [path_id]
+            case _:
+                raise ValueError("Wrong auth type")
+
+        # Now, we query the authorization gateway to make sure the user has the correct permission
+        # on the requested datasets
+
+        # NOTE: This is kept but commented out in case we have to do the token exchange again
         # gw_token = _exchange(authentication, token)
         try:
-            ok = authorization.has_dataset_permission(token, action, dataset_id)
-            if not ok:
-                raise HTTPException(
-                    status_code=403, detail="Forbidden: insufficient permissions"
-                )
-
+            # NOTE: This consider that having acess to ONE dataset is enough to access the node, even if it belongs to other datasets.
+            # For now I don't know if it's possible to have a node belonging to multiple datasets, but if it is the case,
+            # we might want to enforce permissions on ALL parent datasets instead of just one, at least for non-idempotent actions
+            allowed = any(
+                authorization.has_dataset_permission(token, action, ds_id)
+                for ds_id in dataset_ids
+            )
         except UserError as exc:
             logger.warning(
                 "Authorization failed: %s %s: %s",
@@ -182,6 +227,11 @@ def require_permission(action: DatasetRole):
             raise HTTPException(
                 status_code=502,
                 detail="Permission gateway unavailable. Please see logs for details.",
+            )
+
+        if not allowed:
+            raise HTTPException(
+                status_code=403, detail="Forbidden: insufficient permissions"
             )
 
         return user
@@ -199,7 +249,8 @@ def get_allowed_datasets_ids() -> AsyncGenerator[List[str]]:
 
     async def _check(
         credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-        authentication: Optional[Authentication] = Depends(get_authentication_service),
+        authentication: Optional[Authentication] = Depends(
+            get_authentication_service),
         authorization: Optional[DatagemsAuthorizationService] = Depends(
             get_authorization_service
         ),
