@@ -133,10 +133,14 @@ class DatagemsAuthorizationService:
         grants: dict[str, list[str]] = resp.json()
         return any(role == what.value for role in grants.get(on_which_id, []))
 
-    def get_browseable_dataset_ids(self, who_token: str) -> List[str]:
+    def get_browseable_dataset_ids(self, who_token: str) -> List[str] | None:
         """
-        Returns all the datasets Ids who has access to
+        Returns all the dataset IDs the user has access to, or None if the
+        user holds ADMIN / CURATOR realm roles (meaning they can see everything).
         """
+        if self.has_realm_roles(who_token, [RealmRole.ADMIN, RealmRole.CURATOR]):
+            return None
+
         try:
             resp = requests.get(
                 f"{self._gateway_url}/api/principal/me/context-grants",

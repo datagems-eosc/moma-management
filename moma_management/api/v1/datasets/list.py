@@ -75,4 +75,8 @@ async def list_datasets(
             merged = accessible_ids
         filters = filters.model_copy(update={"nodeIds": merged})
 
+        # An empty merged list means zero accessible datasets
+        if not filters.nodeIds:
+            return {"datasets": [], "page": filters.page, "pageSize": filters.pageSize, "total": 0}
+
     return svc.list(filters)
