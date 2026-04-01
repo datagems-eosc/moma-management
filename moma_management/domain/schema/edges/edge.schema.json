@@ -5,11 +5,13 @@
     "properties": {
         "from": {
             "type": "string",
-            "description": "ID of the source node"
+            "description": "ID of the source node",
+            "format": "uuid"
         },
         "to": {
             "type": "string",
-            "description": "ID of the target node"
+            "description": "ID of the target node",
+            "format": "uuid"
         },
         "labels": {
             "type": "array",
@@ -18,7 +20,10 @@
         },
         "properties": {
             "type": "object",
-            "description": "Additional edge properties"
+            "description": "Additional edge properties",
+            "propertyNames": {
+              "pattern": "^[a-z@][a-zA-Z0-9]*$"
+            }
         }
     },
     "required": ["from", "to", "labels"]

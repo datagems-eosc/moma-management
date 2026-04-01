@@ -6,7 +6,8 @@
     "properties": {
         "id": {
             "type": "string",
-            "description": "Unique identifier of the node"
+            "description": "Unique identifier of the node",
+            "format": "uuid"
         },
         "labels": {
             "type": "array",
@@ -15,7 +16,11 @@
         },
         "properties": {
             "type": "object",
-            "description": "Node attributes as defined by the MoMa node type"
+            "description": "Node attributes as defined by the MoMa node type",
+            "additionalProperties": true,
+            "propertyNames": {
+              "pattern": "^[a-z@][a-zA-Z0-9]*$"
+            }
         }
     },
     "required": ["id", "labels", "properties"]

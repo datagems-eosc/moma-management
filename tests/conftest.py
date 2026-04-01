@@ -9,6 +9,29 @@ from testcontainers.neo4j import Neo4jContainer
 from moma_management.repository.dataset import Neo4jDatasetRepository
 from moma_management.repository.node import Neo4jNodeRepository
 from moma_management.services.dataset import DatasetService
+from tests.utils import (
+    DS_ALPHA_FILE_ID,
+    DS_ALPHA_ID,
+    DS_BETA_FILE_ID,
+    DS_BETA_ID,
+    DS_CSV_ONLY_FILE_ID,
+    DS_CSV_ONLY_ID,
+    DS_DATE_A_FILE_ID,
+    DS_DATE_A_ID,
+    DS_DATE_B_FILE_ID,
+    DS_DATE_B_ID,
+    DS_DATE_C_FILE_ID,
+    DS_DATE_C_ID,
+    DS_DATE_D_FILE_ID,
+    DS_DATE_D_ID,
+    DS_GAMMA_FILE_ID,
+    DS_GAMMA_ID,
+    DS_MIXED_CSV_FILE_ID,
+    DS_MIXED_ID,
+    DS_MIXED_PDF_FILE_ID,
+    DS_PDF_ONLY_FILE_ID,
+    DS_PDF_ONLY_ID,
+)
 
 PROJECT_ROOT = Path(__file__).parent.parent
 GENERATED_DIR = PROJECT_ROOT / "generated"
@@ -143,11 +166,11 @@ def populated_repository(
 
     def _make_dataset(
         ds_id: str,
+        file_id: str,
         date_published: str,
         status: str,
         file_node_extra_labels: List[str],
     ) -> Dataset:
-        file_id = f"{ds_id}-file"
         return Dataset(
             nodes=[
                 Node(
@@ -179,9 +202,12 @@ def populated_repository(
     with driver.session() as session:
         repo = Neo4jDatasetRepository(session)
         for ds in [
-            _make_dataset("ds-alpha", "2024-01-15", "published", ["CSV"]),
-            _make_dataset("ds-beta",  "2024-06-01", "draft",     ["CSV"]),
-            _make_dataset("ds-gamma", "2025-03-01", "published", []),
+            _make_dataset(DS_ALPHA_ID, DS_ALPHA_FILE_ID,
+                          "2024-01-15", "published", ["CSV"]),
+            _make_dataset(DS_BETA_ID,  DS_BETA_FILE_ID,
+                          "2024-06-01", "draft",     ["CSV"]),
+            _make_dataset(DS_GAMMA_ID, DS_GAMMA_FILE_ID,
+                          "2025-03-01", "published", []),
         ]:
             repo.create(ds)
         yield repo
@@ -214,8 +240,7 @@ def mixed_date_repository(
     from moma_management.domain.generated.edges.edge_schema import Edge
     from moma_management.domain.generated.nodes.node_schema import Node
 
-    def _make(ds_id: str, date_published: str) -> Dataset:
-        file_id = f"{ds_id}-file"
+    def _make(ds_id: str, file_id: str, date_published: str) -> Dataset:
         return Dataset(
             nodes=[
                 Node(
@@ -237,10 +262,12 @@ def mixed_date_repository(
     with driver.session() as session:
         repo = Neo4jDatasetRepository(session)
         for ds in [
-            _make("ds-date-a", "15-01-2023"),   # DD-MM-YYYY
-            _make("ds-date-b", "2024-01-15"),    # ISO
-            _make("ds-date-c", "01/06/2024"),    # DD/MM/YYYY
-            _make("ds-date-d", "2025-03-01"),    # ISO
+            _make(DS_DATE_A_ID, DS_DATE_A_FILE_ID,
+                  "15-01-2023"),   # DD-MM-YYYY
+            _make(DS_DATE_B_ID, DS_DATE_B_FILE_ID, "2024-01-15"),    # ISO
+            _make(DS_DATE_C_ID, DS_DATE_C_FILE_ID,
+                  "01/06/2024"),    # DD/MM/YYYY
+            _make(DS_DATE_D_ID, DS_DATE_D_FILE_ID, "2025-03-01"),    # ISO
         ]:
             repo.create(ds)
         yield repo
@@ -275,7 +302,7 @@ def mixed_types_repository(
 
     def _make_multi(ds_id: str, file_specs: List[tuple]) -> Dataset:
         """
-        file_specs: list of (file_id_suffix, extra_labels) pairs, one per file node.
+        file_specs: list of (file_id, extra_labels) pairs, one per file node.
         """
         nodes = [
             Node(
@@ -286,8 +313,7 @@ def mixed_types_repository(
             )
         ]
         edges = []
-        for suffix, extra_labels in file_specs:
-            fid = f"{ds_id}-{suffix}"
+        for fid, extra_labels in file_specs:
             nodes.append(
                 Node(id=fid, labels=["cr:FileObject", "Data"] + extra_labels, properties={}))
             edges.append(
@@ -300,10 +326,10 @@ def mixed_types_repository(
     with driver.session() as session:
         repo = Neo4jDatasetRepository(session)
         for ds in [
-            _make_multi(
-                "ds-mixed",    [("csv", ["CSV"]), ("pdf", ["PDFSet"])]),
-            _make_multi("ds-csv-only", [("csv", ["CSV"])]),
-            _make_multi("ds-pdf-only", [("pdf", ["PDFSet"])]),
+            _make_multi(DS_MIXED_ID,    [(DS_MIXED_CSV_FILE_ID, [
+                        "CSV"]), (DS_MIXED_PDF_FILE_ID, ["PDFSet"])]),
+            _make_multi(DS_CSV_ONLY_ID, [(DS_CSV_ONLY_FILE_ID, ["CSV"])]),
+            _make_multi(DS_PDF_ONLY_ID, [(DS_PDF_ONLY_FILE_ID, ["PDFSet"])]),
         ]:
             repo.create(ds)
         yield repo

@@ -113,7 +113,7 @@ class Neo4jPgJsonMixin:
         Raises:
             Exception: If the Neo4j operation fails.
         """
-        node_id = node.id
+        node_id = str(node.id)
         labels = ":".join(self._escape_labels(node.labels))
         props = self._sanitize_properties(node.properties)
         props["id"] = node_id
@@ -140,8 +140,8 @@ class Neo4jPgJsonMixin:
         Raises:
             Exception: If the Neo4j operation fails.
         """
-        from_id = edge.from_
-        to_id = edge.to
+        from_id = str(edge.from_)
+        to_id = str(edge.to)
         # Edge type labels: encode "/" as "___" to keep Cypher valid
         labels = ":".join(
             f"`{lbl.replace('/', '___')}`" for lbl in edge.labels

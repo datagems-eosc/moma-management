@@ -7,6 +7,9 @@ import copy
 from datetime import date
 from pathlib import Path
 
+import pytest
+from pydantic import ValidationError
+
 from moma_management.domain.dataset import Dataset
 from moma_management.domain.filters import (
     DatasetFilter,
@@ -18,6 +21,22 @@ from moma_management.domain.filters import (
 from moma_management.domain.generated.nodes.dataset_schema import Status
 from moma_management.repository.dataset import Neo4jDatasetRepository
 from moma_management.repository.neo4j_pgson_mixin import _DATE_PROPS, _to_iso_date
+from tests.utils import (
+    BLUE_FILE_NODE_ID,
+    DS_ALPHA_FILE_ID,
+    DS_ALPHA_ID,
+    DS_BETA_FILE_ID,
+    DS_BETA_ID,
+    DS_CSV_ONLY_ID,
+    DS_DATE_A_ID,
+    DS_DATE_B_ID,
+    DS_DATE_C_ID,
+    DS_FORBIDDEN_TEST_ID,
+    DS_GAMMA_ID,
+    DS_MIXED_ID,
+    DS_PDF_ONLY_ID,
+    ORANGE_NODE_BASE,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -157,16 +176,17 @@ class TestListMethod:
     # -- filter by nodeId ----------------------------------------------------
 
     def test_single_id(self, populated_repository):
-        result = _list(populated_repository, nodeIds=["ds-alpha"])
+        result = _list(populated_repository, nodeIds=[DS_ALPHA_ID])
         assert result["total"] == 1
         ids = [
-            n.id for ds in result["datasets"]
+            str(n.id) for ds in result["datasets"]
             for n in ds.nodes if "sc:Dataset" in n.labels
         ]
-        assert ids == ["ds-alpha"]
+        assert ids == [DS_ALPHA_ID]
 
     def test_multiple_ids(self, populated_repository):
-        result = _list(populated_repository, nodeIds=["ds-alpha", "ds-gamma"])
+        result = _list(populated_repository, nodeIds=[
+                       DS_ALPHA_ID, DS_GAMMA_ID])
         assert result["total"] == 2
 
     def test_unknown_id_returns_empty(self, populated_repository):
@@ -176,7 +196,7 @@ class TestListMethod:
 
     def test_filter_by_nodeid_excludes_other_datasets(self, populated_repository):
         """Verify that filtering by nodeId returns only the correct dataset and excludes others."""
-        result = _list(populated_repository, nodeIds=["ds-beta"])
+        result = _list(populated_repository, nodeIds=[DS_BETA_ID])
 
         # Verify only one dataset is returned
         assert result["total"] == 1
@@ -184,16 +204,16 @@ class TestListMethod:
 
         # Extract all dataset node IDs from the result
         returned_ids = {
-            n.id for ds in result["datasets"]
+            str(n.id) for ds in result["datasets"]
             for n in ds.nodes if "sc:Dataset" in n.labels
         }
 
         # Verify that only ds-beta is returned
-        assert returned_ids == {"ds-beta"}
+        assert returned_ids == {DS_BETA_ID}
 
         # Explicitly verify that other datasets are NOT in the results
-        assert "ds-alpha" not in returned_ids
-        assert "ds-gamma" not in returned_ids
+        assert DS_ALPHA_ID not in returned_ids
+        assert DS_GAMMA_ID not in returned_ids
 
     def test_filter_by_subgraph_child_node_id(self, populated_repository):
         """Filtering by a child node ID (not the root sc:Dataset) must return the parent dataset.
@@ -203,17 +223,17 @@ class TestListMethod:
         owning dataset, confirming that the filter inspects ALL nodes in the
         subgraph and not only the dataset root node.
         """
-        # "ds-alpha-file" is the cr:FileObject connected to "ds-alpha"
-        result = _list(populated_repository, nodeIds=["ds-alpha-file"])
+        # DS_ALPHA_FILE_ID is the cr:FileObject connected to DS_ALPHA_ID
+        result = _list(populated_repository, nodeIds=[DS_ALPHA_FILE_ID])
 
         assert result["total"] == 1, (
             "Expected the parent dataset to be returned when filtering by a child node ID"
         )
         returned_dataset_ids = {
-            n.id for ds in result["datasets"]
+            str(n.id) for ds in result["datasets"]
             for n in ds.nodes if "sc:Dataset" in n.labels
         }
-        assert returned_dataset_ids == {"ds-alpha"}
+        assert returned_dataset_ids == {DS_ALPHA_ID}
 
     # -- filter by status ----------------------------------------------------
 
@@ -360,10 +380,10 @@ class TestListMethod:
         result = _list(populated_repository, mimeTypes=[MimeType.CSV])
         assert result["total"] == 2
         ids = {
-            n.id for ds in result["datasets"]
+            str(n.id) for ds in result["datasets"]
             for n in ds.nodes if "sc:Dataset" in n.labels
         }
-        assert ids == {"ds-alpha", "ds-beta"}
+        assert ids == {DS_ALPHA_ID, DS_BETA_ID}
 
     def test_mime_type_unknown_returns_empty(self, populated_repository):
         result = _list(populated_repository, mimeTypes=[MimeType.PDF])
@@ -417,14 +437,14 @@ class TestOrderByDate:
 
     def test_dd_mm_yyyy_normalised_correctly(self, mixed_date_repository):
         """DD-MM-YYYY input '15-01-2023' must be stored as '2023-01-15'."""
-        result = _list(mixed_date_repository, nodeIds=["ds-date-a"])
+        result = _list(mixed_date_repository, nodeIds=[DS_DATE_A_ID])
         stored_date = self._root(
             result["datasets"][0]).properties["datePublished"]
         assert stored_date == "2023-01-15"
 
     def test_dd_slash_mm_yyyy_normalised_correctly(self, mixed_date_repository):
         """DD/MM/YYYY input '01/06/2024' must be stored as '2024-06-01'."""
-        result = _list(mixed_date_repository, nodeIds=["ds-date-c"])
+        result = _list(mixed_date_repository, nodeIds=[DS_DATE_C_ID])
         stored_date = self._root(
             result["datasets"][0]).properties["datePublished"]
         assert stored_date == "2024-06-01"
@@ -474,8 +494,8 @@ class TestOrderByDate:
             publishedTo=date(2024, 12, 31),
         )
         assert result["total"] == 2
-        ids = {self._root(ds).id for ds in result["datasets"]}
-        assert ids == {"ds-date-b", "ds-date-c"}
+        ids = {str(self._root(ds).id) for ds in result["datasets"]}
+        assert ids == {DS_DATE_B_ID, DS_DATE_C_ID}
 
 
 # ---------------------------------------------------------------------------
@@ -502,7 +522,7 @@ class TestMimeTypeFullSubgraph:
         }
 
     def _root_id(self, ds) -> str:
-        return next(n.id for n in ds.nodes if "sc:Dataset" in n.labels)
+        return str(next(n.id for n in ds.nodes if "sc:Dataset" in n.labels))
 
     # -- selection correctness -----------------------------------------------
 
@@ -510,13 +530,13 @@ class TestMimeTypeFullSubgraph:
         result = _list(mixed_types_repository, mimeTypes=[MimeType.CSV])
         assert result["total"] == 2
         ids = {self._root_id(ds) for ds in result["datasets"]}
-        assert ids == {"ds-mixed", "ds-csv-only"}
+        assert ids == {DS_MIXED_ID, DS_CSV_ONLY_ID}
 
     def test_pdf_filter_selects_pdf_and_mixed_datasets(self, mixed_types_repository):
         result = _list(mixed_types_repository, mimeTypes=[MimeType.PDF])
         assert result["total"] == 2
         ids = {self._root_id(ds) for ds in result["datasets"]}
-        assert ids == {"ds-mixed", "ds-pdf-only"}
+        assert ids == {DS_MIXED_ID, DS_PDF_ONLY_ID}
 
     # -- full subgraph correctness -------------------------------------------
 
@@ -529,7 +549,7 @@ class TestMimeTypeFullSubgraph:
         """
         result = _list(mixed_types_repository, mimeTypes=[MimeType.CSV])
         mixed = next(
-            ds for ds in result["datasets"] if self._root_id(ds) == "ds-mixed"
+            ds for ds in result["datasets"] if self._root_id(ds) == DS_MIXED_ID
         )
         label_sets = self._file_labels(mixed)
         assert frozenset(["cr:FileObject", "CSV", "Data"]) in label_sets, (
@@ -548,7 +568,7 @@ class TestMimeTypeFullSubgraph:
         """
         result = _list(mixed_types_repository, mimeTypes=[MimeType.PDF])
         mixed = next(
-            ds for ds in result["datasets"] if self._root_id(ds) == "ds-mixed"
+            ds for ds in result["datasets"] if self._root_id(ds) == DS_MIXED_ID
         )
         label_sets = self._file_labels(mixed)
         assert frozenset(["cr:FileObject", "PDFSet", "Data"]) in label_sets, (
@@ -563,7 +583,7 @@ class TestMimeTypeFullSubgraph:
         result = _list(mixed_types_repository)
         assert result["total"] == 3
         mixed = next(
-            ds for ds in result["datasets"] if self._root_id(ds) == "ds-mixed"
+            ds for ds in result["datasets"] if self._root_id(ds) == DS_MIXED_ID
         )
         assert len(self._file_labels(mixed)) == 2, (
             "ds-mixed should have 2 file nodes when no filter is applied"
@@ -579,13 +599,14 @@ def test_prevent_ap_or_ml_traversal(
     from moma_management.domain.generated.edges.edge_schema import Edge
     from moma_management.domain.generated.nodes.node_schema import Node
 
-    ds_id = "ds-forbidden-edge-test"
-    blue_id = "blue-file-node"
+    ds_id = DS_FORBIDDEN_TEST_ID
+    blue_id = BLUE_FILE_NODE_ID
 
     # One node per forbidden edge type — simulating orange/green nodes
     orange_nodes = {
-        edge_type: f"orange-{edge_type}-node"
-        for edge_type in Neo4jDatasetRepository.FORBIDDEN_EDGES
+        # start at 3 to avoid collision with root (1) and blue (2)
+        edge_type: ORANGE_NODE_BASE.format(index=idx + 3)
+        for idx, edge_type in enumerate(Neo4jDatasetRepository.FORBIDDEN_EDGES)
     }
 
     dataset = Dataset.model_construct(
@@ -613,7 +634,7 @@ def test_prevent_ap_or_ml_traversal(
     result = dataset_repository.get(ds_id)
 
     assert result is not None
-    returned_ids = {n.id for n in result.nodes}
+    returned_ids = {str(n.id) for n in result.nodes}
 
     # The blue node must be present
     assert blue_id in returned_ids, "Blue node reachable via normal edge must be returned"

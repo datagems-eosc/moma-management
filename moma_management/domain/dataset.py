@@ -17,16 +17,17 @@ class Dataset(MoMaGraphModel):
     def root_id(self) -> str:
         """Return the id of the sc:Dataset root node."""
         root = next(n for n in self.nodes if "sc:Dataset" in n.labels)
-        return root.id
+        return str(root.id)
 
     @model_validator(mode="after")
     def check_root_node(self: Self) -> Self:
         ROOT_LABEL = "sc:Dataset"
 
         # Check that the root node is truly a root (no edges lead to it)
-        edges_to_root = [e for e in self.edges if e.to == self.root_id]
+        edges_to_root = [e for e in self.edges if str(e.to) == self.root_id]
         if edges_to_root:
-            edge_sources = ", ".join(f"({e.from_} -> {e.to})" for e in edges_to_root)
+            edge_sources = ", ".join(
+                f"({e.from_} -> {e.to})" for e in edges_to_root)
             raise ValueError(
                 f"The root '{ROOT_LABEL}' node is not a root. "
                 f"The following edges lead to it: {edge_sources}"
@@ -35,7 +36,7 @@ class Dataset(MoMaGraphModel):
         # Ensure the undirected graph is properly connected to the root
         # i.e : "Ensure all nodes are reachable from the root, no matter the direction"
         reachable = set(self._dfs_iter_undirected(self.root_id))
-        all_ids = {n.id for n in self.nodes}
+        all_ids = {str(n.id) for n in self.nodes}
 
         if reachable != all_ids:
             if reachable - all_ids:
@@ -60,12 +61,13 @@ class Dataset(MoMaGraphModel):
         """
         Check that all edges in the graph are valids
         """
-        node_labels: dict[str, list[str]] = {n.id: n.labels for n in self.nodes}
+        node_labels: dict[str, list[str]] = {
+            str(n.id): n.labels for n in self.nodes}
         violations: list[str] = []
 
         for edge in self.edges:
-            from_labels = node_labels.get(edge.from_, [])
-            to_labels = node_labels.get(edge.to, [])
+            from_labels = node_labels.get(str(edge.from_), [])
+            to_labels = node_labels.get(str(edge.to), [])
             edge_label = edge.labels[0] if edge.labels else ""
 
             allowed = any(
@@ -110,12 +112,13 @@ class Dataset(MoMaGraphModel):
                 for k, v in n.properties.items()
                 if v is not None and not (isinstance(v, list) and len(v) == 0)
             }
-        self.nodes.sort(key=lambda n: n.id)
+        self.nodes.sort(key=lambda n: str(n.id))
 
         for e in self.edges:
             if getattr(e, "labels", None):
                 e.labels = sorted(e.labels)
-        self.edges.sort(key=lambda e: (e.from_, e.to, tuple(e.labels)))
+        self.edges.sort(key=lambda e: (
+            str(e.from_), str(e.to), tuple(e.labels)))
         return self
 
     def __eq__(self, other: object) -> bool:
@@ -139,13 +142,14 @@ class Dataset(MoMaGraphModel):
         Yields all node IDs reachable from start.
         """
         visited: Set[str] = set()
-        stack: list[Tuple[str, str | None]] = [(start_id, None)]  # (node, parent)
+        stack: list[Tuple[str, str | None]] = [
+            (start_id, None)]  # (node, parent)
 
         # Build undirected adjacency list
         adj: dict[str, list[str]] = defaultdict(list)
         for edge in self.edges:
-            adj[edge.from_].append(edge.to)
-            adj[edge.to].append(edge.from_)
+            adj[str(edge.from_)].append(str(edge.to))
+            adj[str(edge.to)].append(str(edge.from_))
 
         while stack:
             node, parent = stack.pop()

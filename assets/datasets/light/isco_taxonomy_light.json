@@ -9,7 +9,7 @@
       "to": "f74004e0-f4c2-41c0-9422-60e6336138dd"
     },
     {
-      "from": "temp_id_since_profiler_does_not_issue_ids",
+      "from": "00000000-0000-0000-0000-000000001500",
       "labels": [
         "distribution"
       ],
@@ -17,7 +17,7 @@
       "to": "b51c7359-88bf-48b7-8a3f-561d36e81f74"
     },
     {
-      "from": "temp_id_since_profiler_does_not_issue_ids",
+      "from": "00000000-0000-0000-0000-000000001500",
       "labels": [
         "distribution"
       ],
@@ -58,7 +58,7 @@
       }
     },
     {
-      "id": "temp_id_since_profiler_does_not_issue_ids",
+      "id": "00000000-0000-0000-0000-000000001500",
       "labels": [
         "sc:Dataset"
       ],

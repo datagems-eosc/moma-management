@@ -48,7 +48,7 @@
         "wd": "https://www.wikidata.org/wiki/"
     },
     "@type": "sc:Dataset",
-    "@id": "temp_id_since_profiler_does_not_issue_ids",
+    "@id": "00000000-0000-0000-0000-000000001500",
     "name": "ISCO taxonomy",
     "description": "The ISCO taxonomy is the International Standard Classification of Occupations, a globally used system developed by the International Labour Organization (ILO) to organize and classify jobs based on their required tasks, duties, skill levels, and skill specializations. The current version, ISCO-08, is a four-level hierarchical structure with 10 Major Groups, 43 Sub-Major Groups, 130 Minor Groups, and 436 Unit Groups (the most detailed level), which facilitates international communication, comparative occupational statistics, and labor market analysis.",
     "sc:archivedAt": "s3:/temp_id_since_profiler_does_not_issue_ids",

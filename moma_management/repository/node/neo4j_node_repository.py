@@ -30,7 +30,7 @@ class Neo4jNodeRepository(Neo4jPgJsonMixin):
             MATCH (n {id: $nodeId})
             RETURN n
         """
-        record = self._session.run(query, nodeId=node_id).single()
+        record = self._session.run(query, nodeId=str(node_id)).single()
         if record is None:
             return None
         return Node(**self._deserialize_node(record["n"]))
@@ -44,7 +44,7 @@ class Neo4jNodeRepository(Neo4jPgJsonMixin):
                 SET n += $props
                 RETURN count(n) AS updated
             """
-            result = self._session.run(query, nodeId=node.id, props=props)
+            result = self._session.run(query, nodeId=str(node.id), props=props)
             record = result.single()
             updated = record["updated"] if record else 0
             return {"status": "success", "updated": updated}
@@ -59,5 +59,5 @@ class Neo4jNodeRepository(Neo4jPgJsonMixin):
             DETACH DELETE n
             RETURN 1 AS deleted
         """
-        record = self._session.run(query, nodeId=node_id).single()
+        record = self._session.run(query, nodeId=str(node_id)).single()
         return record["deleted"] if record else 0

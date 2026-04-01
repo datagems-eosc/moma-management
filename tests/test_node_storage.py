@@ -11,7 +11,7 @@ from moma_management.repository.node import Neo4jNodeRepository
 # ---------------------------------------------------------------------------
 
 _SAMPLE_NODE = Node(
-    id="node-1",
+    id="00000000-0000-0000-0000-000000000001",
     labels=["cr:FileObject", "CSV"],
     properties={"name": "sample.csv", "encodingFormat": "text/csv"},
 )
@@ -37,7 +37,7 @@ def test_create_and_get(node_repository: Neo4jNodeRepository):
 
 def test_get_nonexistent_returns_none(node_repository: Neo4jNodeRepository):
     """get() must return None when the node ID does not exist."""
-    assert node_repository.get("no-such-node") is None
+    assert node_repository.get("00000000-0000-0000-0000-000000000000") is None
 
 
 def test_create_is_idempotent(node_repository: Neo4jNodeRepository):
@@ -80,7 +80,7 @@ def test_update_properties(node_repository: Neo4jNodeRepository):
 
 def test_update_nonexistent_returns_zero(node_repository: Neo4jNodeRepository):
     """update() on an unknown ID must report 0 updated nodes."""
-    ghost = Node(id="ghost-node",
+    ghost = Node(id="00000000-0000-0000-0000-000000000099",
                  labels=["cr:FileObject"], properties={"x": 1})
     outcome = node_repository.update(ghost)
     assert outcome["status"] == "success"
@@ -104,22 +104,24 @@ def test_delete(node_repository: Neo4jNodeRepository):
 
 def test_delete_nonexistent_returns_zero(node_repository: Neo4jNodeRepository):
     """delete() on an unknown ID must return 0 without raising."""
-    assert node_repository.delete("no-such-node") == 0
+    assert node_repository.delete("00000000-0000-0000-0000-000000000000") == 0
 
 
 def test_delete_detaches_relationships(node_repository: Neo4jNodeRepository):
     """Deleting a node that has relationships must succeed (DETACH DELETE)."""
     # We use the repository's underlying session to add a relationship manually
     # and then verify that delete does not raise a ConstraintError.
-    node_a = Node(id="rel-node-a", labels=["cr:FileObject"], properties={})
-    node_b = Node(id="rel-node-b", labels=["cr:RecordSet"], properties={})
+    node_a = Node(id="00000000-0000-0000-0000-0000000000aa",
+                  labels=["cr:FileObject"], properties={})
+    node_b = Node(id="00000000-0000-0000-0000-0000000000bb",
+                  labels=["cr:RecordSet"], properties={})
     node_repository.create(node_a)
     node_repository.create(node_b)
 
     # Create a relationship directly via cypher
     node_repository._session.run(
         "MATCH (a {id: $a}), (b {id: $b}) MERGE (a)-[:linksTo]->(b)",
-        a=node_a.id, b=node_b.id,
+        a=str(node_a.id), b=str(node_b.id),
     )
 
     deleted = node_repository.delete(node_a.id)
