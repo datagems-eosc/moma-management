@@ -35,6 +35,8 @@ class RealmRole(str, Enum):
     UPLOADER = "GLOBAL_dg_dataset-uploader"
     # Reserved and assigned to users that should be able to process datasets available in the platform.
     CURATOR = "GLOBAL_dg_dataset-curator"
+    # Reserved and assigned to system components
+    SYSTEM = "GLOBAL_dg_system"
 
 
 class GatewayError(Exception):
@@ -92,9 +94,9 @@ class DatagemsAuthorizationService:
         """
         if what == DatasetRole.CREATE:
             # The CREATE role is a special case, as it is not assigned to any dataset but to users that can create datasets.
-            return self.has_realm_roles(who_token, [RealmRole.ADMIN, RealmRole.UPLOADER])
+            return self.has_realm_roles(who_token, [RealmRole.ADMIN, RealmRole.UPLOADER, RealmRole.SYSTEM])
 
-        return self.has_realm_roles(who_token, [RealmRole.ADMIN, RealmRole.CURATOR]) or self._has_dataset_grant(who_token, what, on_which_id)
+        return self.has_realm_roles(who_token, [RealmRole.ADMIN, RealmRole.CURATOR, RealmRole.SYSTEM]) or self._has_dataset_grant(who_token, what, on_which_id)
 
     def _has_dataset_grant(self, who_token: str, what: DatasetRole, on_which_id: str) -> bool:
         """
@@ -138,7 +140,7 @@ class DatagemsAuthorizationService:
         Returns all the dataset IDs the user has access to, or None if the
         user holds ADMIN / CURATOR realm roles (meaning they can see everything).
         """
-        if self.has_realm_roles(who_token, [RealmRole.ADMIN, RealmRole.CURATOR]):
+        if self.has_realm_roles(who_token, [RealmRole.ADMIN, RealmRole.CURATOR, RealmRole.SYSTEM]):
             return None
 
         try:
