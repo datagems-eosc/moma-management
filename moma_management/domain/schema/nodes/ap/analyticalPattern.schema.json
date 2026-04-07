@@ -1,0 +1,50 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "analyticalPattern.schema.json",
+    "title": "Analytical_Pattern",
+    "allOf": [
+        {
+            "$ref": "../node.schema.json"
+        }
+    ],
+    "type": "object",
+    "description": "Root node of an AnalyticalPattern subgraph. Identifies a reusable analytical workflow composed of Operators.",
+    "properties": {
+        "id": {
+            "type": "string",
+            "format": "uuid"
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "Analytical_Pattern"
+            ]
+        },
+        "name": {
+            "type": "string",
+            "description": "Human-readable name of the analytical pattern"
+        },
+        "description": {
+            "type": "string",
+            "description": "What the pattern does"
+        },
+        "process": {
+            "type": "string",
+            "description": "High-level process category (e.g. query, transform)"
+        },
+        "startTime": {
+            "type": "string",
+            "description": "Optional start time for execution scheduling"
+        },
+        "publishedDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the pattern was published"
+        }
+    },
+    "required": [
+        "id",
+        "type",
+        "name"
+    ]
+}

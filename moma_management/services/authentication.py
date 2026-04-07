@@ -53,6 +53,7 @@ class Authentication:
         Verifies signature (RS256), issuer, and audience (when configured).
         Raises ``jose.JWTError`` on any validation failure.
         """
+        roles = jwt.get_unverified_claims(token)
         return jwt.decode(
             token,
             self._get_jwks(),

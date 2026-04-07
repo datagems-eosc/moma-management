@@ -1,18 +1,15 @@
-import json
-from collections import defaultdict
-from typing import Iterator, Self, Set, Tuple, cast
+from typing import Iterator, Self
 
-from deepdiff import DeepDiff
 from pydantic import model_validator
 
 from moma_management.domain import EDGE_CONSTRAINTS_PATH
-from moma_management.domain.generated.moma_schema import MoMaGraphModel
 from moma_management.domain.generated.nodes import node_schema
+from moma_management.domain.pg_json_graph import PgJsonGraph
 
-_CONSTRAINTS: list[dict] = json.loads(EDGE_CONSTRAINTS_PATH.read_text())
 
+class Dataset(PgJsonGraph):
+    _edge_constraints_path = EDGE_CONSTRAINTS_PATH
 
-class Dataset(MoMaGraphModel):
     @property
     def root_id(self) -> str:
         """Return the id of the sc:Dataset root node."""
@@ -56,111 +53,8 @@ class Dataset(MoMaGraphModel):
                 )
         return self
 
-    @model_validator(mode="after")
-    def check_edge_constraints(self: Self) -> Self:
-        """
-        Check that all edges in the graph are valids
-        """
-        node_labels: dict[str, list[str]] = {
-            str(n.id): n.labels for n in self.nodes}
-        violations: list[str] = []
-
-        for edge in self.edges:
-            from_labels = node_labels.get(str(edge.from_), [])
-            to_labels = node_labels.get(str(edge.to), [])
-            edge_label = edge.labels[0] if edge.labels else ""
-
-            allowed = any(
-                c["label"] == edge_label
-                and c["fromLabel"] in from_labels
-                and c["toLabel"] in to_labels
-                for c in _CONSTRAINTS
-            )
-
-            if not allowed:
-                violations.append(
-                    f"({edge.from_}){from_labels} -[{edge_label}]-> "
-                    f"({edge.to}){to_labels}"
-                )
-
-        if violations:
-            raise ValueError(
-                "Edges violate graph constraints:\n"
-                + "\n".join(f"  {v}" for v in violations)
-            )
-
-        return self
-
     def find_all(self, label: str) -> Iterator[node_schema.Node]:
         """Return all nodes with a given label."""
         yield from (n for n in self.nodes if label in n.labels)
 
-    def normalize(self) -> Self:
-        """
-        Normalize the AP in place:
-        - Sorts nodes by id
-        - Sorts edges by from_, to, labels
-        - Sorts labels alphabetically
-        - Strips None and empty-list property values (Neo4j silently drops them)
-        While the order itself doesn't matter at all, this allows for comparison
-        """
-        for n in self.nodes:
-            if getattr(n, "labels", None):
-                n.labels = sorted(n.labels)
-            n.properties = {
-                k: v
-                for k, v in n.properties.items()
-                if v is not None and not (isinstance(v, list) and len(v) == 0)
-            }
-        self.nodes.sort(key=lambda n: str(n.id))
-
-        for e in self.edges:
-            if getattr(e, "labels", None):
-                e.labels = sorted(e.labels)
-        self.edges.sort(key=lambda e: (
-            str(e.from_), str(e.to), tuple(e.labels)))
-        return self
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Dataset):
-            return NotImplemented
-
-        # Simple assertions before doing the expensive computation
-        assert other is not None
-        assert len(other.nodes) == len(other.nodes)
-        assert len(other.edges) == len(other.edges)
-
-        # NOTE : Casting to Self is not necessary but it prevent a warning
-        # as Pylance doesn't recognize the pseudo class "Self" as the same as
-        # the complete class "Dataset"
-        # So this is safe to do
-        return self.difference(cast(Self, other)) == {}
-
-    def _dfs_iter_undirected(self, start_id: str) -> Iterator[str]:
-        """
-        Iterative DFS for undirected graphs starting from `start_id`.
-        Yields all node IDs reachable from start.
-        """
-        visited: Set[str] = set()
-        stack: list[Tuple[str, str | None]] = [
-            (start_id, None)]  # (node, parent)
-
-        # Build undirected adjacency list
-        adj: dict[str, list[str]] = defaultdict(list)
-        for edge in self.edges:
-            adj[str(edge.from_)].append(str(edge.to))
-            adj[str(edge.to)].append(str(edge.from_))
-
-        while stack:
-            node, parent = stack.pop()
-            if node in visited:
-                continue
-            visited.add(node)
-            yield node
-
-            for neighbor in adj[node]:
-                if neighbor != parent:
-                    stack.append((neighbor, node))
-
-    def difference(self, other: Self) -> DeepDiff:
-        return DeepDiff(self.normalize(), other.normalize(), ignore_order=True)
+    # normalize / difference / __eq__ / _dfs_iter_undirected inherited from PgJsonGraph

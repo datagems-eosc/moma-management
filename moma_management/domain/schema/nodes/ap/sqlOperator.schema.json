@@ -1,0 +1,28 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "sqlOperator.schema.json",
+    "title": "SQL_Operator",
+    "allOf": [
+        {
+            "$ref": "operator.schema.json"
+        }
+    ],
+    "type": "object",
+    "description": "An Operator that executes a SQL statement. Carries the SQL query and metadata about the query type.",
+    "properties": {
+        "type": {
+            "type": "string",
+            "enum": [
+                "SQL_Operator"
+            ]
+        },
+        "query": {
+            "type": "string",
+            "description": "The SQL query string (may contain template placeholders)"
+        },
+        "queryType": {
+            "type": "string",
+            "description": "SQL verb (e.g. SELECT, INSERT, UPDATE, DELETE)"
+        }
+    }
+}

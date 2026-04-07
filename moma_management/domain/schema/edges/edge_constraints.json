@@ -58,5 +58,41 @@
         "label": "statistics",
         "toLabel": "Statistics",
         "description": "Column → its column statistics"
+    },
+    {
+        "fromLabel": "Analytical_Pattern",
+        "label": "consist_of",
+        "toLabel": "Operator",
+        "description": "AnalyticalPattern → Operator steps it is composed of"
+    },
+    {
+        "fromLabel": "Operator",
+        "label": "input",
+        "toLabel": "Data",
+        "description": "Operator reads from a Data node (must belong to an existing dataset)"
+    },
+    {
+        "fromLabel": "Operator",
+        "label": "output",
+        "toLabel": "Data",
+        "description": "Operator produces a Data node"
+    },
+    {
+        "fromLabel": "Operator",
+        "label": "follows",
+        "toLabel": "Operator",
+        "description": "Operator executes after another Operator (sequential ordering)"
+    },
+    {
+        "fromLabel": "User",
+        "label": "uses",
+        "toLabel": "Operator",
+        "description": "User triggers or configures an Operator"
+    },
+    {
+        "fromLabel": "Task",
+        "label": "is_accomplished_by",
+        "toLabel": "Analytical_Pattern",
+        "description": "Task is fulfilled by an AnalyticalPattern (edge lives outside the AP subgraph)"
     }
 ]

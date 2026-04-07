@@ -59,6 +59,7 @@ Distribution:
     by_encoding:
       "text/csv":        ["CSV", "Data", "@type"]
       "application/pdf": ["PDFSet", "Data", "@type"]
+      "text/plain":      ["TextSet", "Data", "@type"]
       "text/sql":
         when: containedIn
         then: ["Table", "Data", "@type"]
@@ -75,6 +76,7 @@ Distribution:
     contentSize:    contentSize
     contentUrl:     contentUrl
     sha256:         sha256
+
   edges:
     - from: $parent
       to:   $self
@@ -111,6 +113,7 @@ Field:
       to:   $self
       label: field
   variants:
+    
     - when: "source.fileObject.@id"
       node_type: Column
       labels: ["Column", "@type"]
@@ -128,6 +131,30 @@ Field:
         - from: $self
           to:   "source.fileObject.@id"
           label: "source/fileObject"
+
+    - when: "source.fileSet.@id" 
+      node_type: Text
+      labels: ["Text", "@type"]
+      properties:
+        type:               "@type"
+        name:               name
+        summary:            "dg:summary"
+        keywords:           "dg:keywords"
+        language:           language
+        numLines:           "dg:numLines"
+        numWords:           "dg:numWords"
+        numCharacters:      "dg:numCharacters"
+        avgSentenceLength:  "dg:avgSentenceLength"
+        numParagraphs:      "dg:numParagraphs"
+        fleschKincaidGrade: "dg:fleschKincaidGrade"
+      edges:
+        - from: $parent
+          to:   $self
+          label: field
+        - from: $self
+          to:   "source.fileSet.@id"
+          label: "source/fileSet"
+
     - else: true
       node_type: PDF
       labels: ["PDF", "@type"]

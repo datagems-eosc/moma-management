@@ -170,7 +170,7 @@ def test_ingest_repo_error_propagates(mapping_file: Path):
     repo.create.side_effect = RuntimeError("Neo4j is down")
     svc = DatasetService(repo=repo, mapping_file=mapping_file)
     light_profile = next(
-        (Path(__file__).parent.parent / "assets" /
+        (Path(__file__).parent.parent.parent / "assets" /
          "profiles" / "light").glob("*.json")
     )
     with pytest.raises(RuntimeError, match="Neo4j is down"):

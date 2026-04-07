@@ -1,0 +1,46 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "task.schema.json",
+    "title": "Task",
+    "allOf": [
+        {
+            "$ref": "../node.schema.json"
+        }
+    ],
+    "type": "object",
+    "description": "A Task node represents a user-defined analytical goal. It is linked to one or more AnalyticalPatterns that accomplish it. Tasks live outside the AP subgraph and are never stored inside it.",
+    "properties": {
+        "id": {
+            "type": "string",
+            "format": "uuid"
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "Task"
+            ]
+        },
+        "name": {
+            "type": "string",
+            "description": "Short name of the task"
+        },
+        "description": {
+            "type": "string",
+            "description": "Full description of what the task entails"
+        },
+        "executionTime": {
+            "type": "string",
+            "description": "Expected or actual execution time"
+        },
+        "userRequest": {
+            "type": "string",
+            "description": "The original natural language request from the user"
+        }
+    },
+    "required": [
+        "id",
+        "type",
+        "name",
+        "description"
+    ]
+}
