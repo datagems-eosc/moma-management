@@ -1,9 +1,7 @@
-from typing import Any, List, Optional, Protocol
-
-from moma_management.domain.dataset import Dataset
-from moma_management.domain.filters import DatasetFilter
+from typing import Any, List, Optional, Protocol, runtime_checkable
 
 
+@runtime_checkable
 class Repository[T, F= Any](Protocol):
     """
     Facade to decouple single-node graph operations from their physical storage.

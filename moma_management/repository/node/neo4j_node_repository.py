@@ -5,11 +5,12 @@ from neo4j import Session
 
 from moma_management.domain.generated.nodes.node_schema import Node
 from moma_management.repository.neo4j_pgson_mixin import Neo4jPgJsonMixin
+from moma_management.repository.node.node_repository import NodeRepository
 
 logger = getLogger(__name__)
 
 
-class Neo4jNodeRepository(Neo4jPgJsonMixin):
+class Neo4jNodeRepository(Neo4jPgJsonMixin, NodeRepository):
     """Neo4j-backed implementation of NodeRepository."""
 
     def __init__(self, session: Session):
