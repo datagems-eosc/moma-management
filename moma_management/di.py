@@ -28,6 +28,7 @@ from moma_management.services.authorization import (
     UserError,
 )
 from moma_management.services.dataset import DatasetService
+from moma_management.services.embeddings import Embedder, LocalEmbedder
 from moma_management.services.node import NodeService
 from moma_management.services.task import TaskService
 
@@ -39,6 +40,9 @@ NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "datagems")
 
 driver: Driver
+_embedder: Optional[Embedder] = None
+
+_DEFAULT_EMBEDDER_MODEL = "all-MiniLM-L6-v2"
 
 
 @asynccontextmanager
@@ -48,11 +52,17 @@ async def container_lifespan(_: FastAPI):
     This ties the driver's lifecycle to that of the FastAPI application
     and prevents connection leaks.
     """
-    global driver
+    global driver, _embedder
     driver = GraphDatabase.driver(
         NEO4J_URI,
         auth=(NEO4J_USER, NEO4J_PASSWORD),
     )
+
+    embedder_model = os.getenv("EMBEDDER_MODEL", _DEFAULT_EMBEDDER_MODEL)
+    if embedder_model:
+        _embedder = LocalEmbedder(model_name=embedder_model)
+        logger.info("Embedder loaded: %s (%d dimensions)", embedder_model, _embedder.dimensions)
+
     yield
     driver.close()
 
@@ -390,12 +400,18 @@ def get_ap_repo(session: Session = Depends(get_db_session)) -> AnalyticalPattern
     return Neo4jAnalyticalPatternRepository(session)
 
 
+def get_embedder() -> Optional[Embedder]:
+    """Return the application-wide embedder instance (or ``None`` if disabled)."""
+    return _embedder
+
+
 def get_ap_service(
     repo: AnalyticalPatternRepository = Depends(get_ap_repo),
     dataset_svc: DatasetService = Depends(get_dataset_service),
+    embedder: Optional[Embedder] = Depends(get_embedder),
 ) -> AnalyticalPatternService:
     """Return the service for AnalyticalPattern operations."""
-    return AnalyticalPatternService(repo, dataset_svc)
+    return AnalyticalPatternService(repo, dataset_svc, embedder=embedder)
 
 
 def get_task_repo(session: Session = Depends(get_db_session)) -> TaskRepository:

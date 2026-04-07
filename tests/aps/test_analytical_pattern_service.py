@@ -93,7 +93,7 @@ def test_create_success_when_input_node_found():
     svc = AnalyticalPatternService(repo, dataset_svc)
     returned_id = svc.create(ap)
 
-    repo.create.assert_called_once_with(ap)
+    repo.create.assert_called_once_with(ap, embedding=None)
     assert returned_id == str(ap.root.id)
 
 
@@ -108,7 +108,7 @@ def test_create_success_with_no_input_edges():
     returned_id = svc.create(ap)
 
     dataset_svc.list.assert_not_called()
-    repo.create.assert_called_once_with(ap)
+    repo.create.assert_called_once_with(ap, embedding=None)
     assert returned_id == str(ap.root.id)
 
 
@@ -124,102 +124,124 @@ def test_get_raises_not_found():
 
 
 # ---------------------------------------------------------------------------
-# list() — accessible_dataset_ids filtering
+# list() — accessible_dataset_ids passed to repo
 # ---------------------------------------------------------------------------
 
-def _make_ap_with_input_and_dataset(data_node_id: str, dataset_id: str) -> tuple[AnalyticalPattern, MagicMock]:
-    """Return (AP, mock_dataset) where the AP has one input edge to *data_node_id*."""
-    root_id = str(uuid4())
-    op_id = str(uuid4())
-    ap = AnalyticalPattern(
-        nodes=[
-            Node(id=root_id, labels=[
-                 "Analytical_Pattern"], properties={"name": "ap"}),
-            Node(id=op_id, labels=["Operator"], properties={"name": "op"}),
-            Node(id=data_node_id, labels=["Data"],
-                 properties={"name": "data"}),
-        ],
-        edges=[
-            Edge(**{"from": root_id, "to": op_id, "labels": ["consist_of"]}),
-            Edge(**{"from": op_id, "to": data_node_id, "labels": ["input"]}),
-        ],
-    )
-    mock_ds = MagicMock()
-    ds_node = MagicMock()
-    ds_node.id = dataset_id
-    ds_node.labels = ["sc:Dataset"]
-    mock_ds.nodes = [ds_node]
-    return ap, mock_ds
-
-
 def test_list_no_filter_returns_all():
-    """list() with accessible_dataset_ids=None returns everything."""
-    data_id = str(uuid4())
-    ap, _ = _make_ap_with_input_and_dataset(data_id, str(uuid4()))
+    """list() with accessible_dataset_ids=None passes None to repo."""
+    ap = _make_ap_no_input()
 
     repo = MagicMock()
     repo.list.return_value = [ap]
     svc = AnalyticalPatternService(repo, MagicMock())
 
     result = svc.list(accessible_dataset_ids=None)
+    repo.list.assert_called_once_with(accessible_dataset_ids=None)
     assert result == [ap]
 
 
-def test_list_filter_includes_accessible_ap():
-    """list() returns an AP whose input dataset is in accessible_dataset_ids."""
+def test_list_passes_accessible_ids_to_repo():
+    """list() forwards accessible_dataset_ids to the repository."""
+    ap = _make_ap_no_input()
+    ds_ids = ["ds-1", "ds-2"]
+
+    repo = MagicMock()
+    repo.list.return_value = [ap]
+    svc = AnalyticalPatternService(repo, MagicMock())
+
+    result = svc.list(accessible_dataset_ids=ds_ids)
+    repo.list.assert_called_once_with(accessible_dataset_ids=ds_ids)
+    assert result == [ap]
+
+
+# ---------------------------------------------------------------------------
+# create() — embedding
+# ---------------------------------------------------------------------------
+
+def test_create_embeds_description_when_embedder_set():
+    """create() calls embedder.embed() and passes the vector to repo."""
     data_id = str(uuid4())
-    ds_id = str(uuid4())
-    ap, mock_ds = _make_ap_with_input_and_dataset(data_id, ds_id)
+    ap = _make_ap_with_input(data_id)
+    # Add a description to the root node
+    ap.root.properties["description"] = "weather data analysis"
 
     repo = MagicMock()
-    repo.list.return_value = [ap]
     dataset_svc = MagicMock()
-    dataset_svc.list.return_value = {"datasets": [mock_ds]}
+    mock_node = MagicMock()
+    mock_node.id = data_id
+    mock_dataset = MagicMock()
+    mock_dataset.nodes = [mock_node]
+    dataset_svc.list.return_value = {"datasets": [mock_dataset]}
 
-    svc = AnalyticalPatternService(repo, dataset_svc)
-    result = svc.list(accessible_dataset_ids=[ds_id])
+    embedder = MagicMock()
+    embedder.embed.return_value = [0.1, 0.2, 0.3]
 
-    assert result == [ap]
+    svc = AnalyticalPatternService(repo, dataset_svc, embedder=embedder)
+    svc.create(ap)
+
+    embedder.embed.assert_called_once_with("weather data analysis")
+    repo.create.assert_called_once_with(ap, embedding=[0.1, 0.2, 0.3])
 
 
-def test_list_filter_excludes_inaccessible_ap():
-    """list() excludes an AP whose input dataset is not in accessible_dataset_ids."""
-    data_id = str(uuid4())
-    ds_id = str(uuid4())
-    ap, mock_ds = _make_ap_with_input_and_dataset(data_id, ds_id)
+def test_create_no_embedding_when_no_embedder():
+    """create() passes embedding=None when no embedder is configured."""
+    ap = _make_ap_no_input()
+    ap.root.properties["description"] = "some description"
 
     repo = MagicMock()
-    repo.list.return_value = [ap]
-    dataset_svc = MagicMock()
-    dataset_svc.list.return_value = {"datasets": [mock_ds]}
+    svc = AnalyticalPatternService(repo, MagicMock())
+    svc.create(ap)
 
-    svc = AnalyticalPatternService(repo, dataset_svc)
-    result = svc.list(accessible_dataset_ids=["other-dataset-id"])
-
-    assert result == []
+    repo.create.assert_called_once_with(ap, embedding=None)
 
 
-def test_list_filter_includes_ap_with_no_inputs():
-    """list() always includes APs with no input edges, regardless of accessible_dataset_ids."""
-    root_id = str(uuid4())
-    op_id = str(uuid4())
-    ap = AnalyticalPattern(
-        nodes=[
-            Node(id=root_id, labels=[
-                 "Analytical_Pattern"], properties={"name": "ap"}),
-            Node(id=op_id, labels=["Operator"], properties={"name": "op"}),
-        ],
-        edges=[
-            Edge(**{"from": root_id, "to": op_id, "labels": ["consist_of"]}),
-        ],
-    )
+# ---------------------------------------------------------------------------
+# search()
+# ---------------------------------------------------------------------------
+
+def test_search_raises_when_no_embedder():
+    """search() raises ValidationError when embedder is not configured."""
+    repo = MagicMock()
+    svc = AnalyticalPatternService(repo, MagicMock())
+
+    with pytest.raises(ValidationError, match="no embedder configured"):
+        svc.search("weather")
+
+
+def test_search_returns_results():
+    """search() delegates to embedder.embed and repo.search."""
+    ap = _make_ap_no_input()
+    embedding = [0.1, 0.2, 0.3]
+
+    embedder = MagicMock()
+    embedder.embed.return_value = embedding
 
     repo = MagicMock()
-    repo.list.return_value = [ap]
-    dataset_svc = MagicMock()
+    repo.search.return_value = [(ap, 0.95)]
 
-    svc = AnalyticalPatternService(repo, dataset_svc)
-    result = svc.list(accessible_dataset_ids=[])
+    svc = AnalyticalPatternService(repo, MagicMock(), embedder=embedder)
+    results = svc.search("some query")
 
-    dataset_svc.list.assert_not_called()
-    assert result == [ap]
+    embedder.embed.assert_called_once_with("some query")
+    repo.search.assert_called_once_with(embedding, 10, accessible_dataset_ids=None)
+    assert len(results) == 1
+    assert results[0] == (ap, 0.95)
+
+
+def test_search_passes_accessible_ids_to_repo():
+    """search() forwards accessible_dataset_ids to repo.search."""
+    ap = _make_ap_no_input()
+    embedding = [0.1, 0.2, 0.3]
+    ds_ids = ["ds-1"]
+
+    embedder = MagicMock()
+    embedder.embed.return_value = embedding
+
+    repo = MagicMock()
+    repo.search.return_value = [(ap, 0.9)]
+
+    svc = AnalyticalPatternService(repo, MagicMock(), embedder=embedder)
+    results = svc.search("query", accessible_dataset_ids=ds_ids)
+
+    repo.search.assert_called_once_with(embedding, 10, accessible_dataset_ids=ds_ids)
+    assert results == [(ap, 0.9)]
