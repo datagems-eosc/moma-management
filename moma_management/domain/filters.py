@@ -4,7 +4,10 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from moma_management.domain.generated.nodes.dataset_schema import Dataset, Status
+from moma_management.domain.generated.nodes.dataset.dataset_schema import (
+    Dataset,
+    Status,
+)
 
 
 class MimeType(str, Enum):

@@ -18,7 +18,7 @@ from moma_management.domain.filters import (
     NodeLabel,
     SortDirection,
 )
-from moma_management.domain.generated.nodes.dataset_schema import Status
+from moma_management.domain.generated.nodes.dataset.dataset_schema import Status
 from moma_management.repository.dataset import Neo4jDatasetRepository
 from moma_management.repository.neo4j_pgson_mixin import _DATE_PROPS, _to_iso_date
 from tests.utils import (

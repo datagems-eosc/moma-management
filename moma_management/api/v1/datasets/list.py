@@ -12,7 +12,7 @@ from moma_management.domain.filters import (
     NodeLabel,
     SortDirection,
 )
-from moma_management.domain.generated.nodes.dataset_schema import Status
+from moma_management.domain.generated.nodes.dataset.dataset_schema import Status
 from moma_management.services.dataset import DatasetService
 
 
