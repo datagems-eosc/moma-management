@@ -22,7 +22,13 @@ Test files are in the `tests/` folder:
 | `test_dataset_service.py` | Dataset service business logic |
 | `test_dataset_storage.py` | Neo4j dataset repository (integration) |
 | `test_node_storage.py` | Neo4j node repository (integration) |
-| `test_api.py` | End-to-end API tests |
+| `test_permissions.py` | Authentication and authorization |
+| `test_edge_constraints.py` | Edge-constraint validation |
+| `test_cross_concern.py` | Cross-resource integration (AP ↔ Dataset) |
+| `aps/test_analytical_pattern_storage.py` | Neo4j AP repository (integration) |
+| `aps/test_analytical_pattern_service.py` | AP service business logic |
+| `aps/test_ap_validation.py` | AP/Dataset schema validation |
+| `test_api.py` | End-to-end API tests (Postman collection runner) |
 
 Tests are also run automatically on every push and pull request via the [CI workflow](automations.md).
 

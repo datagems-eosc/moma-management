@@ -5,7 +5,7 @@
 
 ## Overview
 
-The **MoMa Management API** manage CRUD operation on MoMa, a data-flox graph.
+The **MoMa Management API** manages CRUD operations on MoMa, a data-flow graph. It handles **datasets**, **analytical patterns (APs)**, **tasks**, and individual graph **nodes**, backed by a Neo4j property graph store.
 
 ## Quick Start
 
@@ -23,7 +23,7 @@ And run the project :
 uv run python moma_management/main.py
 ```
 
-Once launched, the APi is avilable here
+Once launched, the API is available here
 **Interactive docs:** http://localhost:5000/docs
 
 ## Running the container
@@ -62,6 +62,7 @@ Configuration is managed entirely through environment variables:
 | `OIDC_AUDIENCE`           | no       | *(empty)*                            | Expected JWT audience claim (optional)                                   |
 | `JWKS_TTL_SECONDS`        | no       | `300`                                | How long to cache the JWKS from the OIDC issuer (seconds)                |
 | `PERMISSIONS_GATEWAY_URL` | no       | *(empty)*                            | External gateway URL for dataset-level authorization (disabled if unset) |
+| `EMBEDDER_MODEL`          | no       | `all-MiniLM-L6-v2`                  | Sentence-transformers model for AP semantic search (set empty to disable) |
 
 *¹ These three variables must be set together to enable token exchange. Required only if using token exchange for the permissions gateway.*
 
@@ -69,13 +70,15 @@ Configuration is managed entirely through environment variables:
 
 ### Datasets (`/datasets`)
 
-| Method   | Path                | Description                                             |
-| -------- | ------------------- | ------------------------------------------------------- |
-| `POST`   | `/datasets`         | Ingest a Croissant profile → store as PG-JSON in Neo4j  |
-| `GET`    | `/datasets`         | List datasets with filtering and pagination             |
-| `GET`    | `/datasets/{id}`    | Retrieve the full dataset subgraph by ID                |
-| `DELETE` | `/datasets/{id}`    | Delete a dataset and its connected subgraph             |
-| `POST`   | `/datasets/convert` | Convert a Croissant profile to PG-JSON (no persistence) |
+| Method   | Path                  | Description                                             |
+| -------- | --------------------- | ------------------------------------------------------- |
+| `POST`   | `/datasets`           | Create a dataset from a PG-JSON body                    |
+| `POST`   | `/datasets/croissant` | Ingest a Croissant profile → store as PG-JSON in Neo4j  |
+| `GET`    | `/datasets`           | List datasets with filtering and pagination             |
+| `GET`    | `/datasets/{id}`      | Retrieve the full dataset subgraph by ID                |
+| `DELETE` | `/datasets/{id}`      | Delete a dataset and its connected subgraph             |
+| `POST`   | `/datasets/convert`   | Convert a Croissant profile to PG-JSON (no persistence) |
+| `POST`   | `/datasets/validate`  | Validate a PG-JSON dataset against the MoMa schema      |
 
 #### `GET /datasets` query parameters
 
@@ -92,6 +95,31 @@ Configuration is managed entirely through environment variables:
 | `status`        | `Status`             | —       | Filter by dataset status     |
 | `page`          | `int ≥ 1`            | `1`     | Page number                  |
 | `pageSize`      | `1–100`              | `25`    | Items per page               |
+
+### Analytical Patterns (`/aps`)
+
+| Method   | Path             | Description                                            |
+| -------- | ---------------- | ------------------------------------------------------ |
+| `POST`   | `/aps`           | Create an AP (caller must be able to browse input datasets) |
+| `GET`    | `/aps`           | List APs (supports semantic search via `q` parameter)  |
+| `GET`    | `/aps/{id}`      | Retrieve an AP by root node ID                         |
+| `DELETE` | `/aps/{id}`      | Delete an AP (leaves referenced dataset nodes intact)  |
+| `POST`   | `/aps/validate`  | Validate a PG-JSON AP against the MoMa schema          |
+
+#### `GET /aps` query parameters
+
+| Parameter   | Type    | Default | Description                                    |
+| ----------- | ------- | ------- | ---------------------------------------------- |
+| `q`         | string  | —       | Natural-language query for semantic search      |
+| `top_k`     | 1–100   | `10`    | Max results to return                           |
+| `threshold` | 0.0–1.0 | `0.0`   | Minimum similarity score                        |
+
+### Tasks (`/tasks`)
+
+| Method | Path              | Description                                      |
+| ------ | ----------------- | ------------------------------------------------ |
+| `POST` | `/tasks`          | Create a new Task node                           |
+| `GET`  | `/tasks/{id}/aps` | Get AP IDs accomplished by a task                |
 
 ### Nodes (`/nodes`)
 
@@ -112,20 +140,34 @@ Configuration is managed entirely through environment variables:
 moma_management/
 ├── main.py                    # FastAPI app entry point (port 5000)
 ├── di.py                      # Dependency injection (Neo4j driver, auth, service wiring)
-├── api/v1/                    # Front facing API
+├── api/v1/
+│   ├── datasets/              # Dataset endpoints
+│   ├── analytical_patterns/   # AP endpoints
+│   ├── nodes/                 # Node endpoints
+│   └── tasks/                 # Task endpoints
 ├── services/
-│   ├── dataset.py             # Dataset CRUD
+│   ├── dataset.py             # Dataset CRUD + Croissant ingestion
+│   ├── analytical_pattern.py  # AP CRUD + semantic search
 │   ├── node.py                # Node CRUD
+│   ├── task.py                # Task CRUD
 │   ├── authentication.py      # JWT validation (OIDC/JWKS, RS256)
-│   └── authorization.py       # Dataset-level permission checks via external gateway
+│   ├── authorization.py       # Dataset-level permission checks via external gateway
+│   └── embeddings/            # Sentence-transformer embedder for AP search
 ├── domain/
-│   ├── dataset.py             # Dataset model with graph validation
+│   ├── pg_json_graph.py       # Base class for validated PG-JSON graphs
+│   ├── dataset.py             # Dataset model
+│   ├── analytical_pattern.py  # AnalyticalPattern model
+│   ├── schema_validator.py    # JSON-Schema validation with AJV-style errors
 │   ├── filters.py             # Query filter / pagination models
 │   ├── mapping_engine.py      # Croissant → PG-JSON conversion logic
 │   ├── mapping.yml            # Field mapping configuration
 │   ├── generated/             # Pydantic v2 models (generated via `make gen`)
 │   └── schema/                # JSON Schema source files
-├── repository/                # Object to DB layer
+├── repository/
+│   ├── dataset/               # Dataset repository (Neo4j)
+│   ├── analytical_pattern/    # AP repository (Neo4j + vector index)
+│   ├── node/                  # Node repository (Neo4j)
+│   └── task/                  # Task repository (Neo4j)
 └── legacy/
     └── converters.py          # Deprecated converters (kept for reference)
 ```
@@ -245,7 +287,7 @@ The MoMa Management API supports optional JWT-based authentication and authoriza
 
 - **Authentication** – When `OIDC_ISSUER` is set, all endpoints require a valid Bearer token (JWT). Tokens are validated using RS256 signatures from the OIDC issuer's JWKS endpoint.
 - **Token Exchange** – If `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, and `OIDC_EXCHANGE_SCOPE` are configured, incoming tokens are exchanged for a scope-specific token to be used with the permissions gateway.
-- **Authorization** – When `PERMISSIONS_GATEWAY_URL` is set, the service queries the gateway to verify the caller's permission for each dataset operation (`browse`, `edit`, `delete`).
+- **Authorization** – When `PERMISSIONS_GATEWAY_URL` is set, the service queries the gateway to verify the caller's permission for each operation. Dataset endpoints check `CREATE`, `BROWSE`, `DELETE`, or `EDIT` grants. AP endpoints require `BROWSE` on the referenced input datasets. Task endpoints require authentication only (no RBAC). Validate and convert endpoints are public.
 
 **Development mode:** Leave `OIDC_ISSUER` and `PERMISSIONS_GATEWAY_URL` unset to disable both authentication and authorization (useful for local testing).
 

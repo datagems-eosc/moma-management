@@ -11,6 +11,10 @@ Neo4j is a native property graph database accessed via the official Python drive
 
 The graph schema is formally defined in `moma_management/domain/schema/moma.schema.json` and translated into Pydantic v2 models via `make gen`.
 
+## Vector index
+
+A Neo4j vector index is used for semantic search over Analytical Pattern nodes. AP descriptions are embedded at creation time using a `sentence-transformers` model (configurable via `EMBEDDER_MODEL`) and stored as vector properties on the AP root node. The vector index is created lazily on first use.
+
 ## Connection
 
 The service connects to Neo4j using the Bolt URI, username, and password configured through the `NEO4J_URI`, `NEO4J_USER`, and `NEO4J_PASSWORD` environment variables (see [Configuration](configuration.md)). A single driver instance is created at startup and torn down gracefully on shutdown via the FastAPI lifespan context manager.

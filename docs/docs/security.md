@@ -45,9 +45,13 @@ The following action verbs are checked per endpoint:
 
 | Action | Endpoints |
 |---|---|
-| `browse` | `GET /datasets`, `GET /datasets/{id}`, `GET /nodes/{id}`, `POST /datasets/convert` |
-| `edit` | `POST /datasets`, `PATCH /nodes/{id}` |
-| `delete` | `DELETE /datasets/{id}` |
+| `CREATE` | `POST /datasets`, `POST /datasets/croissant` |
+| `BROWSE` | `GET /datasets`, `GET /datasets/{id}`, `GET /nodes/{id}` |
+| `BROWSE` (on input datasets) | `POST /aps`, `GET /aps`, `GET /aps/{id}`, `DELETE /aps/{id}` |
+| `EDIT` | `PATCH /nodes/{id}` |
+| `DELETE` | `DELETE /datasets/{id}` |
+| authenticated only | `POST /tasks`, `GET /tasks/{id}/aps` |
+| none | `POST /datasets/convert`, `POST /datasets/validate`, `POST /aps/validate`, `GET /health` |
 
 > **Note:** Authorization can be disabled for local development by leaving `PERMISSIONS_GATEWAY_URL` unset. A warning is logged at startup when running in this mode.
 

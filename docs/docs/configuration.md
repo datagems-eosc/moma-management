@@ -33,6 +33,12 @@ The MoMa Management API is configured entirely through **environment variables**
 |---|---|---|
 | `PERMISSIONS_GATEWAY_URL` | *(empty)* | Base URL of the external permissions gateway used for per-dataset authorization checks. **Authorization is disabled when this is unset.** |
 
+### Semantic search
+
+| Variable | Default | Description |
+|---|---|---|
+| `EMBEDDER_MODEL` | `all-MiniLM-L6-v2` | Sentence-transformers model name used to embed AP descriptions for semantic search. Set to an empty string to disable the embedder. |
+
 ## Secrets
 
 The variables `NEO4J_PASSWORD` and `OIDC_*` contain sensitive data. In production these should be supplied via a secrets manager (e.g. Kubernetes Secrets, Docker secrets, Vault) rather than plain environment variables or `.env` files.

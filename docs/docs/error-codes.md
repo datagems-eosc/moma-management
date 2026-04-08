@@ -7,11 +7,13 @@ The MoMa Management API uses standard HTTP status codes to communicate the outco
 | Code | Meaning | When it occurs |
 |---|---|---|
 | `200 OK` | Success | Request succeeded and a body is returned |
-| `204 No Content` | Success (no body) | `DELETE /datasets/{id}` completed successfully |
+| `201 Created` | Resource created | `POST /aps`, `POST /tasks` completed successfully |
+| `204 No Content` | Success (no body) | `DELETE /datasets/{id}`, `DELETE /aps/{id}` completed successfully |
 | `400 Bad Request` | Client error | Request body failed Pydantic validation |
 | `401 Unauthorized` | Authentication failure | Missing, expired, or invalid Bearer token |
 | `403 Forbidden` | Authorization failure | Token is valid but the caller lacks the required permission |
-| `404 Not Found` | Resource not found | Dataset or node with the given ID does not exist |
+| `404 Not Found` | Resource not found | Dataset, AP, task, or node with the given ID does not exist |
+| `409 Conflict` | Resource conflict | Dataset cannot be deleted because it is referenced by an AP |
 | `422 Unprocessable Entity` | Validation error | FastAPI request model validation failed (e.g. wrong query parameter type) |
 | `500 Internal Server Error` | Server error | Unexpected error during processing |
 | `502 Bad Gateway` | Upstream error | Permissions gateway returned an unexpected error or was unreachable |

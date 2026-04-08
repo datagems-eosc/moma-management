@@ -1,6 +1,6 @@
 # API Overview
 
-The MoMa Management API is a RESTful HTTP API built with [FastAPI](https://fastapi.tiangolo.com/). All routes are versioned under `/v1` and grouped into two resource families: **datasets** and **nodes**.
+The MoMa Management API is a RESTful HTTP API built with [FastAPI](https://fastapi.tiangolo.com/). All routes are versioned under `/v1` and grouped into four resource families: **datasets**, **analytical patterns**, **tasks**, and **nodes**.
 
 The full machine-readable specification is available in the [OpenAPI Reference](openapi.md). The interactive docs (Swagger UI) are served at `/docs` when the service is running.
 
@@ -12,7 +12,7 @@ All request and response bodies use `application/json`. Clients must set the `Co
 
 ### Authentication
 
-All endpoints require a valid Bearer JWT in the `Authorization` header. See the [Security](security.md) page for details.
+All endpoints require a valid Bearer JWT in the `Authorization` header unless noted otherwise (validation, conversion, and health endpoints are public). See the [Security](security.md) page for details.
 
 ### Pagination
 
@@ -37,20 +37,47 @@ All resource identifiers (`id`) are strings. Dataset and node IDs are assigned a
 
 ### Datasets
 
-| Method | Path | Auth action | Description |
+| Method | Path | Auth | Description |
 |---|---|---|---|
-| `POST` | `/datasets` | `edit` | Ingest a Croissant profile and persist it as a PG-JSON subgraph |
-| `GET` | `/datasets` | `browse` | List datasets with optional filtering and pagination |
-| `GET` | `/datasets/{id}` | `browse` | Retrieve the full dataset subgraph (nodes + edges) |
-| `DELETE` | `/datasets/{id}` | `delete` | Delete the dataset and its entire connected subgraph |
-| `POST` | `/datasets/convert` | `browse` | Convert a Croissant profile to PG-JSON without persisting |
+| `POST` | `/datasets` | `CREATE` | Create a dataset from a PG-JSON body |
+| `POST` | `/datasets/croissant` | `CREATE` | Ingest a Croissant profile and persist it as a PG-JSON subgraph |
+| `GET` | `/datasets` | `BROWSE` | List datasets with optional filtering and pagination |
+| `GET` | `/datasets/{id}` | `BROWSE` | Retrieve the full dataset subgraph (nodes + edges) |
+| `DELETE` | `/datasets/{id}` | `DELETE` | Delete the dataset and its entire connected subgraph |
+| `POST` | `/datasets/convert` | none | Convert a Croissant profile to PG-JSON without persisting |
+| `POST` | `/datasets/validate` | none | Validate a PG-JSON dataset against the MoMa schema |
+
+### Analytical Patterns
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/aps` | `BROWSE` on input datasets | Create an AP (input edges must reference existing datasets) |
+| `GET` | `/aps` | `BROWSE` | List APs (supports semantic search via `q`) |
+| `GET` | `/aps/{id}` | `BROWSE` on input datasets | Retrieve an AP by root node ID |
+| `DELETE` | `/aps/{id}` | `BROWSE` on all input datasets | Delete an AP (dataset nodes are left intact) |
+| `POST` | `/aps/validate` | none | Validate a PG-JSON AP against the MoMa schema |
+
+`GET /aps` search parameters:
+
+| Parameter | Type | Default | Constraints |
+|---|---|---|---|
+| `q` | string | — | Natural-language query for semantic search |
+| `top_k` | integer | `10` | 1–100 |
+| `threshold` | float | `0.0` | 0.0–1.0 |
+
+### Tasks
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/tasks` | authenticated | Create a new Task node |
+| `GET` | `/tasks/{id}/aps` | authenticated | Get AP IDs accomplished by a task |
 
 ### Nodes
 
-| Method | Path | Auth action | Description |
+| Method | Path | Auth | Description |
 |---|---|---|---|
-| `GET` | `/nodes/{id}` | `browse` | Retrieve a single graph node by ID |
-| `PATCH` | `/nodes/{id}` | `edit` | Partially update properties of an existing node |
+| `GET` | `/nodes/{id}` | `BROWSE` on parent dataset | Retrieve a single graph node by ID |
+| `PATCH` | `/nodes/{id}` | `EDIT` on parent dataset | Partially update properties of an existing node |
 
 ### Health
 

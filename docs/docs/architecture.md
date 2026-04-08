@@ -7,63 +7,72 @@ The MoMa Management API is a [FastAPI](https://fastapi.tiangolo.com/) service th
 The service follows a layered architecture:
 
 ```
-┌──────────────────────────────────────┐
-│           HTTP Clients               │
-│  (DataGEMS UI, integrators, CLI)     │
-└──────────────┬───────────────────────┘
+┌──────────────────────────────────────────────┐
+│              HTTP Clients                    │
+│  (DataGEMS UI, integrators, CLI)             │
+└──────────────┬───────────────────────────────┘
                │ HTTP / REST (port 5000)
-┌──────────────▼───────────────────────┐
-│          FastAPI Application         │
-│  ┌────────────┐  ┌────────────────┐  │
-│  │  Datasets  │  │     Nodes      │  │
-│  │  API (v1)  │  │   API (v1)     │  │
-│  └─────┬──────┘  └──────┬─────────┘  │
-│        │                │            │
-│  ┌─────▼────────────────▼─────────┐  │
-│  │         Services layer         │  │
-│  │  DatasetService / NodeService  │  │
-│  └─────────────┬──────────────────┘  │
-│  ┌─────────────▼──────────────────┐  │
-│  │        Repository layer        │  │
-│  │  Neo4jDatasetRepository        │  │
-│  │  Neo4jNodeRepository           │  │
-│  └─────────────┬──────────────────┘  │
-└────────────────┼─────────────────────┘
-                 │ Bolt protocol
-┌────────────────▼─────────────────────┐
-│              Neo4j                   │
-│     (MoMa property graph store)      │
-└──────────────────────────────────────┘
+┌──────────────▼───────────────────────────────┐
+│            FastAPI Application               │
+│  ┌──────────┐ ┌────┐ ┌───────┐ ┌──────────┐ │
+│  │ Datasets │ │APs │ │ Tasks │ │  Nodes   │ │
+│  └────┬─────┘ └─┬──┘ └───┬───┘ └────┬─────┘ │
+│       │         │        │          │        │
+│  ┌────▼─────────▼────────▼──────────▼─────┐  │
+│  │           Services layer               │  │
+│  │  DatasetService · APService            │  │
+│  │  TaskService   · NodeService           │  │
+│  └──────────────────┬─────────────────────┘  │
+│  ┌──────────────────▼─────────────────────┐  │
+│  │          Repository layer              │  │
+│  │  Neo4jDatasetRepository                │  │
+│  │  Neo4jAnalyticalPatternRepository      │  │
+│  │  Neo4jTaskRepository · Neo4jNodeRepo   │  │
+│  └──────────────────┬─────────────────────┘  │
+└─────────────────────┼────────────────────────┘
+                      │ Bolt protocol
+┌─────────────────────▼────────────────────────┐
+│              Neo4j                            │
+│  (MoMa property graph + vector index)        │
+└──────────────────────────────────────────────┘
 ```
 
 ## Components
 
 ### API layer (`moma_management/api/v1/`)
 
-All routes are mounted under the `/v1` prefix via a single router. Two resource groups are exposed:
+All routes are mounted under the `/v1` prefix via a single router. Four resource groups are exposed:
 
-- **Datasets** – CRUD operations on dataset subgraphs plus a stateless conversion endpoint.
+- **Datasets** – CRUD on dataset subgraphs, Croissant ingestion/conversion, and schema validation.
+- **Analytical Patterns** – CRUD on AP subgraphs with natural-language semantic search.
+- **Tasks** – Task node creation and AP lookup by task.
 - **Nodes** – Retrieval and partial update of individual graph nodes.
 - **Health** – A lightweight liveness probe at `/health`.
 
-Authentication and authorization are enforced as FastAPI dependencies injected into each route handler via `require_permission(action)`.
+Authentication and authorization are enforced as FastAPI dependencies injected into each route handler via `require_permission(action)` or `require_authentication()`.
 
 ### Services layer (`moma_management/services/`)
 
-- **`DatasetService`** – Orchestrates the conversion of Croissant profiles to PG-JSON and delegates persistence to the repository.
+- **`DatasetService`** – Orchestrates the conversion of Croissant profiles to PG-JSON, schema validation, and delegates persistence to the repository.
+- **`AnalyticalPatternService`** – AP CRUD, input-dataset validation, and semantic search (via an embedder).
+- **`TaskService`** – Task creation and AP-id lookup.
 - **`NodeService`** – Retrieves and patches individual Neo4j nodes.
+- **`Embedder` / `LocalEmbedder`** – Produces vector embeddings from AP descriptions using `sentence-transformers` for semantic search.
 - **`Authentication`** – Validates RS256 JWTs against JWKS published by the configured OIDC issuer (with in-memory cache). Optionally exchanges tokens using RFC 8693 for scope-specific credentials.
 - **`AuthorizationService`** – Delegates per-dataset permission checks to an external permissions gateway over HTTP using the original or exchanged Bearer token.
 
 ### Domain layer (`moma_management/domain/`)
 
 - **`MappingEngine`** – Reads `mapping.yml` and transforms Croissant field values into the PG-JSON node/edge structure expected by the MoMa schema.
-- **`Dataset`** / **`filters.py`** – Pydantic models representing the MoMa graph and query parameters.
+- **`PgJsonGraph`** – Base Pydantic model for validated PG-JSON graphs, providing edge-constraint enforcement, DFS connectivity checks, and canonical equality.
+- **`Dataset`** / **`AnalyticalPattern`** – Concrete graph models with root-node and structural validation.
+- **`LocalSchemaValidator`** – Validates raw PG-JSON dicts against Draft 7 JSON schemas and returns AJV-style errors.
+- **`filters.py`** – Query filter and pagination models.
 - **`generated/`** – Pydantic v2 models auto-generated from the JSON Schema files in `schema/` via `make gen`.
 
 ### Repository layer (`moma_management/repository/`)
 
-Defines abstract interfaces (`DatasetRepository`, `NodeRepository`) with Neo4j-backed implementations. All graph I/O uses the official `neo4j` Python driver with PG-JSON serialization helpers provided by `Neo4jPGSONMixin`.
+Defines abstract interfaces (`DatasetRepository`, `AnalyticalPatternRepository`, `TaskRepository`, `NodeRepository`) with Neo4j-backed implementations. All graph I/O uses the official `neo4j` Python driver with PG-JSON serialization helpers provided by `Neo4jPGSONMixin`. The AP repository also manages a Neo4j vector index for semantic search.
 
 ## Authentication flow
 
@@ -117,6 +126,6 @@ Client                Service               Neo4j
 
 | Dependency | Role |
 |---|---|
-| Neo4j ≥ 5 | Primary graph data store |
+| Neo4j ≥ 5 | Primary graph data store (including vector index for semantic search) |
 | OIDC issuer (DataGEMS AAI) | JWT signing keys (JWKS) |
 | Permissions gateway | Dataset-level authorization checks |
