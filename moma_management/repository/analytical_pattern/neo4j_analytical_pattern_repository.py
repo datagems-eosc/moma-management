@@ -216,7 +216,8 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
         When *with_score* is ``True`` each result is a ``(AnalyticalPattern, float)``
         tuple; otherwise a plain ``AnalyticalPattern``.
         """
-        ap_map: Dict[str, Dict[str, Any]] = {}  # root_id -> {nodes, edges, score}
+        ap_map: Dict[str, Dict[str, Any]] = {
+        }  # root_id -> {nodes, edges, score}
 
         for record in records:
             root = record["root"]
@@ -264,6 +265,7 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
                     results.append(ap)
             except Exception:
                 root_id = next(iter(nodes), "unknown")
-                logger.exception("Failed to deserialize AP with id=%s", root_id)
+                logger.exception(
+                    "Failed to deserialize AP with id=%s", root_id)
 
         return results

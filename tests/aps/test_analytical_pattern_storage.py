@@ -19,10 +19,10 @@ from moma_management.repository.analytical_pattern import (
     Neo4jAnalyticalPatternRepository,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_ap(
     root_id: str | None = None,
@@ -52,7 +52,8 @@ def _make_ap(
             ),
         ],
         edges=[
-            Edge(**{"from": root_id, "to": operator_id, "labels": ["consist_of"]}),
+            Edge(**{"from": root_id, "to": operator_id,
+                 "labels": ["consist_of"]}),
             Edge(**{"from": operator_id, "to": data_id, "labels": ["input"]}),
         ],
     )
@@ -123,13 +124,17 @@ def test_shallow_retrieval_does_not_include_deep_dataset_nodes(
 
     dataset = Dataset(
         nodes=[
-            Node(id=ds_id, labels=["sc:Dataset"], properties={"status": "published"}),
-            Node(id=data_id, labels=["Data", "RelationalDatabase"], properties={"name": "db"}),
-            Node(id=deep_table_id, labels=["Data", "Table"], properties={"name": "tbl"}),
+            Node(id=ds_id, labels=["sc:Dataset"],
+                 properties={"status": "published"}),
+            Node(id=data_id, labels=[
+                 "Data", "RelationalDatabase"], properties={"name": "db"}),
+            Node(id=deep_table_id, labels=[
+                 "Data", "Table"], properties={"name": "tbl"}),
         ],
         edges=[
             Edge(**{"from": ds_id, "to": data_id, "labels": ["distribution"]}),
-            Edge(**{"from": data_id, "to": deep_table_id, "labels": ["containedIn"]}),
+            Edge(**{"from": data_id, "to": deep_table_id,
+                 "labels": ["containedIn"]}),
         ],
     )
 
@@ -147,9 +152,11 @@ def test_shallow_retrieval_does_not_include_deep_dataset_nodes(
     op_id = str(uuid4())
     ap = AnalyticalPattern(
         nodes=[
-            Node(id=root_id, labels=["Analytical_Pattern"], properties={"name": "ap"}),
+            Node(id=root_id, labels=[
+                 "Analytical_Pattern"], properties={"name": "ap"}),
             Node(id=op_id, labels=["Operator"], properties={"name": "op"}),
-            Node(id=data_id, labels=["Data", "RelationalDatabase"], properties={"name": "db"}),
+            Node(id=data_id, labels=[
+                 "Data", "RelationalDatabase"], properties={"name": "db"}),
         ],
         edges=[
             Edge(**{"from": root_id, "to": op_id, "labels": ["consist_of"]}),
@@ -204,7 +211,8 @@ def test_delete_preserves_data_nodes(
     data_id = str(uuid4())
     dataset = Dataset(
         nodes=[
-            Node(id=ds_id, labels=["sc:Dataset"], properties={"status": "published"}),
+            Node(id=ds_id, labels=["sc:Dataset"],
+                 properties={"status": "published"}),
             Node(id=data_id, labels=["Data"], properties={"name": "data"}),
         ],
         edges=[
