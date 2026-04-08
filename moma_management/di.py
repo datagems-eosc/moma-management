@@ -378,7 +378,7 @@ def require_browse_for_ap_creation():
             )
 
         try:
-            allowed = any(
+            allowed = all(
                 authorization.has_dataset_permission(
                     token, DatasetRole.BROWSE, ds_id)
                 for ds_id in dataset_ids

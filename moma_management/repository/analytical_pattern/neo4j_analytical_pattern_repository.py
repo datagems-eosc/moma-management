@@ -165,19 +165,22 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
         """Return a WHERE clause + params dict that restricts APs by accessible datasets.
 
         When *accessible_dataset_ids* is ``None`` (auth disabled), no filter is
-        applied.  Otherwise only APs whose ``input`` edges lead to a
-        ``sc:Dataset`` node whose ``id`` is in the allowed list — or APs with
+        applied.  Otherwise only APs whose ``input`` edges **all** lead to
+        ``sc:Dataset`` nodes whose ``id`` is in the allowed list — or APs with
         no ``input`` edges at all — are kept.
+
+        An AP that references datasets D1 and D2 is only visible to a user
+        who can browse **both** D1 and D2.
         """
         if accessible_dataset_ids is None:
             return "", {}
         clause = """
             WHERE (
                 NOT EXISTS { MATCH (root)-[:consist_of]->(:Operator)-[:input]->() }
-                OR EXISTS {
+                OR NOT EXISTS {
                     MATCH (root)-[:consist_of]->(:Operator)-[:input]->(d)
                           -[*0..4]-(ds:`sc:Dataset`)
-                    WHERE ds.id IN $accessible_ids
+                    WHERE NOT ds.id IN $accessible_ids
                 }
             )
         """
