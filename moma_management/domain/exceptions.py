@@ -24,3 +24,8 @@ class ValidationError(MomaError):
 class RepositoryError(MomaError):
     """Raised when a repository operation fails unexpectedly."""
     pass
+
+
+class ConflictError(MomaError):
+    """Raised when an operation conflicts with existing state."""
+    pass

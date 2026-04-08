@@ -7,6 +7,7 @@ from yaml import safe_load
 
 from moma_management.domain.dataset import Dataset
 from moma_management.domain.exceptions import (
+    ConflictError,
     ConversionError,
     NotFoundError,
     ValidationError,
@@ -106,8 +107,13 @@ class DatasetService:
 
         Raises:
             NotFoundError: if no dataset with *id* exists.
+            ConflictError: if at least one AnalyticalPattern references this dataset.
         """
-        deleted = self._repo.delete(id)
-        if deleted == 0:
+        if self._repo.get(id) is None:
             raise NotFoundError(f"Dataset '{id}' not found.")
-        return deleted
+        if self._repo.has_referencing_aps(id):
+            raise ConflictError(
+                f"Dataset '{id}' cannot be deleted: it is referenced by at "
+                f"least one AnalyticalPattern."
+            )
+        return self._repo.delete(id)

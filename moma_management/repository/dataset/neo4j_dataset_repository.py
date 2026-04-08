@@ -47,6 +47,23 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
         record = result.single()
         return record["deletedRows"] if record else 0
 
+    def has_referencing_aps(self, dataset_id: str) -> bool:
+        """Return True if at least one AP references a node in this dataset."""
+        query = """//cypher
+            MATCH (d:`sc:Dataset` {id: $datasetId})
+            MATCH path=(d)-[*1..4]-(data)
+            WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
+            WITH collect(DISTINCT data) AS data_nodes
+            UNWIND data_nodes AS dn
+            MATCH (:Operator)-[:input]->(dn)
+            RETURN true AS referenced
+            LIMIT 1
+        """
+        record = self._session.run(
+            query, datasetId=dataset_id, forbiddenEdges=self.FORBIDDEN_EDGES
+        ).single()
+        return record is not None
+
     def get(self, id: str) -> Optional[Dataset]:
         """
         Retrieve the dataset with the given ID

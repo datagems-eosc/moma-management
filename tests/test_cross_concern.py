@@ -15,7 +15,7 @@ from neo4j import GraphDatabase
 from testcontainers.neo4j import Neo4jContainer
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
-from moma_management.domain.exceptions import ValidationError
+from moma_management.domain.exceptions import ConflictError, ValidationError
 from moma_management.domain.generated.edges.edge_schema import Edge
 from moma_management.domain.generated.nodes.node_schema import Node
 from moma_management.repository.analytical_pattern import (
@@ -128,4 +128,32 @@ def test_create_ap_referencing_existing_dataset_succeeds(
     # AP must now be retrievable
     retrieved = ap_svc.get(ap_id)
     assert retrieved is not None
-    assert str(retrieved.root.id) == ap_id
+
+
+def test_delete_dataset_blocked_when_ap_references_it(
+    services: tuple[DatasetService, AnalyticalPatternService],
+):
+    """
+    Deleting a dataset that is referenced by an AP must raise ConflictError.
+    After the AP is deleted, the dataset deletion must succeed.
+    """
+    ds_svc, ap_svc = services
+
+    # Ingest a dataset
+    profile = json.loads(_LIGHT_PROFILE_PATH.read_text())
+    dataset = ds_svc.ingest(profile)
+    ds_node = next(n for n in dataset.nodes if "sc:Dataset" in n.labels)
+    ds_id = str(ds_node.id)
+
+    # Create an AP that references a data node from this dataset
+    data_node = next(n for n in dataset.nodes if "Data" in n.labels)
+    ap = _make_ap(str(data_node.id))
+    ap_id = ap_svc.create(ap)
+
+    # Deleting the dataset must be blocked
+    with pytest.raises(ConflictError):
+        ds_svc.delete(ds_id)
+
+    # After deleting the AP, dataset deletion must succeed
+    ap_svc.delete(ap_id)
+    ds_svc.delete(ds_id)

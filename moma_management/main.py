@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from moma_management.api.v1.routes import router
 from moma_management.di import container_lifespan
 from moma_management.domain.exceptions import (
+    ConflictError,
     ConversionError,
     MomaError,
     NotFoundError,
@@ -62,6 +63,11 @@ app.include_router(router, prefix="/api/v1")
 @app.exception_handler(NotFoundError)
 async def not_found_handler(request: Request, exc: NotFoundError) -> JSONResponse:
     return JSONResponse(status_code=404, content={"detail": exc.message})
+
+
+@app.exception_handler(ConflictError)
+async def conflict_error_handler(request: Request, exc: ConflictError) -> JSONResponse:
+    return JSONResponse(status_code=409, content={"detail": exc.message})
 
 
 @app.exception_handler(ConversionError)
