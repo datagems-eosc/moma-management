@@ -4,6 +4,7 @@ from .create import create_ap
 from .delete import delete_ap
 from .get import get_ap
 from .list import list_aps
+from .validate import validate_ap
 
 router = APIRouter(tags=["analytical patterns"])
 
@@ -28,6 +29,15 @@ router.add_api_route(
     summary="List all AnalyticalPatterns",
     responses={
         401: {"description": "Unauthorized"},
+        500: {"description": "Internal server error"},
+    },
+)
+router.add_api_route(
+    "/validate",
+    validate_ap,
+    methods=["POST"],
+    summary="Validate an AnalyticalPattern",
+    responses={
         500: {"description": "Internal server error"},
     },
 )

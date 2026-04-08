@@ -226,6 +226,10 @@ class PostmanRunner:
                 if not (actual is not None and actual > expected):
                     failures.append(
                         f"'{key}': expected > {expected}, got {actual!r}")
+            elif op == "equals":
+                if actual != expected:
+                    failures.append(
+                        f"'{key}': expected {expected!r}, got {actual!r}")
         return failures
 
     # -- request execution ---------------------------------------------------

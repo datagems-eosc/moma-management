@@ -4,6 +4,7 @@ from typing import List, Optional, Tuple
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.exceptions import NotFoundError, ValidationError
 from moma_management.domain.filters import DatasetFilter
+from moma_management.domain.schema_validator import LocalSchemaValidator, SchemaError
 from moma_management.repository.analytical_pattern.analytical_pattern_repository import (
     AnalyticalPatternRepository,
 )
@@ -118,3 +119,12 @@ class AnalyticalPatternService:
         returned.  APs with no ``input`` edges are always included.
         """
         return self._repo.list(accessible_dataset_ids=accessible_dataset_ids)
+
+    def validate(self, candidate: dict) -> list[SchemaError]:
+        """Validate a raw PG-JSON dict as an AnalyticalPattern.
+
+        Returns a list of AJV-style :class:`SchemaError` objects (empty when
+        the candidate is valid).
+        """
+        validator = LocalSchemaValidator()
+        return validator.validate_graph(candidate, graph_type="ap")

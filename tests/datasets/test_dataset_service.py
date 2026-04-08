@@ -120,10 +120,10 @@ def test_convert_invalid_croissant_raises_conversion_error(dataset_service: Data
             dataset_service.convert({})
 
 
-def test_validate_invalid_pgjson_raises_validation_error(dataset_service: DatasetService):
-    """Structurally invalid PG-JSON must raise ValidationError."""
-    with pytest.raises(ValidationError):
-        dataset_service.validate({"nodes": "not-a-list"})
+def test_validate_invalid_pgjson_returns_errors(dataset_service: DatasetService):
+    """Structurally invalid PG-JSON must return a non-empty list of SchemaErrors."""
+    errors = dataset_service.validate({"nodes": "not-a-list"})
+    assert len(errors) >= 1
 
 
 def test_get_missing_dataset_raises_not_found(dataset_service: DatasetService):

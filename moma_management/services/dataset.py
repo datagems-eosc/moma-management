@@ -14,6 +14,7 @@ from moma_management.domain.exceptions import (
 )
 from moma_management.domain.filters import DatasetFilter
 from moma_management.domain.mapping_engine import croissant_to_pgjson
+from moma_management.domain.schema_validator import LocalSchemaValidator, SchemaError
 from moma_management.repository.dataset.dataset_repository import DatasetRepository
 
 logger = logging.getLogger(__name__)
@@ -54,11 +55,12 @@ class DatasetService:
             raise ConversionError(
                 f"Failed to convert Croissant profile: {e}") from e
 
-        return self.validate(dataset)
+        return self._parse(dataset)
 
-    def validate(self, pg_json: Dict[str, Any]) -> Dataset:
-        """
-        Validate a PG-JSON dataset against the MoMa graph schema.
+    def _parse(self, pg_json: Dict[str, Any]) -> Dataset:
+        """Parse and validate a raw PG-JSON dict into a :class:`Dataset`.
+
+        Used internally by :meth:`convert` and :meth:`ingest`.
 
         Raises:
             ValidationError: if *pg_json* does not conform to the MoMa Dataset schema.
@@ -68,6 +70,15 @@ class DatasetService:
         except PydanticValidationError as e:
             raise ValidationError(
                 f"PG-JSON failed schema validation: {e}") from e
+
+    def validate(self, candidate: dict) -> list[SchemaError]:
+        """Validate a raw PG-JSON dict as a Dataset.
+
+        Returns a list of AJV-style :class:`SchemaError` objects (empty when
+        the candidate is valid).
+        """
+        validator = LocalSchemaValidator()
+        return validator.validate_graph(candidate, graph_type="dataset")
 
     def ingest(self, candidate: Dict[str, Any]) -> Dataset:
         """

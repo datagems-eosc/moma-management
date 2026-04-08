@@ -3,9 +3,9 @@ from typing import Any, Dict, List
 from fastapi import Depends
 from pydantic import BaseModel
 
-from moma_management.di import get_dataset_service
+from moma_management.di import get_ap_service
 from moma_management.domain.schema_validator import SchemaError
-from moma_management.services.dataset import DatasetService
+from moma_management.services.analytical_pattern import AnalyticalPatternService
 
 
 class ValidationPayload(BaseModel):
@@ -13,18 +13,18 @@ class ValidationPayload(BaseModel):
     errors: List[SchemaError]
 
 
-async def validate_dataset(
-    input_data: Dict[str, Any],
-    svc: DatasetService = Depends(get_dataset_service),
+async def validate_ap(
+    candidate: Dict[str, Any],
+    svc: AnalyticalPatternService = Depends(get_ap_service),
 ) -> ValidationPayload:
     """
-    Validate a PG-JSON dataset against the MoMa graph schema without persisting it.
+    Validate a raw PG-JSON payload as an AnalyticalPattern without persisting it.
 
     Returns a ``ValidationPayload`` with ``valid=true`` and an empty ``errors``
-    list when the payload conforms to the MoMa Dataset schema, or ``valid=false``
+    list when the payload conforms to the MoMa AP schema, or ``valid=false``
     with AJV-style errors otherwise.
 
     This endpoint requires no authentication.
     """
-    errors = svc.validate(input_data)
+    errors = svc.validate(candidate)
     return ValidationPayload(valid=len(errors) == 0, errors=errors)

@@ -125,8 +125,9 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Response contains nodes', () => {",
-                  "  pm.expect(pm.response.json().nodes).to.be.an('array').with.length.above(0);",
+                  "pm.test('Response is valid', () => {",
+                  "  pm.expect(pm.response.json().valid).to.be.true;",
+                  "  pm.expect(pm.response.json().errors).to.be.an('array').with.length(0);",
                   "});"
                 ]
               }
@@ -134,8 +135,9 @@
           ],
           "_pytest_assert": [
             {
-              "key": "nodes",
-              "op": "non_empty_list"
+              "key": "valid",
+              "op": "equals",
+              "value": true
             }
           ]
         },
