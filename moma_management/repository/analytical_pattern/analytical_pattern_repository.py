@@ -42,6 +42,10 @@ class AnalyticalPatternRepository(Protocol):
         """
         ...
 
+    def delete(self, ap_id: str) -> None:
+        """Delete an AP and its Operator nodes (not the referenced data nodes)."""
+        ...
+
     def search(
         self,
         query_vector: List[float],

@@ -61,7 +61,8 @@ async def container_lifespan(_: FastAPI):
     embedder_model = os.getenv("EMBEDDER_MODEL", _DEFAULT_EMBEDDER_MODEL)
     if embedder_model:
         _embedder = LocalEmbedder(model_name=embedder_model)
-        logger.info("Embedder loaded: %s (%d dimensions)", embedder_model, _embedder.dimensions)
+        logger.info("Embedder loaded: %s (%d dimensions)",
+                    embedder_model, _embedder.dimensions)
 
     yield
     driver.close()
@@ -182,7 +183,12 @@ class IdType(str, Enum):
     AP = "AP"
 
 
-def require_permission(action: DatasetRole, *, id_type: IdType = IdType.Dataset):
+def require_permission(
+    action: DatasetRole,
+    *,
+    id_type: IdType = IdType.Dataset,
+    require_all: bool = False,
+):
     """Validate the caller's token and enforce *action*.
 
     ``id_type=IdType.Dataset`` (default): the ``id`` path parameter is a
@@ -198,6 +204,9 @@ def require_permission(action: DatasetRole, *, id_type: IdType = IdType.Dataset)
     ``id_type=IdType.AP``: the ``id`` path parameter is an AnalyticalPattern
     root node ID.  The parent dataset(s) are resolved via the AP's ``input``
     edges, and the caller must hold *action* on at least one of them.
+
+    ``require_all``: when ``True``, the caller must hold *action* on **all**
+    resolved datasets, not just one.
     """
 
     async def _check(
@@ -289,7 +298,8 @@ def require_permission(action: DatasetRole, *, id_type: IdType = IdType.Dataset)
             # NOTE: This consider that having acess to ONE dataset is enough to access the node, even if it belongs to other datasets.
             # For now I don't know if it's possible to have a node belonging to multiple datasets, but if it is the case,
             # we might want to enforce permissions on ALL parent datasets instead of just one, at least for non-idempotent actions
-            allowed = any(
+            check = all if require_all else any
+            allowed = check(
                 authorization.has_dataset_permission(token, action, ds_id)
                 for ds_id in dataset_ids
             )

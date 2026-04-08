@@ -11,14 +11,15 @@ from moma_management.repository.neo4j_pgson_mixin import Neo4jPgJsonMixin
 
 logger = getLogger(__name__)
 
-# Edges used to traverse from Operators to their connected data/user nodes
-_OP_EDGES = "input|output|uses|follows"
-
 _VECTOR_INDEX_NAME = "ap_description_embedding"
 
 
 class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternRepository):
     """Synchronous Neo4j-backed implementation of ``AnalyticalPatternRepository``."""
+
+    # Edges that link APs/Operators to external entities (Data, User, …) and
+    # must NOT be traversed when manipulating an AP subgraph in isolation.
+    FORBIDDEN_EDGES: list[str] = ["input", "output", "perform", "uses"]
 
     _index_ensured: bool = False
 
@@ -43,6 +44,21 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
                 embedding=embedding,
             )
 
+    def delete(self, ap_id: str) -> None:
+        """Delete the AP and its connected subgraph; leaves data nodes intact."""
+        self._session.run(
+            """//cypher
+            MATCH (root:Analytical_Pattern {id: $ap_id})
+            OPTIONAL MATCH path=(root)-[*1..10]-(m)
+            WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
+            WITH root, collect(DISTINCT m) AS related
+            FOREACH (n IN related | DETACH DELETE n)
+            DETACH DELETE root
+            """,
+            ap_id=str(ap_id),
+            forbiddenEdges=self.FORBIDDEN_EDGES,
+        )
+
     # ------------------------------------------------------------------
     # Vector index (lazy)
     # ------------------------------------------------------------------
@@ -60,7 +76,8 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             "}}",
         )
         Neo4jAnalyticalPatternRepository._index_ensured = True
-        logger.info("Vector index '%s' ensured (%d dimensions)", _VECTOR_INDEX_NAME, dimensions)
+        logger.info("Vector index '%s' ensured (%d dimensions)",
+                    _VECTOR_INDEX_NAME, dimensions)
 
     # ------------------------------------------------------------------
     # Vector search
@@ -79,73 +96,65 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             CALL db.index.vector.queryNodes($index_name, $top_k, $query_vector)
             YIELD node AS root, score
             {filter_clause}
-            OPTIONAL MATCH (root)-[r1:consist_of]->(op:Operator)
-            OPTIONAL MATCH (op)-[r2:input|output|uses|follows]->(connected)
-            OPTIONAL MATCH (connected2)-[r3:input|output|uses|follows]->(op)
-            WITH
-                root, score,
-                collect(DISTINCT op)         AS operators,
-                collect(DISTINCT r1)         AS r1s,
-                collect(DISTINCT connected)  AS connected_out,
-                collect(DISTINCT r2)         AS r2s,
-                collect(DISTINCT connected2) AS connected_in,
-                collect(DISTINCT r3)         AS r3s
-            RETURN
-                root, score,
-                operators, r1s,
-                connected_out, r2s,
-                connected_in, r3s
+            OPTIONAL MATCH path=(root)-[*1..4]-(m)
+            WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
+            RETURN root, score, m, relationships(path) AS rels
         """
         params.update(
             index_name=_VECTOR_INDEX_NAME,
             top_k=top_k,
             query_vector=query_vector,
+            forbiddenEdges=self.FORBIDDEN_EDGES,
         )
         records = list(self._session.run(query, **params))
-        results: List[Tuple[AnalyticalPattern, float]] = []
-        for record in records:
-            if record.get("root") is not None:
-                try:
-                    ap = self._record_to_ap(record)
-                    results.append((ap, record["score"]))
-                except Exception:
-                    root = record.get("root")
-                    ap_id = root["id"] if root is not None else "unknown"
-                    logger.exception("Failed to deserialize AP with id=%s", ap_id)
-        return results
+        return self._group_ap_records(records, with_score=True)
 
     # ------------------------------------------------------------------
     # Read (shallow)
     # ------------------------------------------------------------------
 
     def get(self, ap_id: str) -> Optional[AnalyticalPattern]:
-        """Shallow retrieval: root + operators + first-level connected nodes."""
+        """Shallow retrieval: root + connected subgraph (excluding forbidden edges)."""
         query = """//cypher
             MATCH (root:Analytical_Pattern {id: $ap_id})
-            OPTIONAL MATCH (root)-[r1:consist_of]->(op:Operator)
-            OPTIONAL MATCH (op)-[r2:input|output|uses|follows]->(connected)
-            OPTIONAL MATCH (connected2)-[r3:input|output|uses|follows]->(op)
-            WITH
-                root,
-                collect(DISTINCT op)         AS operators,
-                collect(DISTINCT r1)         AS r1s,
-                collect(DISTINCT connected)  AS connected_out,
-                collect(DISTINCT r2)         AS r2s,
-                collect(DISTINCT connected2) AS connected_in,
-                collect(DISTINCT r3)         AS r3s
-            RETURN
-                root,
-                operators,
-                r1s,
-                connected_out,
-                r2s,
-                connected_in,
-                r3s
+            OPTIONAL MATCH path=(root)-[*1..4]-(m)
+            WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
+            RETURN root, m, relationships(path) AS rels
         """
-        record = self._session.run(query, ap_id=str(ap_id)).single()
-        if record is None or record["root"] is None:
+        rows = list(self._session.run(
+            query, ap_id=str(ap_id), forbiddenEdges=self.FORBIDDEN_EDGES))
+        if not rows:
             return None
-        return self._record_to_ap(record)
+
+        nodes: Dict[str, Any] = {}
+        edges: Dict[str, Any] = {}
+
+        root = rows[0]["root"]
+        if root is None:
+            return None
+        nodes[root["id"]] = self._deserialize_node(root)
+
+        for record in rows:
+            m = record["m"]
+            rels = record["rels"] or []
+            if m:
+                mid = m["id"]
+                if mid not in nodes:
+                    nodes[mid] = self._deserialize_node(m)
+            for rel in rels:
+                key = (rel.start_node["id"], rel.end_node["id"], rel.type)
+                if key not in edges:
+                    edges[key] = self._deserialize_edge(rel)
+
+        valid_edges = [
+            e for e in edges.values()
+            if e["from"] in nodes and e["to"] in nodes
+        ]
+
+        return AnalyticalPattern(
+            nodes=list(nodes.values()),
+            edges=valid_edges or None,
+        )
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -180,38 +189,13 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
         query = f"""//cypher
             MATCH (root:Analytical_Pattern)
             {filter_clause}
-            OPTIONAL MATCH (root)-[r1:consist_of]->(op:Operator)
-            OPTIONAL MATCH (op)-[r2:input|output|uses|follows]->(connected)
-            OPTIONAL MATCH (connected2)-[r3:input|output|uses|follows]->(op)
-            WITH
-                root,
-                collect(DISTINCT op)         AS operators,
-                collect(DISTINCT r1)         AS r1s,
-                collect(DISTINCT connected)  AS connected_out,
-                collect(DISTINCT r2)         AS r2s,
-                collect(DISTINCT connected2) AS connected_in,
-                collect(DISTINCT r3)         AS r3s
-            RETURN
-                root,
-                operators,
-                r1s,
-                connected_out,
-                r2s,
-                connected_in,
-                r3s
+            OPTIONAL MATCH path=(root)-[*1..4]-(m)
+            WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
+            RETURN root, m, relationships(path) AS rels
         """
+        params["forbiddenEdges"] = self.FORBIDDEN_EDGES
         records = list(self._session.run(query, **params))
-        results = []
-        for record in records:
-            if record.get("root") is not None:
-                try:
-                    results.append(self._record_to_ap(record))
-                except Exception:
-                    root = record.get("root")
-                    ap_id = root["id"] if root is not None else "unknown"
-                    logger.exception(
-                        "Failed to deserialize AP with id=%s", ap_id)
-        return results
+        return self._group_ap_records(records, with_score=False)
 
     def get_ids_by_task_id(self, task_id: str) -> List[str]:
         """Return AP IDs accomplished by the given Task."""
@@ -226,60 +210,60 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _record_to_ap(self, record: Any) -> AnalyticalPattern:
-        """Convert a Cypher record (from get/list) into an ``AnalyticalPattern``."""
-        nodes_dict: Dict[str, Any] = {}
-        edges_list: List[Dict[str, Any]] = []
+    def _group_ap_records(self, records: list, *, with_score: bool) -> list:
+        """Group flat (root, m, rels) rows into per-AP results.
 
-        # Root node
-        root_data = self._deserialize_node(record["root"])
-        nodes_dict[root_data["id"]] = root_data
+        When *with_score* is ``True`` each result is a ``(AnalyticalPattern, float)``
+        tuple; otherwise a plain ``AnalyticalPattern``.
+        """
+        ap_map: Dict[str, Dict[str, Any]] = {}  # root_id -> {nodes, edges, score}
 
-        # Operators
-        for op in record.get("operators") or []:
-            if op is not None:
-                d = self._deserialize_node(op)
-                nodes_dict[d["id"]] = d
+        for record in records:
+            root = record["root"]
+            if root is None:
+                continue
+            root_id = root["id"]
 
-        # Outgoing operator edges (r1: consist_of)
-        for rel in record.get("r1s") or []:
-            if rel is not None:
-                edges_list.append(self._deserialize_edge(rel))
+            if root_id not in ap_map:
+                ap_map[root_id] = {
+                    "nodes": {root_id: self._deserialize_node(root)},
+                    "edges": {},
+                }
+                if with_score:
+                    ap_map[root_id]["score"] = record["score"]
 
-        # Nodes connected OUT from operators
-        for node in record.get("connected_out") or []:
-            if node is not None:
-                d = self._deserialize_node(node)
-                nodes_dict[d["id"]] = d
+            entry = ap_map[root_id]
+            m = record["m"]
+            rels = record["rels"] or []
 
-        # Edges from operators to connected nodes (r2: input/output/uses/follows)
-        for rel in record.get("r2s") or []:
-            if rel is not None:
-                edges_list.append(self._deserialize_edge(rel))
+            if m:
+                mid = m["id"]
+                if mid not in entry["nodes"]:
+                    entry["nodes"][mid] = self._deserialize_node(m)
 
-        # Nodes connected INTO operators from other side (e.g. User -uses-> Op)
-        for node in record.get("connected_in") or []:
-            if node is not None:
-                d = self._deserialize_node(node)
-                nodes_dict[d["id"]] = d
+            for rel in rels:
+                key = (rel.start_node["id"], rel.end_node["id"], rel.type)
+                if key not in entry["edges"]:
+                    entry["edges"][key] = self._deserialize_edge(rel)
 
-        # Edges r3
-        for rel in record.get("r3s") or []:
-            if rel is not None:
-                edges_list.append(self._deserialize_edge(rel))
+        results = []
+        for entry in ap_map.values():
+            nodes = entry["nodes"]
+            valid_edges = [
+                e for e in entry["edges"].values()
+                if e["from"] in nodes and e["to"] in nodes
+            ]
+            try:
+                ap = AnalyticalPattern(
+                    nodes=list(nodes.values()),
+                    edges=valid_edges or None,
+                )
+                if with_score:
+                    results.append((ap, entry["score"]))
+                else:
+                    results.append(ap)
+            except Exception:
+                root_id = next(iter(nodes), "unknown")
+                logger.exception("Failed to deserialize AP with id=%s", root_id)
 
-        # Deduplicate edges by (from, to, label)
-        seen_edges: set = set()
-        deduped_edges = []
-        for e in edges_list:
-            key = (e["from"], e["to"], tuple(e["labels"]))
-            if key not in seen_edges:
-                seen_edges.add(key)
-                deduped_edges.append(e)
-
-        return AnalyticalPattern.model_validate(
-            {
-                "nodes": list(nodes_dict.values()),
-                "edges": deduped_edges if deduped_edges else None,
-            }
-        )
+        return results

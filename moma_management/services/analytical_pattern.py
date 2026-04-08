@@ -65,7 +65,8 @@ class AnalyticalPatternService:
         """Extract description text and embed it, or return ``None`` if no embedder."""
         if self._embedder is None:
             return None
-        text = ap.root.properties.get("description") or ap.root.properties.get("name", "")
+        text = ap.root.properties.get(
+            "description") or ap.root.properties.get("name", "")
         if not text:
             return None
         return self._embedder.embed(text)
@@ -81,7 +82,8 @@ class AnalyticalPatternService:
         Raises ``ValidationError`` when no embedder is configured.
         """
         if self._embedder is None:
-            raise ValidationError("Semantic search is not available: no embedder configured.")
+            raise ValidationError(
+                "Semantic search is not available: no embedder configured.")
         query_vector = self._embedder.embed(q)
         return self._repo.search(query_vector, top_k, accessible_dataset_ids=accessible_dataset_ids)
 
@@ -96,6 +98,16 @@ class AnalyticalPatternService:
         if result is None:
             raise NotFoundError(f"AnalyticalPattern '{ap_id}' not found.")
         return result
+
+    def delete(self, ap_id: str) -> None:
+        """Delete an AnalyticalPattern by its root node ID.
+
+        Raises:
+            NotFoundError: if no AP with *ap_id* exists.
+        """
+        if self._repo.get(ap_id) is None:
+            raise NotFoundError(f"AnalyticalPattern '{ap_id}' not found.")
+        self._repo.delete(ap_id)
 
     def list(self, accessible_dataset_ids: list[str] | None = None) -> List[AnalyticalPattern]:
         """

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from .create import create_ap
+from .delete import delete_ap
 from .get import get_ap
 from .list import list_aps
 
@@ -36,6 +37,20 @@ router.add_api_route(
     methods=["GET"],
     summary="Get an AnalyticalPattern by ID",
     responses={
+        404: {"description": "AnalyticalPattern not found"},
+        500: {"description": "Internal server error"},
+    },
+)
+router.add_api_route(
+    "/{id}",
+    delete_ap,
+    methods=["DELETE"],
+    status_code=204,
+    summary="Delete an AnalyticalPattern by ID",
+    responses={
+        204: {"description": "AnalyticalPattern deleted"},
+        401: {"description": "Unauthorized"},
+        403: {"description": "Forbidden"},
         404: {"description": "AnalyticalPattern not found"},
         500: {"description": "Internal server error"},
     },

@@ -1,15 +1,15 @@
 """
-This are test for the reqire_permission function that has many branches.
+This are unit tests for the reqire_permission function that has many branches.
 This assumes remote services are functional, so we mock them to test the logic of the permission check itself.
 """
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 
 from moma_management.di import IdType, require_authentication, require_permission
-from moma_management.services.authorization import DatasetRole, GatewayError, UserError
+from moma_management.services.authorization import DatasetRole, GatewayError
 
 
 def _make_request(path_id: str | None = "ds-123"):

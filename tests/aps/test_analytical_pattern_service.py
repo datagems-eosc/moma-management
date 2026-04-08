@@ -223,7 +223,8 @@ def test_search_returns_results():
     results = svc.search("some query")
 
     embedder.embed.assert_called_once_with("some query")
-    repo.search.assert_called_once_with(embedding, 10, accessible_dataset_ids=None)
+    repo.search.assert_called_once_with(
+        embedding, 10, accessible_dataset_ids=None)
     assert len(results) == 1
     assert results[0] == (ap, 0.95)
 
@@ -243,5 +244,6 @@ def test_search_passes_accessible_ids_to_repo():
     svc = AnalyticalPatternService(repo, MagicMock(), embedder=embedder)
     results = svc.search("query", accessible_dataset_ids=ds_ids)
 
-    repo.search.assert_called_once_with(embedding, 10, accessible_dataset_ids=ds_ids)
+    repo.search.assert_called_once_with(
+        embedding, 10, accessible_dataset_ids=ds_ids)
     assert results == [(ap, 0.9)]
