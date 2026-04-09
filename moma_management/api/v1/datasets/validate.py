@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 
-from fastapi import Depends
+from fastapi import Depends, Response
 from pydantic import BaseModel
 
 from moma_management.di import get_dataset_service
@@ -15,6 +15,7 @@ class ValidationPayload(BaseModel):
 
 async def validate_dataset(
     input_data: Dict[str, Any],
+    res: Response,
     svc: DatasetService = Depends(get_dataset_service),
 ) -> ValidationPayload:
     """
@@ -27,4 +28,6 @@ async def validate_dataset(
     This endpoint requires no authentication.
     """
     errors = svc.validate(input_data)
+    if errors:
+        res.status_code = 422
     return ValidationPayload(valid=len(errors) == 0, errors=errors)
