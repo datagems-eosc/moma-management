@@ -185,7 +185,7 @@ class Neo4jPgJsonMixin:
         }
         return {
             "id": neo4j_node["id"],
-            "labels": list(neo4j_node.labels),
+            "labels": [lbl.replace("__", ":") for lbl in neo4j_node.labels],
             "properties": properties,
         }
 
