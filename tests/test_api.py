@@ -339,8 +339,12 @@ def test_dataset_lifecycle(
         base_url=api_server,
         initial_env={"profileBody": profile_path.read_text()},
     )
+    dataset_folder = next(
+        item for item in postman_collection["item"]
+        if item["name"] == "Dataset Lifecycle"
+    )
     with http_requests.Session() as session:
-        results = runner.run_collection(postman_collection, session)
+        results = runner.run_collection(dataset_folder, session)
 
     failures = [
         f"  [{name}] {detail}"
