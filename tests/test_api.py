@@ -190,6 +190,9 @@ class PostmanRunner:
                     self.env[var] = node["id"]
                 elif strategy == "entire_body":
                     self.env[var] = response.text
+                elif strategy == "json_key":
+                    key = rule.get("key", "id")
+                    self.env[var] = str(response.json()[key])
             except Exception:
                 pass  # failures will surface as downstream assertion errors
 
@@ -213,7 +216,12 @@ class PostmanRunner:
             key = rule.get("key", "")
             op = rule.get("op", "")
             expected = rule.get("value")
-            actual = data.get(key)
+            if op == "response_is_list":
+                if not isinstance(data, list):
+                    failures.append(
+                        f"response body is not a list (got {type(data).__name__})")
+                continue
+            actual = data.get(key) if isinstance(data, dict) else None
             if op == "non_empty_list":
                 if not (isinstance(actual, list) and len(actual) > 0):
                     failures.append(
@@ -230,6 +238,10 @@ class PostmanRunner:
                 if actual != expected:
                     failures.append(
                         f"'{key}': expected {expected!r}, got {actual!r}")
+            elif op == "is_string":
+                if not isinstance(actual, str):
+                    failures.append(
+                        f"'{key}' is not a string (got {actual!r})")
         return failures
 
     # -- request execution ---------------------------------------------------

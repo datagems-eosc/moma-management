@@ -259,6 +259,71 @@
           ]
         },
         {
+          "name": "Get Node by ID",
+          "description": "Retrieve the root sc:Dataset node via the /nodes endpoint.",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nodes/{{rootId}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response contains an id', () => {pm.expect(pm.response.json().id).to.be.a('string');});"
+                ]
+              }
+            }
+          ],
+          "_pytest_assert": [
+            {
+              "key": "id",
+              "op": "is_string"
+            }
+          ]
+        },
+        {
+          "name": "Patch Node Properties",
+          "description": "Partially update the root dataset node's properties.",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"testMark\": \"patched-by-pytest\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/nodes/{{rootId}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Delete Dataset",
           "description": "Delete the ingested dataset and its full connected subgraph.",
           "request": {
@@ -299,6 +364,291 @@
                   "pm.test('Status code is 404', () => pm.response.to.have.status(404));"
                 ]
               }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Analytical Pattern Lifecycle",
+      "description": "Full CRUD lifecycle for AnalyticalPatterns using a self-contained AP body (no external dataset nodes required).",
+      "item": [
+        {
+          "name": "Validate AP",
+          "description": "Validate a self-contained AP payload; expects valid=true.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"edges\":[{\"from\":\"a51f3e82-ca74-4ef6-8d1e-2bb08f4df6cf\",\"labels\":[\"consist_of\"],\"to\":\"437e473a-bc17-46ce-8b36-a8b48cb2ef75\"}],\"nodes\":[{\"id\":\"a51f3e82-ca74-4ef6-8d1e-2bb08f4df6cf\",\"labels\":[\"Analytical_Pattern\"],\"properties\":{\"description\":\"Test AP\",\"name\":\"Test AP\",\"process\":\"query\",\"publishedDate\":\"2025-06-30\",\"startTime\":\"10:00:00\"}},{\"id\":\"437e473a-bc17-46ce-8b36-a8b48cb2ef75\",\"labels\":[\"Operator\",\"SQL_Operator\"],\"properties\":{\"description\":\"Test operator\",\"name\":\"Test Operator\",\"command\":\"query\",\"queryType\":\"SELECT\",\"publishedDate\":\"2025-06-30\",\"query\":\"SELECT 1\",\"startTime\":\"10:00:00\",\"step\":1,\"type\":\"SQL Query\"}}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/aps/validate"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('AP payload is valid', () => pm.expect(pm.response.json().valid).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "_pytest_assert": [
+            {
+              "key": "valid",
+              "op": "equals",
+              "value": true
+            }
+          ]
+        },
+        {
+          "name": "Create AP",
+          "description": "Create a self-contained AnalyticalPattern; capture its ID.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"edges\":[{\"from\":\"a51f3e82-ca74-4ef6-8d1e-2bb08f4df6cf\",\"labels\":[\"consist_of\"],\"to\":\"437e473a-bc17-46ce-8b36-a8b48cb2ef75\"}],\"nodes\":[{\"id\":\"a51f3e82-ca74-4ef6-8d1e-2bb08f4df6cf\",\"labels\":[\"Analytical_Pattern\"],\"properties\":{\"description\":\"Test AP\",\"name\":\"Test AP\",\"process\":\"query\",\"publishedDate\":\"2025-06-30\",\"startTime\":\"10:00:00\"}},{\"id\":\"437e473a-bc17-46ce-8b36-a8b48cb2ef75\",\"labels\":[\"Operator\",\"SQL_Operator\"],\"properties\":{\"description\":\"Test operator\",\"name\":\"Test Operator\",\"command\":\"query\",\"queryType\":\"SELECT\",\"publishedDate\":\"2025-06-30\",\"query\":\"SELECT 1\",\"startTime\":\"10:00:00\",\"step\":1,\"type\":\"SQL Query\"}}]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/aps/"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.environment.set('apId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "_pytest_capture": [
+            {
+              "var": "apId",
+              "from_response": "json_key",
+              "key": "id"
+            }
+          ],
+          "_pytest_assert": [
+            {
+              "key": "id",
+              "op": "is_string"
+            }
+          ]
+        },
+        {
+          "name": "List APs",
+          "description": "List all APs; expect at least one result after creation.",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/aps/"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is a non-empty list', () => {pm.expect(pm.response.json()).to.be.an('array').with.length.above(0);});"
+                ]
+              }
+            }
+          ],
+          "_pytest_assert": [
+            {
+              "op": "response_is_list"
+            }
+          ]
+        },
+        {
+          "name": "Get AP",
+          "description": "Retrieve the created AP by ID.",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/aps/{{apId}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response contains nodes', () => {pm.expect(pm.response.json().nodes).to.be.an('array').with.length.above(0);});"
+                ]
+              }
+            }
+          ],
+          "_pytest_assert": [
+            {
+              "key": "nodes",
+              "op": "non_empty_list"
+            }
+          ]
+        },
+        {
+          "name": "Delete AP",
+          "description": "Delete the created AP.",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/aps/{{apId}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Deleted AP Returns 404",
+          "description": "Confirm the deleted AP is no longer retrievable.",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/aps/{{apId}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Task Lifecycle",
+      "description": "Create a Task and verify AP-ID retrieval.",
+      "item": [
+        {
+          "name": "Create Task",
+          "description": "Create a named Task; capture its ID.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"pytest-task\", \"description\": \"Task created during API integration test\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks/"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', () => pm.response.to.have.status(201));",
+                  "pm.environment.set('taskId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "_pytest_capture": [
+            {
+              "var": "taskId",
+              "from_response": "json_key",
+              "key": "id"
+            }
+          ],
+          "_pytest_assert": [
+            {
+              "key": "id",
+              "op": "is_string"
+            }
+          ]
+        },
+        {
+          "name": "Get Task AP IDs",
+          "description": "Retrieve AP IDs for the newly created Task (should be an empty list).",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tasks/{{taskId}}/aps"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is a list', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "_pytest_assert": [
+            {
+              "op": "response_is_list"
             }
           ]
         }
