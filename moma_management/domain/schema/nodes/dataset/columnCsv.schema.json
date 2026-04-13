@@ -1,0 +1,26 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ColumnCSV",
+    "allOf": [
+        {
+            "$ref": "./data.schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "dataType": {
+                    "type": "string"
+                },
+                "column": {
+                    "type": "string"
+                },
+                "sample": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    ]
+}

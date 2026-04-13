@@ -13,9 +13,15 @@
     },
     {
         "fromLabel": "Data",
+        "label": "linkTo",
+        "toLabel": "Data",
+        "description": "Data node links to another Data node"
+    },
+    {
+        "fromLabel": "Data",
         "label": "containedIn",
         "toLabel": "Data",
-        "description": "Generic containedIn fallback — covers all Data sub-type pairs (e.g. Table → RelationalDatabase) as produced by the mapping engine"
+        "description": "Generic containedIn fallback — covers all Data sub-type pairs as produced by the mapping engine"
     },
     {
         "fromLabel": "RelationalDatabase",
@@ -28,6 +34,48 @@
         "label": "containedIn",
         "toLabel": "CSV",
         "description": "CSV set contains CSV files"
+    },
+    {
+        "fromLabel": "JSONSet",
+        "label": "containedIn",
+        "toLabel": "JSON",
+        "description": "JSON set contains JSON files"
+    },
+    {
+        "fromLabel": "XMLSet",
+        "label": "containedIn",
+        "toLabel": "XML",
+        "description": "XML set contains XML files"
+    },
+    {
+        "fromLabel": "TextSet",
+        "label": "containedIn",
+        "toLabel": "Text",
+        "description": "Text set contains Text items"
+    },
+    {
+        "fromLabel": "VideoSet",
+        "label": "containedIn",
+        "toLabel": "Video",
+        "description": "Video set contains Video items"
+    },
+    {
+        "fromLabel": "ImageSet",
+        "label": "containedIn",
+        "toLabel": "Image",
+        "description": "Image set contains Image items"
+    },
+    {
+        "fromLabel": "Table",
+        "label": "containedIn",
+        "toLabel": "ColumnTable",
+        "description": "Table contains ColumnTable entries"
+    },
+    {
+        "fromLabel": "CSV",
+        "label": "containedIn",
+        "toLabel": "ColumnCSV",
+        "description": "CSV contains ColumnCSV entries"
     },
     {
         "fromLabel": "cr:RecordSet",
