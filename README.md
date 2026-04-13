@@ -5,7 +5,103 @@
 
 ## Overview
 
-The **MoMa Management API** manages CRUD operations on MoMa, a data-flow graph. It handles **datasets**, **analytical patterns (APs)**, **tasks**, and individual graph **nodes**, backed by a Neo4j property graph store.
+The **MoMa Management API** manages CRUD operations on MoMa, a data-flow graph. It handles **datasets**, **analytical patterns (APs)**, **tasks**, **ML models**, and individual graph **nodes**, backed by a Neo4j property graph store.
+
+## Graph Data Model
+
+The diagram below shows all MoMa node types and their relationships. Solid arrows are graph edges stored in Neo4j; dashed arrows denote type-hierarchy ("is-a") specialisations.
+
+```mermaid
+graph LR
+  %% ── Styling ──────────────────────────────────────────────
+  classDef dataset fill:#1565C0,stroke:#0D47A1,color:#fff
+  classDef data fill:#1E88E5,stroke:#1565C0,color:#fff
+  classDef dataChild fill:#42A5F5,stroke:#1E88E5,color:#fff
+  classDef dataLeaf fill:#64B5F6,stroke:#42A5F5,color:#fff
+  classDef record fill:#90CAF9,stroke:#42A5F5,color:#000
+  classDef ap fill:#E53935,stroke:#C62828,color:#fff
+  classDef operator fill:#EF5350,stroke:#E53935,color:#fff
+  classDef ml fill:#43A047,stroke:#2E7D32,color:#fff
+  classDef misc fill:#78909C,stroke:#546E7A,color:#fff
+
+  %% ── Dataset subgraph ────────────────────────────────────
+  Dataset["sc:Dataset"]:::dataset
+  Data:::data
+  StructuredData["Structured Data"]:::dataChild
+  UnstructuredData["Unstructured Data"]:::dataChild
+  RelDB["Relational Database"]:::dataChild
+  CsvSet["CSV Set"]:::dataChild
+  JSONSet["JSON Set"]:::dataChild
+  XMLSet["XML Set"]:::dataChild
+  TextSet["Text Set"]:::dataChild
+  VideoSet["Video Set"]:::dataChild
+  ImageSet["Image Set"]:::dataChild
+  Table:::dataLeaf
+  CSV:::dataLeaf
+  JSON:::dataLeaf
+  XML:::dataLeaf
+  Text:::dataLeaf
+  Video:::dataLeaf
+  Image:::dataLeaf
+  ColumnTable["Column Table"]:::dataLeaf
+  ColumnCSV["Column CSV"]:::dataLeaf
+  Column:::dataLeaf
+  PDF:::dataLeaf
+  Statistics:::dataLeaf
+  RecordSet["cr:RecordSet"]:::record
+
+  Dataset -- distribution --> Data
+  Dataset -- recordSet --> RecordSet
+  Data -- linkTo --> Data
+  Data -. "is-a" .-> StructuredData
+  Data -. "is-a" .-> UnstructuredData
+  StructuredData -. "is-a" .-> RelDB
+  StructuredData -. "is-a" .-> CsvSet
+  StructuredData -. "is-a" .-> JSONSet
+  StructuredData -. "is-a" .-> XMLSet
+  UnstructuredData -. "is-a" .-> TextSet
+  UnstructuredData -. "is-a" .-> VideoSet
+  UnstructuredData -. "is-a" .-> ImageSet
+  RelDB -- containedIn --> Table
+  CsvSet -- containedIn --> CSV
+  JSONSet -- containedIn --> JSON
+  XMLSet -- containedIn --> XML
+  TextSet -- containedIn --> Text
+  VideoSet -- containedIn --> Video
+  ImageSet -- containedIn --> Image
+  Table -- containedIn --> ColumnTable
+  CSV -- containedIn --> ColumnCSV
+  RecordSet -- field --> Column
+  RecordSet -- field --> PDF
+  Column -- "source/fileObject" --> Data
+  PDF -- "source/fileSet" --> Data
+  Column -- statistics --> Statistics
+
+  %% ── Analytical-Pattern subgraph ─────────────────────────
+  AP["Analytical Pattern"]:::ap
+  Operator:::operator
+  Task:::misc
+  User:::misc
+
+  AP -- consist_of --> Operator
+  Operator -- input --> Data
+  Operator -- output --> Data
+  Operator -- follows --> Operator
+  User -- uses --> Operator
+  Task -- is_accomplished_by --> AP
+
+  %% ── ML Model subgraph ──────────────────────────────────
+  MLModel["ML_Model"]:::ml
+
+  Operator -- perform_inference --> MLModel
+```
+
+| Colour | Domain |
+|--------|--------|
+| 🟦 Blue shades | Dataset & Data nodes |
+| 🟥 Red shades | Analytical Pattern & Operators |
+| 🟩 Green | ML Model |
+| ⬜ Grey | Task & User |
 
 ## Quick Start
 
@@ -128,6 +224,16 @@ Configuration is managed entirely through environment variables:
 | `GET`   | `/nodes/{id}` | Retrieve a single graph node by ID              |
 | `PATCH` | `/nodes/{id}` | Partially update properties of an existing node |
 
+### ML Models (`/ml-models`)
+
+| Method   | Path              | Description                                                 |
+| -------- | ----------------- | ----------------------------------------------------------- |
+| `POST`   | `/ml-models`      | Create a new ML_Model (admin only)                          |
+| `GET`    | `/ml-models`      | List all ML_Models (any authenticated user)                 |
+| `GET`    | `/ml-models/{id}` | Retrieve an ML_Model by ID (any authenticated user)         |
+| `PATCH`  | `/ml-models/{id}` | Update an ML_Model (admin only)                             |
+| `DELETE` | `/ml-models/{id}` | Delete an ML_Model (admin only, blocked if referenced by AP)|
+
 ### Health
 
 | Method | Path      | Description                             |
@@ -144,12 +250,14 @@ moma_management/
 │   ├── datasets/              # Dataset endpoints
 │   ├── analytical_patterns/   # AP endpoints
 │   ├── nodes/                 # Node endpoints
-│   └── tasks/                 # Task endpoints
+│   ├── tasks/                 # Task endpoints
+│   └── ml_models/             # ML Model endpoints
 ├── services/
 │   ├── dataset.py             # Dataset CRUD + Croissant ingestion
 │   ├── analytical_pattern.py  # AP CRUD + semantic search
 │   ├── node.py                # Node CRUD
 │   ├── task.py                # Task CRUD
+│   ├── ml_model.py            # ML Model CRUD + delete protection
 │   ├── authentication.py      # JWT validation (OIDC/JWKS, RS256)
 │   ├── authorization.py       # Dataset-level permission checks via external gateway
 │   └── embeddings/            # Sentence-transformer embedder for AP search
@@ -167,7 +275,8 @@ moma_management/
 │   ├── dataset/               # Dataset repository (Neo4j)
 │   ├── analytical_pattern/    # AP repository (Neo4j + vector index)
 │   ├── node/                  # Node repository (Neo4j)
-│   └── task/                  # Task repository (Neo4j)
+│   ├── task/                  # Task repository (Neo4j)
+│   └── ml_model/              # ML Model repository (Neo4j)
 └── legacy/
     └── converters.py          # Deprecated converters (kept for reference)
 ```
