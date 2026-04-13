@@ -17,6 +17,10 @@ from moma_management.repository.analytical_pattern import (
     AnalyticalPatternRepository,
     Neo4jAnalyticalPatternRepository,
 )
+from moma_management.repository.ml_model import (
+    MlModelRepository,
+    Neo4jMlModelRepository,
+)
 from moma_management.repository.node import Neo4jNodeRepository, NodeRepository
 from moma_management.repository.task import Neo4jTaskRepository, TaskRepository
 from moma_management.services.analytical_pattern import AnalyticalPatternService
@@ -25,10 +29,12 @@ from moma_management.services.authorization import (
     DatagemsAuthorizationService,
     DatasetRole,
     GatewayError,
+    RealmRole,
     UserError,
 )
 from moma_management.services.dataset import DatasetService
 from moma_management.services.embeddings import Embedder, LocalEmbedder
+from moma_management.services.ml_model import MlModelService
 from moma_management.services.node import NodeService
 from moma_management.services.task import TaskService
 
@@ -435,6 +441,70 @@ def get_task_service(
 ) -> TaskService:
     """Return the service for Task operations."""
     return TaskService(task_repo, ap_repo)
+
+
+def get_ml_model_repo(session: Session = Depends(get_db_session)) -> MlModelRepository:
+    """Return the repository for ML_Model node operations."""
+    return Neo4jMlModelRepository(session)
+
+
+def get_ml_model_service(
+    repo: MlModelRepository = Depends(get_ml_model_repo),
+) -> MlModelService:
+    """Return the service for ML_Model operations."""
+    return MlModelService(repo)
+
+
+def require_admin():
+    """Validate the caller's token and enforce admin-level realm roles.
+
+    Grants access to users with ``ADMIN``, ``CURATOR``, or ``SYSTEM``
+    realm roles.  Returns the JWT claims dict when authorised, ``None``
+    when authentication is disabled.
+
+    Raises:
+        HTTPException 401: missing or invalid token.
+        HTTPException 403: authenticated but lacks admin realm role.
+    """
+
+    async def _check(
+        credentials: HTTPAuthorizationCredentials | None = Depends(
+            bearer_scheme),
+        authentication: Optional[Authentication] = Depends(
+            get_authentication_service),
+        authorization: Optional[DatagemsAuthorizationService] = Depends(
+            get_authorization_service
+        ),
+    ) -> dict | None:
+        if authentication is None:
+            return None
+
+        token, user = _authenticate(credentials, authentication)
+
+        if authorization is None:
+            return user
+
+        try:
+            if not authorization.has_realm_roles(
+                token, [RealmRole.ADMIN, RealmRole.CURATOR, RealmRole.SYSTEM]
+            ):
+                raise HTTPException(
+                    status_code=403,
+                    detail="Forbidden: admin role required.",
+                )
+        except GatewayError:
+            raise HTTPException(
+                status_code=502,
+                detail="Permission gateway unavailable. Please see logs for details.",
+            )
+        except UserError as exc:
+            raise HTTPException(
+                status_code=exc.status_code, detail=f"Gateway error. {exc.text}"
+            )
+
+        return user
+
+    return _check
 
 
 def get_allowed_datasets_ids() -> AsyncGenerator[List[str]]:

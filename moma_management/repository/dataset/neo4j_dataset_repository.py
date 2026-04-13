@@ -15,7 +15,8 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
     """Neo4j-backed implementation of DatasetRepository."""
 
     # These edges links datasets to models or APs so must be excluded when maniulating datasets in isolation
-    FORBIDDEN_EDGES: list[str] = ["fitted_on", "input", "output", "trained_on"]
+    FORBIDDEN_EDGES: list[str] = ["fitted_on", "input",
+                                  "output", "perform_inference", "trained_on"]
 
     def __init__(self, session: Session):
         self._session = session

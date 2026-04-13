@@ -1,0 +1,31 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "mlModel.schema.json",
+    "title": "ML_Model",
+    "allOf": [
+        {
+            "$ref": "../node.schema.json"
+        }
+    ],
+    "type": "object",
+    "description": "An ML_Model node represents a machine-learning model that can be used by Operators for inference.",
+    "properties": {
+        "id": {
+            "type": "string",
+            "format": "uuid"
+        },
+        "name": {
+            "type": "string",
+            "description": "Human-readable name of the ML model"
+        },
+        "type": {
+            "type": "string",
+            "description": "Type or family of the ML model (e.g. classification, regression, LLM)"
+        }
+    },
+    "required": [
+        "id",
+        "name",
+        "type"
+    ]
+}

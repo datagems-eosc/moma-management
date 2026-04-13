@@ -94,5 +94,11 @@
         "label": "is_accomplished_by",
         "toLabel": "Analytical_Pattern",
         "description": "Task is fulfilled by an AnalyticalPattern (edge lives outside the AP subgraph)"
+    },
+    {
+        "fromLabel": "Operator",
+        "label": "perform_inference",
+        "toLabel": "ML_Model",
+        "description": "Operator performs inference using an ML model"
     }
 ]

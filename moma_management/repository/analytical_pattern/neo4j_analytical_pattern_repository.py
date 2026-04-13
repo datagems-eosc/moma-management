@@ -19,7 +19,8 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
 
     # Edges that link APs/Operators to external entities (Data, User, …) and
     # must NOT be traversed when manipulating an AP subgraph in isolation.
-    FORBIDDEN_EDGES: list[str] = ["input", "output", "perform", "uses"]
+    FORBIDDEN_EDGES: list[str] = ["input", "output",
+                                  "perform", "perform_inference", "uses"]
 
     _index_ensured: bool = False
 
