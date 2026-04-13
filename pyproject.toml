@@ -27,6 +27,7 @@ dependencies = [
     "requests>=2.32.5",
     "sentence-transformers>=3.0.0",
     "uvicorn[standard]>=0.41.0",
+    "torch>=2.10.0"
 ]
 
 [dependency-groups]
@@ -48,6 +49,17 @@ dev = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
+torchaudio = { index = "pytorch-cpu" }
+
 
 [tool.setuptools]
 py-modules = ["moma_management"]
