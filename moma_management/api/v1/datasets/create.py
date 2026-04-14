@@ -18,4 +18,4 @@ async def create_dataset(
 
     **Required permission:** realm role `dg_admin` or `dg_dataset-uploader`.
     """
-    return svc.create(candidate)
+    return await svc.create(candidate)

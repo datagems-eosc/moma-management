@@ -2,7 +2,7 @@
 This are unit tests for the reqire_permission function that has many branches.
 This assumes remote services are functional, so we mock them to test the logic of the permission check itself.
 """
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi import HTTPException
@@ -149,7 +149,7 @@ async def test_gateway_error_raises_502():
 @pytest.mark.asyncio
 async def test_node_not_found_raises_404():
     authz_svc = MagicMock()
-    dataset_svc = MagicMock()
+    dataset_svc = AsyncMock()
     dataset_svc.list.return_value = {
         "datasets": []}  # node has no parent datasets
 

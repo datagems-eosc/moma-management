@@ -18,5 +18,5 @@ async def create_ml_model(
     _auth: Never = Depends(require_admin()),
 ) -> dict:
     """Create a new ML_Model node. Returns the created model's ``id``."""
-    node = svc.create(name=body.name, type=body.type)
+    node = await svc.create(name=body.name, type=body.type)
     return {"id": str(node.id)}

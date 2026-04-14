@@ -3,7 +3,7 @@ from logging import getLogger
 from typing import Any, Dict, List, LiteralString, Optional, cast
 
 import arrow
-from neo4j import Transaction
+from neo4j import AsyncManagedTransaction
 
 from moma_management.domain.generated.edges.edge_schema import Edge
 from moma_management.domain.generated.moma_schema import MoMaGraphModel
@@ -99,7 +99,7 @@ class Neo4jPgJsonMixin:
         """
         return [f"`{label}`" for label in labels]
 
-    def create_pgson_node(self, tx: Transaction, node: Node) -> None:
+    async def create_pgson_node(self, tx: AsyncManagedTransaction, node: Node) -> None:
         """
         Store a single PG-JSON node in Neo4j using MERGE/SET.
 
@@ -121,9 +121,9 @@ class Neo4jPgJsonMixin:
         prop_assignments = ", ".join(f"{k}: ${k}" for k in props.keys())
         query = f"MERGE (n:{labels} {{id: $id}}) SET n += {{{prop_assignments}}}"
 
-        tx.run(cast(LiteralString, query), props)
+        await tx.run(cast(LiteralString, query), props)
 
-    def create_pgson_edge(self, tx: Transaction, edge: Edge) -> None:
+    async def create_pgson_edge(self, tx: AsyncManagedTransaction, edge: Edge) -> None:
         """
         Store a single PG-JSON edge in Neo4j using MERGE/SET.
 
@@ -160,7 +160,7 @@ class Neo4jPgJsonMixin:
 
         parameters: Dict[str, Any] = {
             "from_id": from_id, "to_id": to_id, **props}
-        tx.run(cast(LiteralString, query), parameters)
+        await tx.run(cast(LiteralString, query), parameters)
 
     @staticmethod
     def _deserialize_node(neo4j_node: Any) -> Dict[str, Any]:
@@ -219,7 +219,7 @@ class Neo4jPgJsonMixin:
             "properties": properties,
         }
 
-    def create_pgson(self, tx: Transaction, pg_json: MoMaGraphModel) -> None:
+    async def create_pgson(self, tx: AsyncManagedTransaction, pg_json: MoMaGraphModel) -> None:
         """
         Store an entire PG-JSON structure (nodes then edges) in Neo4j.
 
@@ -234,9 +234,9 @@ class Neo4jPgJsonMixin:
             Exception: If any Neo4j operation fails.
         """
         for node in pg_json.nodes:
-            self.create_pgson_node(tx, node)
+            await self.create_pgson_node(tx, node)
         for edge in pg_json.edges or []:
-            self.create_pgson_edge(tx, edge)
+            await self.create_pgson_edge(tx, edge)
 
     def _build_dataset(self, root: Any, node_lists: List, rel_lists: List) -> MoMaGraphModel:
         """

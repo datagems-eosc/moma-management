@@ -13,4 +13,4 @@ async def get_ml_model(
     _auth: Never = Depends(require_authentication()),
 ) -> Node:
     """Retrieve a single ML_Model by its ID."""
-    return svc.get(id)
+    return await svc.get(id)

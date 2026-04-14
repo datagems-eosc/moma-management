@@ -23,4 +23,4 @@ async def delete_ap(
     by the AP's ``input`` edges, or realm role ``dg_admin`` /
     ``dg_dataset-curator``.
     """
-    svc.delete(id)
+    await svc.delete(id)

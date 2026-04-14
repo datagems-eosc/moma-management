@@ -19,4 +19,4 @@ async def get_dataset(
     **Required permission:** dataset grant `dg_ds-browse`, or realm role
     `dg_admin` / `dg_dataset-curator`.
     """
-    return svc.get(id)
+    return await svc.get(id)

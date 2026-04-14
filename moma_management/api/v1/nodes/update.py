@@ -23,4 +23,4 @@ async def update_node(
     role `GLOBAL_dg_admin` / `GLOBAL_dg_dataset-curator`.
     Returns 404 (not 403) on permission denial to prevent dataset enumeration.
     """
-    return svc.update(Node(id=id, labels=[], properties=properties))
+    return await svc.update(Node(id=id, labels=[], properties=properties))

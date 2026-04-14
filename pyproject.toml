@@ -44,6 +44,7 @@ dev = [
     "pymdown-extensions>=10.20",
     "datamodel-code-generator>=0.54.1",
     "pytest-xdist>=3.8.0",
+    "pyinstrument>=5.1.2",
 ]
 
 [build-system]
@@ -67,5 +68,7 @@ py-modules = ["moma_management"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-n auto --maxprocesses=12"
+asyncio_default_test_loop_scope = "session"
+asyncio_default_fixture_loop_scope = "session"
 
 

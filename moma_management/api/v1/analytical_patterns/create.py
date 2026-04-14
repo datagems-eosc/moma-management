@@ -19,5 +19,5 @@ async def create_ap(
     to an existing dataset, and the caller must be able to **browse** those
     datasets.  The AP cannot create Dataset nodes itself.
     """
-    ap_id = svc.create(candidate)
+    ap_id = await svc.create(candidate)
     return {"id": ap_id}

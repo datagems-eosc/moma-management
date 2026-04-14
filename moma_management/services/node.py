@@ -15,34 +15,34 @@ class NodeService:
     def __init__(self, repo: NodeRepository):
         self._repo = repo
 
-    def create(self, node: Node) -> str:
+    async def create(self, node: Node) -> str:
         """Store a single node. Returns 'success' or an error string."""
-        return self._repo.create(node)
+        return await self._repo.create(node)
 
-    def get(self, node_id: str) -> Node:
+    async def get(self, node_id: str) -> Node:
         """
         Retrieve a single node by its ID.
 
         Raises:
             NotFoundError: if no node with *node_id* exists.
         """
-        result = self._repo.get(node_id)
+        result = await self._repo.get(node_id)
         if result is None:
             raise NotFoundError(f"Node '{node_id}' not found.")
         return result
 
-    def update(self, node: Node) -> dict:
+    async def update(self, node: Node) -> dict:
         """
         Update properties of an existing node.
 
         Raises:
             NotFoundError: if no node with *node.id* exists.
         """
-        result = self._repo.update(node)
+        result = await self._repo.update(node)
         if result.get("updated", 0) == 0:
             raise NotFoundError(f"Node '{node.id}' not found.")
         return result
 
-    def delete(self, node_id: str) -> int:
+    async def delete(self, node_id: str) -> int:
         """Delete a node (detaching its relationships) by ID. Returns 1 on success, 0 if not found."""
-        return self._repo.delete(node_id)
+        return await self._repo.delete(node_id)

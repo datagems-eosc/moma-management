@@ -27,7 +27,7 @@ class AnalyticalPatternService:
         self._dataset_service = dataset_service
         self._embedder = embedder
 
-    def create(self, ap: AnalyticalPattern) -> str:
+    async def create(self, ap: AnalyticalPattern) -> str:
         """
         Validate that every ``input`` edge in the AP references a Data node
         that belongs to an existing dataset, then persist the AP.
@@ -44,7 +44,7 @@ class AnalyticalPatternService:
         ]
 
         if input_node_ids:
-            result = self._dataset_service.list(
+            result = await self._dataset_service.list(
                 DatasetFilter(nodeIds=input_node_ids)
             )
             found_ids: set[str] = set()
@@ -59,7 +59,7 @@ class AnalyticalPatternService:
                     f"belong to any known dataset: {', '.join(missing)}"
                 )
 
-        self._repo.create(ap, embedding=self._embed_ap(ap))
+        await self._repo.create(ap, embedding=self._embed_ap(ap))
         return str(ap.root.id)
 
     def _embed_ap(self, ap: AnalyticalPattern) -> Optional[List[float]]:
@@ -72,7 +72,7 @@ class AnalyticalPatternService:
             return None
         return self._embedder.embed(text)
 
-    def search(
+    async def search(
         self,
         q: str,
         top_k: int = 10,
@@ -86,31 +86,31 @@ class AnalyticalPatternService:
             raise ValidationError(
                 "Semantic search is not available: no embedder configured.")
         query_vector = self._embedder.embed(q)
-        return self._repo.search(query_vector, top_k, accessible_dataset_ids=accessible_dataset_ids)
+        return await self._repo.search(query_vector, top_k, accessible_dataset_ids=accessible_dataset_ids)
 
-    def get(self, ap_id: str) -> AnalyticalPattern:
+    async def get(self, ap_id: str) -> AnalyticalPattern:
         """
         Retrieve an AnalyticalPattern by its root node ID (shallow).
 
         Raises:
             NotFoundError: if no AP with *ap_id* exists.
         """
-        result = self._repo.get(ap_id)
+        result = await self._repo.get(ap_id)
         if result is None:
             raise NotFoundError(f"AnalyticalPattern '{ap_id}' not found.")
         return result
 
-    def delete(self, ap_id: str) -> None:
+    async def delete(self, ap_id: str) -> None:
         """Delete an AnalyticalPattern by its root node ID.
 
         Raises:
             NotFoundError: if no AP with *ap_id* exists.
         """
-        if self._repo.get(ap_id) is None:
+        if await self._repo.get(ap_id) is None:
             raise NotFoundError(f"AnalyticalPattern '{ap_id}' not found.")
-        self._repo.delete(ap_id)
+        await self._repo.delete(ap_id)
 
-    def list(self, accessible_dataset_ids: list[str] | None = None) -> List[AnalyticalPattern]:
+    async def list(self, accessible_dataset_ids: list[str] | None = None) -> List[AnalyticalPattern]:
         """
         Return all AnalyticalPattern subgraphs (shallow retrieval).
 
@@ -118,7 +118,7 @@ class AnalyticalPatternService:
         edges reference a Data node that belongs to one of those datasets are
         returned.  APs with no ``input`` edges are always included.
         """
-        return self._repo.list(accessible_dataset_ids=accessible_dataset_ids)
+        return await self._repo.list(accessible_dataset_ids=accessible_dataset_ids)
 
     def validate(self, candidate: dict) -> list[SchemaError]:
         """Validate a raw PG-JSON dict as an AnalyticalPattern.

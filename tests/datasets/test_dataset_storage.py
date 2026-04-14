@@ -43,9 +43,9 @@ from tests.utils import (
 # ---------------------------------------------------------------------------
 
 
-def _list(repo: Neo4jDatasetRepository, **kwargs) -> dict:
+async def _list(repo: Neo4jDatasetRepository, **kwargs) -> dict:
     """Shorthand: build a DatasetFilter from keyword overrides and call list()."""
-    return repo.list(DatasetFilter(**kwargs))
+    return await repo.list(DatasetFilter(**kwargs))
 
 
 def _with_normalised_dates(dataset: Dataset) -> Dataset:
@@ -70,7 +70,8 @@ def _with_normalised_dates(dataset: Dataset) -> Dataset:
 # ---------------------------------------------------------------------------
 
 
-def test_round_trip(
+@pytest.mark.asyncio
+async def test_round_trip(
     dataset_file: Path,
     dataset_repository: Neo4jDatasetRepository,
 ):
@@ -81,9 +82,9 @@ def test_round_trip(
     the normalised form of the original rather than the raw file content.
     """
     original = Dataset.model_validate_json(dataset_file.read_text())
-    dataset_repository.create(original)
+    await dataset_repository.create(original)
 
-    stored = dataset_repository.get(original.root_id)
+    stored = await dataset_repository.get(original.root_id)
     expected = _with_normalised_dates(original)
 
     assert len(stored.nodes) > 0 and len(stored.edges) > 0, (
@@ -106,7 +107,8 @@ def test_round_trip(
     )
 
 
-def test_deletion(
+@pytest.mark.asyncio
+async def test_deletion(
     dataset_file: Path,
     dataset_repository: Neo4jDatasetRepository,
 ):
@@ -114,21 +116,21 @@ def test_deletion(
     Store / Retrieve round-trip test for a single dataset JSON file.
     """
     original = Dataset.model_validate_json(dataset_file.read_text())
-    dataset_repository.create(original)
+    await dataset_repository.create(original)
 
-    stored = dataset_repository.get(original.root_id)
+    stored = await dataset_repository.get(original.root_id)
 
     assert len(stored.nodes) > 0 and len(stored.edges) > 0, (
         f"get() did not return a PG-JSON structure for {dataset_file.name!r}"
     )
 
-    number_deleted = dataset_repository.delete(original.root_id)
+    number_deleted = await dataset_repository.delete(original.root_id)
     assert number_deleted == 1, (
         f"Expected to delete exactly 1 dataset for {dataset_file.name!r}, "
         f"but delete() reported {number_deleted} deleted"
     )
 
-    deleted = dataset_repository.get(original.root_id)
+    deleted = await dataset_repository.get(original.root_id)
     assert deleted is None, (
         f"Dataset with id {original.root_id!r} was not deleted properly, "
         f"expected None but got {deleted!r}"
@@ -150,33 +152,38 @@ def test_deletion(
 class TestListMethod:
     # -- no filter -----------------------------------------------------------
 
-    def test_returns_all_datasets(self, populated_repository):
-        result = _list(populated_repository)
+    @pytest.mark.asyncio
+    async def test_returns_all_datasets(self, populated_repository):
+        result = await _list(populated_repository)
         assert "datasets" in result
         assert result["total"] == 3
         assert len(result["datasets"]) == 3
 
-    def test_response_shape(self, populated_repository):
-        result = _list(populated_repository)
+    @pytest.mark.asyncio
+    async def test_response_shape(self, populated_repository):
+        result = await _list(populated_repository)
         for ds in result["datasets"]:
             assert hasattr(ds, "nodes")
             assert hasattr(ds, "edges")
             assert any("sc:Dataset" in n.labels for n in ds.nodes)
 
-    def test_includes_connected_nodes(self, populated_repository):
-        result = _list(populated_repository)
+    @pytest.mark.asyncio
+    async def test_includes_connected_nodes(self, populated_repository):
+        result = await _list(populated_repository)
         for ds in result["datasets"]:
             assert len(ds.nodes) > 1, "Expected root + connected file node"
 
-    def test_includes_edges(self, populated_repository):
-        result = _list(populated_repository)
+    @pytest.mark.asyncio
+    async def test_includes_edges(self, populated_repository):
+        result = await _list(populated_repository)
         for ds in result["datasets"]:
             assert ds.edges and len(ds.edges) > 0
 
     # -- filter by nodeId ----------------------------------------------------
 
-    def test_single_id(self, populated_repository):
-        result = _list(populated_repository, nodeIds=[DS_ALPHA_ID])
+    @pytest.mark.asyncio
+    async def test_single_id(self, populated_repository):
+        result = await _list(populated_repository, nodeIds=[DS_ALPHA_ID])
         assert result["total"] == 1
         ids = [
             str(n.id) for ds in result["datasets"]
@@ -184,19 +191,22 @@ class TestListMethod:
         ]
         assert ids == [DS_ALPHA_ID]
 
-    def test_multiple_ids(self, populated_repository):
-        result = _list(populated_repository, nodeIds=[
+    @pytest.mark.asyncio
+    async def test_multiple_ids(self, populated_repository):
+        result = await _list(populated_repository, nodeIds=[
                        DS_ALPHA_ID, DS_GAMMA_ID])
         assert result["total"] == 2
 
-    def test_unknown_id_returns_empty(self, populated_repository):
-        result = _list(populated_repository, nodeIds=["no-such-id"])
+    @pytest.mark.asyncio
+    async def test_unknown_id_returns_empty(self, populated_repository):
+        result = await _list(populated_repository, nodeIds=["no-such-id"])
         assert result["total"] == 0
         assert result["datasets"] == []
 
-    def test_filter_by_nodeid_excludes_other_datasets(self, populated_repository):
+    @pytest.mark.asyncio
+    async def test_filter_by_nodeid_excludes_other_datasets(self, populated_repository):
         """Verify that filtering by nodeId returns only the correct dataset and excludes others."""
-        result = _list(populated_repository, nodeIds=[DS_BETA_ID])
+        result = await _list(populated_repository, nodeIds=[DS_BETA_ID])
 
         # Verify only one dataset is returned
         assert result["total"] == 1
@@ -215,7 +225,8 @@ class TestListMethod:
         assert DS_ALPHA_ID not in returned_ids
         assert DS_GAMMA_ID not in returned_ids
 
-    def test_filter_by_subgraph_child_node_id(self, populated_repository):
+    @pytest.mark.asyncio
+    async def test_filter_by_subgraph_child_node_id(self, populated_repository):
         """Filtering by a child node ID (not the root sc:Dataset) must return the parent dataset.
 
         Each seeded dataset has a connected file node whose ID follows the pattern
@@ -224,7 +235,7 @@ class TestListMethod:
         subgraph and not only the dataset root node.
         """
         # DS_ALPHA_FILE_ID is the cr:FileObject connected to DS_ALPHA_ID
-        result = _list(populated_repository, nodeIds=[DS_ALPHA_FILE_ID])
+        result = await _list(populated_repository, nodeIds=[DS_ALPHA_FILE_ID])
 
         assert result["total"] == 1, (
             "Expected the parent dataset to be returned when filtering by a child node ID"
@@ -237,52 +248,60 @@ class TestListMethod:
 
     # -- filter by status ----------------------------------------------------
 
-    def test_published_status(self, populated_repository):
-        result = _list(populated_repository, status=Status.published)
+    @pytest.mark.asyncio
+    async def test_published_status(self, populated_repository):
+        result = await _list(populated_repository, status=Status.published)
         assert result["total"] == 2
         for ds in result["datasets"]:
             root = next(n for n in ds.nodes if "sc:Dataset" in n.labels)
             assert root.properties.get("status") == "published"
 
-    def test_draft_status(self, populated_repository):
-        result = _list(populated_repository, status=Status.draft)
+    @pytest.mark.asyncio
+    async def test_draft_status(self, populated_repository):
+        result = await _list(populated_repository, status=Status.draft)
         assert result["total"] == 1
 
-    def test_nonexistent_status_returns_empty(self, populated_repository):
-        result = _list(populated_repository, status=Status.archived)
+    @pytest.mark.asyncio
+    async def test_nonexistent_status_returns_empty(self, populated_repository):
+        result = await _list(populated_repository, status=Status.archived)
         assert result["total"] == 0
         assert result["datasets"] == []
 
     # -- filter by date range ------------------------------------------------
 
-    def test_from_date_excludes_older(self, populated_repository):
-        result = _list(populated_repository,
+    @pytest.mark.asyncio
+    async def test_from_date_excludes_older(self, populated_repository):
+        result = await _list(populated_repository,
                        publishedFrom=date(2024, 6, 1))
         assert result["total"] == 2  # ds-beta and ds-gamma
 
-    def test_to_date_excludes_newer(self, populated_repository):
-        result = _list(populated_repository,
+    @pytest.mark.asyncio
+    async def test_to_date_excludes_newer(self, populated_repository):
+        result = await _list(populated_repository,
                        publishedTo=date(2024, 12, 31))
         assert result["total"] == 2  # ds-alpha and ds-beta
 
-    def test_exact_date_range(self, populated_repository):
-        result = _list(
+    @pytest.mark.asyncio
+    async def test_exact_date_range(self, populated_repository):
+        result = await _list(
             populated_repository,
             publishedFrom=date(2024, 6, 1),
             publishedTo=date(2024, 6, 1),
         )
         assert result["total"] == 1
 
-    def test_range_with_no_match(self, populated_repository):
-        result = _list(
+    @pytest.mark.asyncio
+    async def test_range_with_no_match(self, populated_repository):
+        result = await _list(
             populated_repository,
             publishedFrom=date(2020, 1, 1),
             publishedTo=date(2020, 12, 31),
         )
         assert result["total"] == 0
 
-    def test_combined_date_and_status(self, populated_repository):
-        result = _list(
+    @pytest.mark.asyncio
+    async def test_combined_date_and_status(self, populated_repository):
+        result = await _list(
             populated_repository,
             publishedFrom=date(2024, 1, 1),
             publishedTo=date(2024, 12, 31),
@@ -292,27 +311,32 @@ class TestListMethod:
 
     # -- filter by type / mimeType -------------------------------------------
 
-    def test_fileobject_type_filter(self, populated_repository):
-        result = _list(populated_repository, types=[NodeLabel.FILE_OBJECT])
+    @pytest.mark.asyncio
+    async def test_fileobject_type_filter(self, populated_repository):
+        result = await _list(populated_repository, types=[NodeLabel.FILE_OBJECT])
         assert result["total"] == 3  # all datasets have a cr:FileObject node
 
-    def test_csv_label_filter(self, populated_repository):
-        result = _list(populated_repository, types=[NodeLabel.CSV])
+    @pytest.mark.asyncio
+    async def test_csv_label_filter(self, populated_repository):
+        result = await _list(populated_repository, types=[NodeLabel.CSV])
         assert result["total"] == 2  # ds-alpha and ds-beta only
 
-    def test_no_type_filter_returns_all(self, populated_repository):
-        result = _list(populated_repository, types=[])
+    @pytest.mark.asyncio
+    async def test_no_type_filter_returns_all(self, populated_repository):
+        result = await _list(populated_repository, types=[])
         assert result["total"] == 3
 
-    def test_mimetype_csv_maps_to_csv_label(self, populated_repository):
-        result = _list(populated_repository, mimeTypes=[MimeType.CSV])
+    @pytest.mark.asyncio
+    async def test_mimetype_csv_maps_to_csv_label(self, populated_repository):
+        result = await _list(populated_repository, mimeTypes=[MimeType.CSV])
         # MimeType.CSV maps to the CSV node label via MIME_TYPE_TO_NODE_LABEL
         assert result["total"] == 2
 
     # -- sorting -------------------------------------------------------------
 
-    def test_order_asc_by_id(self, populated_repository):
-        result = _list(populated_repository, orderBy=[
+    @pytest.mark.asyncio
+    async def test_order_asc_by_id(self, populated_repository):
+        result = await _list(populated_repository, orderBy=[
                        "id"], direction=SortDirection.ASC)
         root_ids = [
             n.id for ds in result["datasets"]
@@ -320,8 +344,9 @@ class TestListMethod:
         ]
         assert root_ids == sorted(root_ids)
 
-    def test_order_desc_by_id(self, populated_repository):
-        result = _list(populated_repository, orderBy=[
+    @pytest.mark.asyncio
+    async def test_order_desc_by_id(self, populated_repository):
+        result = await _list(populated_repository, orderBy=[
                        "id"], direction=SortDirection.DESC)
         root_ids = [
             n.id for ds in result["datasets"]
@@ -331,27 +356,31 @@ class TestListMethod:
 
     # -- pagination ----------------------------------------------------------
 
-    def test_page_size_limits_results(self, populated_repository):
-        result = _list(populated_repository, pageSize=2)
+    @pytest.mark.asyncio
+    async def test_page_size_limits_results(self, populated_repository):
+        result = await _list(populated_repository, pageSize=2)
         assert len(result["datasets"]) == 2
         assert result["total"] == 3
         assert result["pageSize"] == 2
         assert result["page"] == 1
 
-    def test_page_two_skips_first_page(self, populated_repository):
-        result = _list(populated_repository, page=2,
+    @pytest.mark.asyncio
+    async def test_page_two_skips_first_page(self, populated_repository):
+        result = await _list(populated_repository, page=2,
                        pageSize=2, orderBy=["id"])
         assert len(result["datasets"]) == 1
         assert result["page"] == 2
 
-    def test_page_beyond_total_returns_empty(self, populated_repository):
-        result = _list(populated_repository, page=10, pageSize=25)
+    @pytest.mark.asyncio
+    async def test_page_beyond_total_returns_empty(self, populated_repository):
+        result = await _list(populated_repository, page=10, pageSize=25)
         assert len(result["datasets"]) == 0
 
-    def test_paginate_all_with_page_size_one(self, populated_repository):
-        page1 = _list(populated_repository, page=1, pageSize=1, orderBy=["id"])
-        page2 = _list(populated_repository, page=2, pageSize=1, orderBy=["id"])
-        page3 = _list(populated_repository, page=3, pageSize=1, orderBy=["id"])
+    @pytest.mark.asyncio
+    async def test_paginate_all_with_page_size_one(self, populated_repository):
+        page1 = await _list(populated_repository, page=1, pageSize=1, orderBy=["id"])
+        page2 = await _list(populated_repository, page=2, pageSize=1, orderBy=["id"])
+        page3 = await _list(populated_repository, page=3, pageSize=1, orderBy=["id"])
 
         assert len(page1["datasets"]) == 1
         assert len(page2["datasets"]) == 1
@@ -365,9 +394,10 @@ class TestListMethod:
 
         assert len({root_id(page1), root_id(page2), root_id(page3)}) == 3
 
-    def test_pagination_totals_consistent(self, populated_repository):
-        page1 = _list(populated_repository, page=1, pageSize=2, orderBy=["id"])
-        page2 = _list(populated_repository, page=2, pageSize=2, orderBy=["id"])
+    @pytest.mark.asyncio
+    async def test_pagination_totals_consistent(self, populated_repository):
+        page1 = await _list(populated_repository, page=1, pageSize=2, orderBy=["id"])
+        page2 = await _list(populated_repository, page=2, pageSize=2, orderBy=["id"])
         assert page1["total"] == page2["total"] == 3
 
     # -- filter by mimeType --------------------------------------------------
@@ -376,8 +406,9 @@ class TestListMethod:
     #   ds-beta   cr:FileObject + CSV  →  matches text/csv
     #   ds-gamma  cr:FileObject only   →  no mimeType match
 
-    def test_mime_type_csv_returns_matching_datasets(self, populated_repository):
-        result = _list(populated_repository, mimeTypes=[MimeType.CSV])
+    @pytest.mark.asyncio
+    async def test_mime_type_csv_returns_matching_datasets(self, populated_repository):
+        result = await _list(populated_repository, mimeTypes=[MimeType.CSV])
         assert result["total"] == 2
         ids = {
             str(n.id) for ds in result["datasets"]
@@ -385,21 +416,24 @@ class TestListMethod:
         }
         assert ids == {DS_ALPHA_ID, DS_BETA_ID}
 
-    def test_mime_type_unknown_returns_empty(self, populated_repository):
-        result = _list(populated_repository, mimeTypes=[MimeType.PDF])
+    @pytest.mark.asyncio
+    async def test_mime_type_unknown_returns_empty(self, populated_repository):
+        result = await _list(populated_repository, mimeTypes=[MimeType.PDF])
         assert result["total"] == 0
         assert result["datasets"] == []
 
-    def test_multiple_mime_types_returns_union(self, populated_repository):
+    @pytest.mark.asyncio
+    async def test_multiple_mime_types_returns_union(self, populated_repository):
         # MimeType.CSV matches ds-alpha and ds-beta; MimeType.PDF matches none.
         # The union should still be just the two CSV datasets.
-        result = _list(populated_repository, mimeTypes=[
+        result = await _list(populated_repository, mimeTypes=[
                        MimeType.CSV, MimeType.PDF])
         assert result["total"] == 2
 
-    def test_mime_type_no_filter_returns_all(self, populated_repository):
+    @pytest.mark.asyncio
+    async def test_mime_type_no_filter_returns_all(self, populated_repository):
         # An empty mimeTypes list must not restrict results.
-        result = _list(populated_repository, mimeTypes=[])
+        result = await _list(populated_repository, mimeTypes=[])
         assert result["total"] == 3
 
 
@@ -425,9 +459,10 @@ class TestOrderByDate:
     def _dates(self, result: dict) -> list[str]:
         return [self._root(ds).properties["datePublished"] for ds in result["datasets"]]
 
-    def test_dates_are_normalised_to_iso(self, mixed_date_repository):
+    @pytest.mark.asyncio
+    async def test_dates_are_normalised_to_iso(self, mixed_date_repository):
         """All datePublished values must be stored as YYYY-MM-DD regardless of input format."""
-        result = _list(mixed_date_repository)
+        result = await _list(mixed_date_repository)
         for ds in result["datasets"]:
             date_val = self._root(ds).properties.get("datePublished", "")
             assert len(date_val) == 10 and date_val[4] == "-" and date_val[7] == "-", (
@@ -435,23 +470,26 @@ class TestOrderByDate:
                 f"for dataset {self._root(ds).id!r}"
             )
 
-    def test_dd_mm_yyyy_normalised_correctly(self, mixed_date_repository):
+    @pytest.mark.asyncio
+    async def test_dd_mm_yyyy_normalised_correctly(self, mixed_date_repository):
         """DD-MM-YYYY input '15-01-2023' must be stored as '2023-01-15'."""
-        result = _list(mixed_date_repository, nodeIds=[DS_DATE_A_ID])
+        result = await _list(mixed_date_repository, nodeIds=[DS_DATE_A_ID])
         stored_date = self._root(
             result["datasets"][0]).properties["datePublished"]
         assert stored_date == "2023-01-15"
 
-    def test_dd_slash_mm_yyyy_normalised_correctly(self, mixed_date_repository):
+    @pytest.mark.asyncio
+    async def test_dd_slash_mm_yyyy_normalised_correctly(self, mixed_date_repository):
         """DD/MM/YYYY input '01/06/2024' must be stored as '2024-06-01'."""
-        result = _list(mixed_date_repository, nodeIds=[DS_DATE_C_ID])
+        result = await _list(mixed_date_repository, nodeIds=[DS_DATE_C_ID])
         stored_date = self._root(
             result["datasets"][0]).properties["datePublished"]
         assert stored_date == "2024-06-01"
 
-    def test_sort_asc_by_date_returns_chronological_order(self, mixed_date_repository):
+    @pytest.mark.asyncio
+    async def test_sort_asc_by_date_returns_chronological_order(self, mixed_date_repository):
         """Sorting ASC by datePublished must return datasets oldest-first."""
-        result = _list(
+        result = await _list(
             mixed_date_repository,
             orderBy=[DatasetSortField.DATE_PUBLISHED],
             direction=SortDirection.ASC,
@@ -462,9 +500,10 @@ class TestOrderByDate:
         )
         assert dates[0] == "2023-01-15", f"Oldest dataset should be first, got {dates[0]}"
 
-    def test_sort_desc_by_date_returns_reverse_chronological_order(self, mixed_date_repository):
+    @pytest.mark.asyncio
+    async def test_sort_desc_by_date_returns_reverse_chronological_order(self, mixed_date_repository):
         """Sorting DESC by datePublished must return datasets newest-first."""
-        result = _list(
+        result = await _list(
             mixed_date_repository,
             orderBy=[DatasetSortField.DATE_PUBLISHED],
             direction=SortDirection.DESC,
@@ -475,9 +514,10 @@ class TestOrderByDate:
         )
         assert dates[0] == "2025-03-01", f"Newest dataset should be first, got {dates[0]}"
 
-    def test_sort_order_matches_expected_sequence(self, mixed_date_repository):
+    @pytest.mark.asyncio
+    async def test_sort_order_matches_expected_sequence(self, mixed_date_repository):
         """Full ASC sequence must be exactly [2023-01-15, 2024-01-15, 2024-06-01, 2025-03-01]."""
-        result = _list(
+        result = await _list(
             mixed_date_repository,
             orderBy=[DatasetSortField.DATE_PUBLISHED],
             direction=SortDirection.ASC,
@@ -485,10 +525,11 @@ class TestOrderByDate:
         assert self._dates(result) == [
             "2023-01-15", "2024-01-15", "2024-06-01", "2025-03-01"]
 
-    def test_date_range_filter_works_with_mixed_input_formats(self, mixed_date_repository):
+    @pytest.mark.asyncio
+    async def test_date_range_filter_works_with_mixed_input_formats(self, mixed_date_repository):
         """publishedFrom/publishedTo must correctly bound datasets after normalisation."""
         # Only ds-date-b (2024-01-15) and ds-date-c (2024-06-01) fall in 2024
-        result = _list(
+        result = await _list(
             mixed_date_repository,
             publishedFrom=date(2024, 1, 1),
             publishedTo=date(2024, 12, 31),
@@ -526,28 +567,31 @@ class TestMimeTypeFullSubgraph:
 
     # -- selection correctness -----------------------------------------------
 
-    def test_csv_filter_selects_csv_and_mixed_datasets(self, mixed_types_repository):
-        result = _list(mixed_types_repository, mimeTypes=[MimeType.CSV])
+    @pytest.mark.asyncio
+    async def test_csv_filter_selects_csv_and_mixed_datasets(self, mixed_types_repository):
+        result = await _list(mixed_types_repository, mimeTypes=[MimeType.CSV])
         assert result["total"] == 2
         ids = {self._root_id(ds) for ds in result["datasets"]}
         assert ids == {DS_MIXED_ID, DS_CSV_ONLY_ID}
 
-    def test_pdf_filter_selects_pdf_and_mixed_datasets(self, mixed_types_repository):
-        result = _list(mixed_types_repository, mimeTypes=[MimeType.PDF])
+    @pytest.mark.asyncio
+    async def test_pdf_filter_selects_pdf_and_mixed_datasets(self, mixed_types_repository):
+        result = await _list(mixed_types_repository, mimeTypes=[MimeType.PDF])
         assert result["total"] == 2
         ids = {self._root_id(ds) for ds in result["datasets"]}
         assert ids == {DS_MIXED_ID, DS_PDF_ONLY_ID}
 
     # -- full subgraph correctness -------------------------------------------
 
-    def test_csv_filter_returns_all_file_nodes_of_mixed_dataset(
+    @pytest.mark.asyncio
+    async def test_csv_filter_returns_all_file_nodes_of_mixed_dataset(
         self, mixed_types_repository
     ):
         """
         A dataset that has both a CSV and a PDF file must return BOTH file nodes
         when the query filters by text/csv — not only the CSV node.
         """
-        result = _list(mixed_types_repository, mimeTypes=[MimeType.CSV])
+        result = await _list(mixed_types_repository, mimeTypes=[MimeType.CSV])
         mixed = next(
             ds for ds in result["datasets"] if self._root_id(ds) == DS_MIXED_ID
         )
@@ -559,14 +603,15 @@ class TestMimeTypeFullSubgraph:
             "PDF file node incorrectly stripped from ds-mixed when filtered by text/csv"
         )
 
-    def test_pdf_filter_returns_all_file_nodes_of_mixed_dataset(
+    @pytest.mark.asyncio
+    async def test_pdf_filter_returns_all_file_nodes_of_mixed_dataset(
         self, mixed_types_repository
     ):
         """
         A dataset that has both a CSV and a PDF file must return BOTH file nodes
         when the query filters by application/pdf.
         """
-        result = _list(mixed_types_repository, mimeTypes=[MimeType.PDF])
+        result = await _list(mixed_types_repository, mimeTypes=[MimeType.PDF])
         mixed = next(
             ds for ds in result["datasets"] if self._root_id(ds) == DS_MIXED_ID
         )
@@ -578,9 +623,10 @@ class TestMimeTypeFullSubgraph:
             "CSV file node incorrectly stripped from ds-mixed when filtered by application/pdf"
         )
 
-    def test_no_filter_returns_all_nodes_of_all_datasets(self, mixed_types_repository):
+    @pytest.mark.asyncio
+    async def test_no_filter_returns_all_nodes_of_all_datasets(self, mixed_types_repository):
         """Baseline: unfiltered list returns full subgraphs for all datasets."""
-        result = _list(mixed_types_repository)
+        result = await _list(mixed_types_repository)
         assert result["total"] == 3
         mixed = next(
             ds for ds in result["datasets"] if self._root_id(ds) == DS_MIXED_ID
@@ -590,7 +636,8 @@ class TestMimeTypeFullSubgraph:
         )
 
 
-def test_prevent_ap_or_ml_traversal(
+@pytest.mark.asyncio
+async def test_prevent_ap_or_ml_traversal(
     dataset_repository: Neo4jDatasetRepository,
 ):
     """
@@ -630,8 +677,8 @@ def test_prevent_ap_or_ml_traversal(
         ],
     )
 
-    dataset_repository.create(dataset)
-    result = dataset_repository.get(ds_id)
+    await dataset_repository.create(dataset)
+    result = await dataset_repository.get(ds_id)
 
     assert result is not None
     returned_ids = {str(n.id) for n in result.nodes}

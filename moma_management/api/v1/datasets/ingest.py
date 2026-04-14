@@ -19,4 +19,4 @@ async def ingest_profile(
 
     **Required permission:** realm role `dg_admin` or `dg_dataset-uploader`.
     """
-    return svc.ingest(input_data)
+    return await svc.ingest(input_data)

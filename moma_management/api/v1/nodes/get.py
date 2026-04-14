@@ -21,4 +21,4 @@ async def get_node(
     role `GLOBAL_dg_admin` / `GLOBAL_dg_dataset-curator`.
     Returns 404 (not 403) on permission denial to prevent dataset enumeration.
     """
-    return svc.get(id)
+    return await svc.get(id)

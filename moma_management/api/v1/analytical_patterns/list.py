@@ -35,8 +35,8 @@ async def list_aps(
     When authentication is disabled all APs are returned.
     """
     if q is not None:
-        results = svc.search(
+        results = await svc.search(
             q, top_k=top_k, accessible_dataset_ids=accessible_ids)
         return [SearchResult(ap=ap, score=score) for ap, score in results if score >= threshold]
 
-    return svc.list(accessible_dataset_ids=accessible_ids)
+    return await svc.list(accessible_dataset_ids=accessible_ids)

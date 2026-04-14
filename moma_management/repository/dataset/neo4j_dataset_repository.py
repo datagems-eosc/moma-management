@@ -1,7 +1,7 @@
 from logging import getLogger
 from typing import List, Optional
 
-from neo4j import Session, Transaction
+from neo4j import AsyncManagedTransaction, AsyncSession
 
 from moma_management.domain.dataset import Dataset
 from moma_management.domain.filters import DatasetFilter, DatasetSortField
@@ -18,19 +18,19 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
     FORBIDDEN_EDGES: list[str] = ["fitted_on", "input",
                                   "output", "perform_inference", "trained_on"]
 
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         self._session = session
 
-    def create(self, dataset: Dataset) -> str:
+    async def create(self, dataset: Dataset) -> str:
         """Store a full PG-JSON graph (nodes + edges)."""
         try:
-            self._session.execute_write(self.create_pgson, dataset)
+            await self._session.execute_write(self.create_pgson, dataset)
             return "success"
         except Exception as e:
             logger.error("Neo4j upload failed: %s", e)
             return f"Error: {str(e)}"
 
-    def delete(self, id: str) -> int:
+    async def delete(self, id: str) -> int:
         """
         Delete a dataset and its full connected subgraph by id.
         """
@@ -43,12 +43,12 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             DETACH DELETE d
             RETURN 1 AS deletedRows
         """
-        result = self._session.run(
+        result = await self._session.run(
             query, datasetId=id, forbiddenEdges=self.FORBIDDEN_EDGES)
-        record = result.single()
+        record = await result.single()
         return record["deletedRows"] if record else 0
 
-    def has_referencing_aps(self, dataset_id: str) -> bool:
+    async def has_referencing_aps(self, dataset_id: str) -> bool:
         """Return True if at least one AP references a node in this dataset."""
         query = """//cypher
             MATCH (d:`sc:Dataset` {id: $datasetId})
@@ -60,12 +60,13 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             RETURN true AS referenced
             LIMIT 1
         """
-        record = self._session.run(
+        result = await self._session.run(
             query, datasetId=dataset_id, forbiddenEdges=self.FORBIDDEN_EDGES
-        ).single()
+        )
+        record = await result.single()
         return record is not None
 
-    def get(self, id: str) -> Optional[Dataset]:
+    async def get(self, id: str) -> Optional[Dataset]:
         """
         Retrieve the dataset with the given ID
         """
@@ -75,8 +76,9 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
             RETURN root, m, relationships(path) AS r
         """
-        rows = list(self._session.run(query, datasetId=id,
-                    forbiddenEdges=self.FORBIDDEN_EDGES))
+        result = await self._session.run(query, datasetId=id,
+                                         forbiddenEdges=self.FORBIDDEN_EDGES)
+        rows = [record async for record in result]
 
         if not rows:
             return None
@@ -110,7 +112,7 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
 
         return Dataset(nodes=list(nodes.values()), edges=valid_edges)
 
-    def list(self, criteria: DatasetFilter) -> List[Dataset]:
+    async def list(self, criteria: DatasetFilter) -> List[Dataset]:
         try:
             skip = (criteria.page - 1) * criteria.pageSize
             limit = criteria.pageSize
@@ -168,7 +170,8 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             RETURN count(DISTINCT n) AS total
             """
 
-            total_record = self._session.run(count_query, **params).single()
+            count_result = await self._session.run(count_query, **params)
+            total_record = await count_result.single()
             total = total_record["total"] if total_record else 0
 
             if total == 0:
@@ -263,8 +266,9 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                    [h1r + h2r + h3r + h4r] AS rel_lists
             """
 
-            records = list(self._session.run(
-                query, **params, skip=skip, limit=limit))
+            result = await self._session.run(
+                query, **params, skip=skip, limit=limit)
+            records = [record async for record in result]
 
             datasets = [
                 self._build_dataset(
@@ -309,7 +313,7 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             logger.error("Neo4j retrieve failed: %s", e)
             return {"error": str(e)}
 
-    def update(self, pg_json: Dataset) -> dict:
+    async def update(self, pg_json: Dataset) -> dict:
         """Update properties of existing nodes."""
         try:
             batch = [
@@ -326,8 +330,8 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                     SET n += row.properties
                     RETURN count(n) AS updated
                     """
-            result = self._session.run(cypher_query, {"batch": batch})
-            record = result.single()
+            result = await self._session.run(cypher_query, {"batch": batch})
+            record = await result.single()
             return {
                 "status": "success",
                 "updated": record["updated"]

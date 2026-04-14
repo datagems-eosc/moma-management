@@ -31,11 +31,11 @@ class DatasetService:
         ), f"Mapping file not found at {mapping_file}"
         self._mapping_file = mapping_file
 
-    def create(self, candidate: Dataset) -> Dataset:
+    async def create(self, candidate: Dataset) -> Dataset:
         """
         Create a new dataset from a validated Dataset object.
         """
-        self._repo.create(candidate)
+        await self._repo.create(candidate)
         return candidate
 
     def convert(self, candidate: Dict[str, Any]) -> Dataset:
@@ -80,7 +80,7 @@ class DatasetService:
         validator = LocalSchemaValidator()
         return validator.validate_graph(candidate, graph_type="dataset")
 
-    def ingest(self, candidate: Dict[str, Any]) -> Dataset:
+    async def ingest(self, candidate: Dict[str, Any]) -> Dataset:
         """
         Ingest a dataset profile into the MoMa repository.
         Accepts a Croissant-format JSON body, converts it to PG-JSON according to
@@ -91,28 +91,28 @@ class DatasetService:
             ValidationError: if the converted PG-JSON fails schema validation.
         """
         dataset = self.convert(candidate)
-        self._repo.create(dataset)
+        await self._repo.create(dataset)
         return dataset
 
-    def get(self, dataset_id: str) -> Dataset:
+    async def get(self, dataset_id: str) -> Dataset:
         """
         Retrieve the full dataset subgraph (nodes + edges) by dataset ID.
 
         Raises:
             NotFoundError: if no dataset with *dataset_id* exists.
         """
-        result = self._repo.get(dataset_id)
+        result = await self._repo.get(dataset_id)
         if result is None:
             raise NotFoundError(f"Dataset '{dataset_id}' not found.")
         return result
 
-    def list(self, filters: DatasetFilter) -> List[Dataset]:
+    async def list(self, filters: DatasetFilter) -> List[Dataset]:
         """
         List datasets with optional filtering, sorting, and pagination criteria.
         """
-        return self._repo.list(filters)
+        return await self._repo.list(filters)
 
-    def delete(self, id: str) -> int:
+    async def delete(self, id: str) -> int:
         """
         Delete a dataset and its connected subgraph by dataset ID.
 
@@ -120,11 +120,11 @@ class DatasetService:
             NotFoundError: if no dataset with *id* exists.
             ConflictError: if at least one AnalyticalPattern references this dataset.
         """
-        if self._repo.get(id) is None:
+        if await self._repo.get(id) is None:
             raise NotFoundError(f"Dataset '{id}' not found.")
-        if self._repo.has_referencing_aps(id):
+        if await self._repo.has_referencing_aps(id):
             raise ConflictError(
                 f"Dataset '{id}' cannot be deleted: it is referenced by at "
                 f"least one AnalyticalPattern."
             )
-        return self._repo.delete(id)
+        return await self._repo.delete(id)

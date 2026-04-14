@@ -15,4 +15,4 @@ async def delete_ml_model(
 
     Returns 409 Conflict if the model is referenced by an analytical pattern.
     """
-    svc.delete(id)
+    await svc.delete(id)

@@ -25,4 +25,4 @@ async def get_ap(
     dataset, or realm role ``dg_admin`` / ``dg_dataset-curator``.
     Returns 404 on permission denial to prevent enumeration.
     """
-    return svc.get(id)
+    return await svc.get(id)

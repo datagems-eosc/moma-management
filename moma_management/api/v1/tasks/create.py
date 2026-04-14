@@ -22,5 +22,5 @@ async def create_task(
 
     Returns the created Task's ``id``.
     """
-    task = svc.create(name=body.name, description=body.description)
+    task = await svc.create(name=body.name, description=body.description)
     return {"id": str(task.id)}

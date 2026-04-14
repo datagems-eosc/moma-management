@@ -19,4 +19,4 @@ async def update_ml_model(
     _auth: Never = Depends(require_admin()),
 ) -> dict:
     """Update properties of an existing ML_Model node."""
-    return svc.update(id, name=body.name, type=body.type)
+    return await svc.update(id, name=body.name, type=body.type)

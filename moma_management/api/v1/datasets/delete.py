@@ -18,4 +18,4 @@ async def delete_dataset(
     **Required permission:** dataset grant `dg_ds-delete`, or realm role
     `dg_admin` / `dg_dataset-curator`.
     """
-    svc.delete(id)
+    await svc.delete(id)

@@ -4,6 +4,7 @@ from typing import AsyncGenerator, Generator, List
 import pytest
 import pytest_asyncio
 from neo4j import AsyncGraphDatabase, GraphDatabase
+from pyinstrument import Profiler
 from testcontainers.neo4j import Neo4jContainer
 
 from moma_management.repository.dataset import Neo4jDatasetRepository
@@ -128,21 +129,21 @@ def neo4j_container_class() -> Generator[Neo4jContainer, None, None]:
     container.stop()
 
 
-@pytest.fixture
-def dataset_repository(neo4j_container: Neo4jContainer) -> Generator[Neo4jDatasetRepository, None, None]:
+@pytest_asyncio.fixture
+async def dataset_repository(neo4j_container: Neo4jContainer) -> AsyncGenerator[Neo4jDatasetRepository, None]:
     """Provide a Neo4jDatasetRepository backed by a throwaway Neo4j container session."""
     uri = neo4j_container.get_connection_url()
     auth = (neo4j_container.username, neo4j_container.password)
-    driver = GraphDatabase.driver(uri, auth=auth)
-    with driver.session() as session:
+    driver = AsyncGraphDatabase.driver(uri, auth=auth)
+    async with driver.session() as session:
         yield Neo4jDatasetRepository(session)
-    driver.close()
+    await driver.close()
 
 
-@pytest.fixture(scope="class")
-def populated_repository(
+@pytest_asyncio.fixture(scope="class")
+async def populated_repository(
     neo4j_container_class: Neo4jContainer,
-) -> Generator[Neo4jDatasetRepository, None, None]:
+) -> AsyncGenerator[Neo4jDatasetRepository, None]:
     """
     Controlled repo for filter tests.
 
@@ -198,8 +199,8 @@ def populated_repository(
 
     uri = neo4j_container_class.get_connection_url()
     auth = (neo4j_container_class.username, neo4j_container_class.password)
-    driver = GraphDatabase.driver(uri, auth=auth)
-    with driver.session() as session:
+    driver = AsyncGraphDatabase.driver(uri, auth=auth)
+    async with driver.session() as session:
         repo = Neo4jDatasetRepository(session)
         for ds in [
             _make_dataset(DS_ALPHA_ID, DS_ALPHA_FILE_ID,
@@ -209,21 +210,21 @@ def populated_repository(
             _make_dataset(DS_GAMMA_ID, DS_GAMMA_FILE_ID,
                           "2025-03-01", "published", []),
         ]:
-            repo.create(ds)
+            await repo.create(ds)
         yield repo
-    driver.close()
+    await driver.close()
 
 
-@pytest.fixture
-def dataset_service(dataset_repository: Neo4jDatasetRepository, mapping_file: Path) -> DatasetService:
+@pytest_asyncio.fixture
+async def dataset_service(dataset_repository: Neo4jDatasetRepository, mapping_file: Path) -> DatasetService:
     """Provide a DatasetService with a Neo4jDatasetRepository and mapping file."""
     return DatasetService(dataset_repository, mapping_file)
 
 
-@pytest.fixture(scope="class")
-def mixed_date_repository(
+@pytest_asyncio.fixture(scope="class")
+async def mixed_date_repository(
     neo4j_container_class: Neo4jContainer,
-) -> Generator[Neo4jDatasetRepository, None, None]:
+) -> AsyncGenerator[Neo4jDatasetRepository, None]:
     """
     Repository pre-loaded with four datasets whose ``datePublished`` values are
     written in *different* input formats.  Used to verify that date
@@ -258,8 +259,8 @@ def mixed_date_repository(
 
     uri = neo4j_container_class.get_connection_url()
     auth = (neo4j_container_class.username, neo4j_container_class.password)
-    driver = GraphDatabase.driver(uri, auth=auth)
-    with driver.session() as session:
+    driver = AsyncGraphDatabase.driver(uri, auth=auth)
+    async with driver.session() as session:
         repo = Neo4jDatasetRepository(session)
         for ds in [
             _make(DS_DATE_A_ID, DS_DATE_A_FILE_ID,
@@ -269,15 +270,15 @@ def mixed_date_repository(
                   "01/06/2024"),    # DD/MM/YYYY
             _make(DS_DATE_D_ID, DS_DATE_D_FILE_ID, "2025-03-01"),    # ISO
         ]:
-            repo.create(ds)
+            await repo.create(ds)
         yield repo
-    driver.close()
+    await driver.close()
 
 
-@pytest.fixture(scope="class")
-def mixed_types_repository(
+@pytest_asyncio.fixture(scope="class")
+async def mixed_types_repository(
     neo4j_container_class: Neo4jContainer,
-) -> Generator[Neo4jDatasetRepository, None, None]:
+) -> AsyncGenerator[Neo4jDatasetRepository, None]:
     """
     Repository for testing that mimeType filtering selects datasets by the
     presence of a matching file-object type, but always returns the FULL
@@ -322,8 +323,8 @@ def mixed_types_repository(
 
     uri = neo4j_container_class.get_connection_url()
     auth = (neo4j_container_class.username, neo4j_container_class.password)
-    driver = GraphDatabase.driver(uri, auth=auth)
-    with driver.session() as session:
+    driver = AsyncGraphDatabase.driver(uri, auth=auth)
+    async with driver.session() as session:
         repo = Neo4jDatasetRepository(session)
         for ds in [
             _make_multi(DS_MIXED_ID,    [(DS_MIXED_CSV_FILE_ID, [
@@ -331,17 +332,35 @@ def mixed_types_repository(
             _make_multi(DS_CSV_ONLY_ID, [(DS_CSV_ONLY_FILE_ID, ["CSV"])]),
             _make_multi(DS_PDF_ONLY_ID, [(DS_PDF_ONLY_FILE_ID, ["PDFSet"])]),
         ]:
-            repo.create(ds)
+            await repo.create(ds)
         yield repo
-    driver.close()
+    await driver.close()
 
 
-@pytest.fixture(scope="function")
-def node_repository(neo4j_container: Neo4jContainer) -> Generator[Neo4jNodeRepository, None, None]:
+@pytest_asyncio.fixture(scope="function")
+async def node_repository(neo4j_container: Neo4jContainer) -> AsyncGenerator[Neo4jNodeRepository, None]:
     """Provide a Neo4jNodeRepository backed by a throwaway Neo4j container session."""
     uri = neo4j_container.get_connection_url()
     auth = (neo4j_container.username, neo4j_container.password)
-    driver = GraphDatabase.driver(uri, auth=auth)
-    with driver.session() as session:
+    driver = AsyncGraphDatabase.driver(uri, auth=auth)
+    async with driver.session() as session:
         yield Neo4jNodeRepository(session)
-    driver.close()
+    await driver.close()
+
+
+TESTS_ROOT = Path.cwd()
+
+
+@pytest.fixture(autouse=True)
+def auto_profile(request):
+    PROFILE_ROOT = (TESTS_ROOT / ".profiles")
+    # Turn profiling on
+    profiler = Profiler()
+    profiler.start()
+
+    yield  # Run test
+
+    profiler.stop()
+    PROFILE_ROOT.mkdir(exist_ok=True)
+    results_file = PROFILE_ROOT / f"{request.node.name}.html"
+    profiler.write_html(results_file)

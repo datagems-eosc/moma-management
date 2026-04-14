@@ -79,4 +79,4 @@ async def list_datasets(
         if not filters.nodeIds:
             return {"datasets": [], "page": filters.page, "pageSize": filters.pageSize, "total": 0}
 
-    return svc.list(filters)
+    return await svc.list(filters)

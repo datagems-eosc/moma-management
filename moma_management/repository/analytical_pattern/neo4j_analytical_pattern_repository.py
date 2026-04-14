@@ -1,7 +1,7 @@
 from logging import getLogger
 from typing import Any, Dict, List, Optional, Tuple
 
-from neo4j import Session
+from neo4j import AsyncSession
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.repository.analytical_pattern.analytical_pattern_repository import (
@@ -24,19 +24,19 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
 
     _index_ensured: bool = False
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
     # ------------------------------------------------------------------
     # Write
     # ------------------------------------------------------------------
 
-    def create(self, ap: AnalyticalPattern, embedding: Optional[List[float]] = None) -> None:
+    async def create(self, ap: AnalyticalPattern, embedding: Optional[List[float]] = None) -> None:
         """Store the full AP subgraph using the mixin's MERGE/SET helpers."""
-        self._session.execute_write(self.create_pgson, ap)
+        await self._session.execute_write(self.create_pgson, ap)
         if embedding is not None:
-            self._ensure_index(len(embedding))
-            self._session.run(
+            await self._ensure_index(len(embedding))
+            await self._session.run(
                 """//cypher
                 MATCH (n:Analytical_Pattern {id: $id})
                 CALL db.create.setNodeVectorProperty(n, 'description_embedding', $embedding)
@@ -45,9 +45,9 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
                 embedding=embedding,
             )
 
-    def delete(self, ap_id: str) -> None:
+    async def delete(self, ap_id: str) -> None:
         """Delete the AP and its connected subgraph; leaves data nodes intact."""
-        self._session.run(
+        await self._session.run(
             """//cypher
             MATCH (root:Analytical_Pattern {id: $ap_id})
             OPTIONAL MATCH path=(root)-[*1..10]-(m)
@@ -64,11 +64,11 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
     # Vector index (lazy)
     # ------------------------------------------------------------------
 
-    def _ensure_index(self, dimensions: int) -> None:
+    async def _ensure_index(self, dimensions: int) -> None:
         """Create the vector index on first use (idempotent, class-level flag)."""
         if Neo4jAnalyticalPatternRepository._index_ensured:
             return
-        self._session.run(
+        await self._session.run(
             f"CREATE VECTOR INDEX `{_VECTOR_INDEX_NAME}` IF NOT EXISTS "
             "FOR (n:Analytical_Pattern) ON (n.description_embedding) "
             "OPTIONS {indexConfig: {"
@@ -84,14 +84,14 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
     # Vector search
     # ------------------------------------------------------------------
 
-    def search(
+    async def search(
         self,
         query_vector: List[float],
         top_k: int = 10,
         accessible_dataset_ids: Optional[List[str]] = None,
     ) -> List[Tuple[AnalyticalPattern, float]]:
         """Return APs ranked by cosine similarity to *query_vector*."""
-        self._ensure_index(len(query_vector))
+        await self._ensure_index(len(query_vector))
         filter_clause, params = self._access_filter(accessible_dataset_ids)
         query = f"""//cypher
             CALL db.index.vector.queryNodes($index_name, $top_k, $query_vector)
@@ -107,14 +107,15 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             query_vector=query_vector,
             forbiddenEdges=self.FORBIDDEN_EDGES,
         )
-        records = list(self._session.run(query, **params))
+        result = await self._session.run(query, **params)
+        records = [record async for record in result]
         return self._group_ap_records(records, with_score=True)
 
     # ------------------------------------------------------------------
     # Read (shallow)
     # ------------------------------------------------------------------
 
-    def get(self, ap_id: str) -> Optional[AnalyticalPattern]:
+    async def get(self, ap_id: str) -> Optional[AnalyticalPattern]:
         """Shallow retrieval: root + connected subgraph (excluding forbidden edges)."""
         query = """//cypher
             MATCH (root:Analytical_Pattern {id: $ap_id})
@@ -122,8 +123,9 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
             RETURN root, m, relationships(path) AS rels
         """
-        rows = list(self._session.run(
-            query, ap_id=str(ap_id), forbiddenEdges=self.FORBIDDEN_EDGES))
+        result = await self._session.run(
+            query, ap_id=str(ap_id), forbiddenEdges=self.FORBIDDEN_EDGES)
+        rows = [record async for record in result]
         if not rows:
             return None
 
@@ -187,7 +189,7 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
         """
         return clause, {"accessible_ids": accessible_dataset_ids}
 
-    def list(self, accessible_dataset_ids: Optional[List[str]] = None) -> List[AnalyticalPattern]:
+    async def list(self, accessible_dataset_ids: Optional[List[str]] = None) -> List[AnalyticalPattern]:
         """Shallow retrieval of all AnalyticalPattern subgraphs."""
         filter_clause, params = self._access_filter(accessible_dataset_ids)
         query = f"""//cypher
@@ -198,16 +200,18 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             RETURN root, m, relationships(path) AS rels
         """
         params["forbiddenEdges"] = self.FORBIDDEN_EDGES
-        records = list(self._session.run(query, **params))
+        result = await self._session.run(query, **params)
+        records = [record async for record in result]
         return self._group_ap_records(records, with_score=False)
 
-    def get_ids_by_task_id(self, task_id: str) -> List[str]:
+    async def get_ids_by_task_id(self, task_id: str) -> List[str]:
         """Return AP IDs accomplished by the given Task."""
         query = """//cypher
             MATCH (t:Task {id: $task_id})-[:is_accomplished_by]->(ap:Analytical_Pattern)
             RETURN ap.id AS ap_id
         """
-        records = self._session.run(query, task_id=str(task_id)).data()
+        result = await self._session.run(query, task_id=str(task_id))
+        records = await result.data()
         return [r["ap_id"] for r in records]
 
     # ------------------------------------------------------------------

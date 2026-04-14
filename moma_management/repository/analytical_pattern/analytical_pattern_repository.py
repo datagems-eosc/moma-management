@@ -7,7 +7,7 @@ from moma_management.domain.analytical_pattern import AnalyticalPattern
 class AnalyticalPatternRepository(Protocol):
     """Facade to decouple AnalyticalPattern graph operations from physical storage."""
 
-    def create(self, ap: AnalyticalPattern, embedding: Optional[List[float]] = None) -> None:
+    async def create(self, ap: AnalyticalPattern, embedding: Optional[List[float]] = None) -> None:
         """Store the full AnalyticalPattern subgraph (nodes + edges).
 
         When *embedding* is provided the vector is stored on the root node
@@ -15,7 +15,7 @@ class AnalyticalPatternRepository(Protocol):
         """
         ...
 
-    def get(self, ap_id: str) -> Optional[AnalyticalPattern]:
+    async def get(self, ap_id: str) -> Optional[AnalyticalPattern]:
         """
         Retrieve an AnalyticalPattern by its root node ID.
 
@@ -27,7 +27,7 @@ class AnalyticalPatternRepository(Protocol):
         """
         ...
 
-    def list(self, accessible_dataset_ids: Optional[List[str]] = None) -> List[AnalyticalPattern]:
+    async def list(self, accessible_dataset_ids: Optional[List[str]] = None) -> List[AnalyticalPattern]:
         """Return all AnalyticalPattern subgraphs (shallow retrieval).
 
         When *accessible_dataset_ids* is provided, only APs whose input data
@@ -35,18 +35,18 @@ class AnalyticalPatternRepository(Protocol):
         """
         ...
 
-    def get_ids_by_task_id(self, task_id: str) -> List[str]:
+    async def get_ids_by_task_id(self, task_id: str) -> List[str]:
         """
         Return the IDs of all AnalyticalPattern nodes accomplished by the
         given Task.
         """
         ...
 
-    def delete(self, ap_id: str) -> None:
+    async def delete(self, ap_id: str) -> None:
         """Delete an AP and its Operator nodes (not the referenced data nodes)."""
         ...
 
-    def search(
+    async def search(
         self,
         query_vector: List[float],
         top_k: int = 10,

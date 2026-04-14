@@ -2,7 +2,7 @@
 Unit tests for AnalyticalPatternService (MagicMock — no Neo4j container).
 """
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
@@ -57,31 +57,33 @@ def _make_ap_no_input() -> AnalyticalPattern:
 # Tests
 # ---------------------------------------------------------------------------
 
-def test_create_fails_if_input_dataset_not_found():
+@pytest.mark.asyncio
+async def test_create_fails_if_input_dataset_not_found():
     """create() must raise ValidationError when an input node has no parent dataset."""
     data_id = str(uuid4())
     ap = _make_ap_with_input(data_id)
 
-    repo = MagicMock()
-    dataset_svc = MagicMock()
+    repo = AsyncMock()
+    dataset_svc = AsyncMock()
     # Simulate: no datasets contain the input node
     dataset_svc.list.return_value = {"datasets": []}
 
     svc = AnalyticalPatternService(repo, dataset_svc)
 
     with pytest.raises(ValidationError):
-        svc.create(ap)
+        await svc.create(ap)
 
     repo.create.assert_not_called()
 
 
-def test_create_success_when_input_node_found():
+@pytest.mark.asyncio
+async def test_create_success_when_input_node_found():
     """create() must persist the AP when all input nodes belong to a known dataset."""
     data_id = str(uuid4())
     ap = _make_ap_with_input(data_id)
 
-    repo = MagicMock()
-    dataset_svc = MagicMock()
+    repo = AsyncMock()
+    dataset_svc = AsyncMock()
 
     # Simulate: input node found in a dataset
     mock_node = MagicMock()
@@ -91,65 +93,69 @@ def test_create_success_when_input_node_found():
     dataset_svc.list.return_value = {"datasets": [mock_dataset]}
 
     svc = AnalyticalPatternService(repo, dataset_svc)
-    returned_id = svc.create(ap)
+    returned_id = await svc.create(ap)
 
     repo.create.assert_called_once_with(ap, embedding=None)
     assert returned_id == str(ap.root.id)
 
 
-def test_create_success_with_no_input_edges():
+@pytest.mark.asyncio
+async def test_create_success_with_no_input_edges():
     """create() must not query datasets when the AP has no input edges."""
     ap = _make_ap_no_input()
 
-    repo = MagicMock()
-    dataset_svc = MagicMock()
+    repo = AsyncMock()
+    dataset_svc = AsyncMock()
 
     svc = AnalyticalPatternService(repo, dataset_svc)
-    returned_id = svc.create(ap)
+    returned_id = await svc.create(ap)
 
     dataset_svc.list.assert_not_called()
     repo.create.assert_called_once_with(ap, embedding=None)
     assert returned_id == str(ap.root.id)
 
 
-def test_get_raises_not_found():
+@pytest.mark.asyncio
+async def test_get_raises_not_found():
     """get() must raise NotFoundError when the repo returns None."""
-    repo = MagicMock()
+    repo = AsyncMock()
     repo.get.return_value = None
 
-    svc = AnalyticalPatternService(repo, MagicMock())
+    svc = AnalyticalPatternService(repo, AsyncMock())
 
     with pytest.raises(NotFoundError):
-        svc.get(str(uuid4()))
+        await svc.get(str(uuid4()))
 
 
 # ---------------------------------------------------------------------------
 # list() — accessible_dataset_ids passed to repo
 # ---------------------------------------------------------------------------
 
-def test_list_no_filter_returns_all():
+@pytest.mark.asyncio
+async def test_list_no_filter_returns_all():
     """list() with accessible_dataset_ids=None passes None to repo."""
     ap = _make_ap_no_input()
 
-    repo = MagicMock()
+    repo = AsyncMock()
     repo.list.return_value = [ap]
-    svc = AnalyticalPatternService(repo, MagicMock())
+    svc = AnalyticalPatternService(repo, AsyncMock())
 
-    result = svc.list(accessible_dataset_ids=None)
+    result = await svc.list(accessible_dataset_ids=None)
     repo.list.assert_called_once_with(accessible_dataset_ids=None)
     assert result == [ap]
 
 
-def test_list_passes_accessible_ids_to_repo():
+@pytest.mark.asyncio
+async def test_list_passes_accessible_ids_to_repo():
     """list() forwards accessible_dataset_ids to the repository."""
     ap = _make_ap_no_input()
     ds_ids = ["ds-1", "ds-2"]
 
-    repo = MagicMock()
+    repo = AsyncMock()
     repo.list.return_value = [ap]
-    svc = AnalyticalPatternService(repo, MagicMock())
+    svc = AnalyticalPatternService(repo, AsyncMock())
 
-    result = svc.list(accessible_dataset_ids=ds_ids)
+    result = await svc.list(accessible_dataset_ids=ds_ids)
     repo.list.assert_called_once_with(accessible_dataset_ids=ds_ids)
     assert result == [ap]
 
@@ -158,15 +164,16 @@ def test_list_passes_accessible_ids_to_repo():
 # create() — embedding
 # ---------------------------------------------------------------------------
 
-def test_create_embeds_description_when_embedder_set():
+@pytest.mark.asyncio
+async def test_create_embeds_description_when_embedder_set():
     """create() calls embedder.embed() and passes the vector to repo."""
     data_id = str(uuid4())
     ap = _make_ap_with_input(data_id)
     # Add a description to the root node
     ap.root.properties["description"] = "weather data analysis"
 
-    repo = MagicMock()
-    dataset_svc = MagicMock()
+    repo = AsyncMock()
+    dataset_svc = AsyncMock()
     mock_node = MagicMock()
     mock_node.id = data_id
     mock_dataset = MagicMock()
@@ -177,20 +184,21 @@ def test_create_embeds_description_when_embedder_set():
     embedder.embed.return_value = [0.1, 0.2, 0.3]
 
     svc = AnalyticalPatternService(repo, dataset_svc, embedder=embedder)
-    svc.create(ap)
+    await svc.create(ap)
 
     embedder.embed.assert_called_once_with("weather data analysis")
     repo.create.assert_called_once_with(ap, embedding=[0.1, 0.2, 0.3])
 
 
-def test_create_no_embedding_when_no_embedder():
+@pytest.mark.asyncio
+async def test_create_no_embedding_when_no_embedder():
     """create() passes embedding=None when no embedder is configured."""
     ap = _make_ap_no_input()
     ap.root.properties["description"] = "some description"
 
-    repo = MagicMock()
-    svc = AnalyticalPatternService(repo, MagicMock())
-    svc.create(ap)
+    repo = AsyncMock()
+    svc = AnalyticalPatternService(repo, AsyncMock())
+    await svc.create(ap)
 
     repo.create.assert_called_once_with(ap, embedding=None)
 
@@ -199,16 +207,18 @@ def test_create_no_embedding_when_no_embedder():
 # search()
 # ---------------------------------------------------------------------------
 
-def test_search_raises_when_no_embedder():
+@pytest.mark.asyncio
+async def test_search_raises_when_no_embedder():
     """search() raises ValidationError when embedder is not configured."""
-    repo = MagicMock()
-    svc = AnalyticalPatternService(repo, MagicMock())
+    repo = AsyncMock()
+    svc = AnalyticalPatternService(repo, AsyncMock())
 
     with pytest.raises(ValidationError, match="no embedder configured"):
-        svc.search("weather")
+        await svc.search("weather")
 
 
-def test_search_returns_results():
+@pytest.mark.asyncio
+async def test_search_returns_results():
     """search() delegates to embedder.embed and repo.search."""
     ap = _make_ap_no_input()
     embedding = [0.1, 0.2, 0.3]
@@ -216,11 +226,11 @@ def test_search_returns_results():
     embedder = MagicMock()
     embedder.embed.return_value = embedding
 
-    repo = MagicMock()
+    repo = AsyncMock()
     repo.search.return_value = [(ap, 0.95)]
 
     svc = AnalyticalPatternService(repo, MagicMock(), embedder=embedder)
-    results = svc.search("some query")
+    results = await svc.search("some query")
 
     embedder.embed.assert_called_once_with("some query")
     repo.search.assert_called_once_with(
@@ -229,7 +239,8 @@ def test_search_returns_results():
     assert results[0] == (ap, 0.95)
 
 
-def test_search_passes_accessible_ids_to_repo():
+@pytest.mark.asyncio
+async def test_search_passes_accessible_ids_to_repo():
     """search() forwards accessible_dataset_ids to repo.search."""
     ap = _make_ap_no_input()
     embedding = [0.1, 0.2, 0.3]
@@ -238,11 +249,11 @@ def test_search_passes_accessible_ids_to_repo():
     embedder = MagicMock()
     embedder.embed.return_value = embedding
 
-    repo = MagicMock()
+    repo = AsyncMock()
     repo.search.return_value = [(ap, 0.9)]
 
     svc = AnalyticalPatternService(repo, MagicMock(), embedder=embedder)
-    results = svc.search("query", accessible_dataset_ids=ds_ids)
+    results = await svc.search("query", accessible_dataset_ids=ds_ids)
 
     repo.search.assert_called_once_with(
         embedding, 10, accessible_dataset_ids=ds_ids)

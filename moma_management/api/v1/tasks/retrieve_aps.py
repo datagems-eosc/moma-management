@@ -16,4 +16,4 @@ async def retrieve_ap_ids(
 
     Returns a list of AnalyticalPattern root node IDs.
     """
-    return svc.get_ap_ids(id)
+    return await svc.get_ap_ids(id)

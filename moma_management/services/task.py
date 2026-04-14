@@ -23,7 +23,7 @@ class TaskService:
         self._repo = repo
         self._ap_repo = ap_repo
 
-    def create(self, name: str, description: str) -> Node:
+    async def create(self, name: str, description: str) -> Node:
         """
         Create a new Task node and persist it.
 
@@ -37,16 +37,16 @@ class TaskService:
                 "description": description,
             },
         )
-        return self._repo.create(task)
+        return await self._repo.create(task)
 
-    def get_ap_ids(self, task_id: str) -> List[str]:
+    async def get_ap_ids(self, task_id: str) -> List[str]:
         """
         Return the IDs of all AnalyticalPattern nodes accomplished by the task.
 
         Raises:
             NotFoundError: if no Task with *task_id* exists.
         """
-        task = self._repo.get(task_id)
+        task = await self._repo.get(task_id)
         if task is None:
             raise NotFoundError(f"Task '{task_id}' not found.")
-        return self._ap_repo.get_ids_by_task_id(task_id)
+        return await self._ap_repo.get_ids_by_task_id(task_id)

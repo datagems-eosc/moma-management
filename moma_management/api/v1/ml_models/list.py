@@ -12,4 +12,4 @@ async def list_ml_models(
     _auth: Never = Depends(require_authentication()),
 ) -> List[Node]:
     """Return all ML_Model nodes."""
-    return svc.list()
+    return await svc.list()

@@ -7,11 +7,12 @@ service down to repository.
 
 import json
 from pathlib import Path
-from typing import Generator
+from typing import AsyncGenerator, Generator
 from uuid import uuid4
 
 import pytest
-from neo4j import GraphDatabase
+import pytest_asyncio
+from neo4j import AsyncGraphDatabase
 from testcontainers.neo4j import Neo4jContainer
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
@@ -40,34 +41,34 @@ def neo4j_container_module() -> Generator[Neo4jContainer, None, None]:
     container.stop()
 
 
-@pytest.fixture(scope="module")
-def services(
+@pytest_asyncio.fixture(scope="module")
+async def services(
     neo4j_container_module: Neo4jContainer,
     mapping_file: Path,
-) -> Generator[tuple[DatasetService, AnalyticalPatternService], None, None]:
+) -> AsyncGenerator[tuple[DatasetService, AnalyticalPatternService], None]:
     """Return (DatasetService, AnalyticalPatternService) sharing one Neo4j session."""
     uri = neo4j_container_module.get_connection_url()
     auth = (neo4j_container_module.username, neo4j_container_module.password)
-    driver = GraphDatabase.driver(uri, auth=auth)
-    with driver.session() as session:
+    driver = AsyncGraphDatabase.driver(uri, auth=auth)
+    async with driver.session() as session:
         ds_repo = Neo4jDatasetRepository(session)
         ap_repo = Neo4jAnalyticalPatternRepository(session)
         ds_svc = DatasetService(ds_repo, mapping_file)
         ap_svc = AnalyticalPatternService(ap_repo, ds_svc)
         yield ds_svc, ap_svc
-    driver.close()
+    await driver.close()
 
 
-@pytest.fixture(scope="module")
-def services_with_ml(
+@pytest_asyncio.fixture(scope="module")
+async def services_with_ml(
     neo4j_container_module: Neo4jContainer,
     mapping_file: Path,
-) -> Generator[tuple[DatasetService, AnalyticalPatternService, MlModelService], None, None]:
+) -> AsyncGenerator[tuple[DatasetService, AnalyticalPatternService, MlModelService], None]:
     """Return (DatasetService, AnalyticalPatternService, MlModelService) sharing one Neo4j session."""
     uri = neo4j_container_module.get_connection_url()
     auth = (neo4j_container_module.username, neo4j_container_module.password)
-    driver = GraphDatabase.driver(uri, auth=auth)
-    with driver.session() as session:
+    driver = AsyncGraphDatabase.driver(uri, auth=auth)
+    async with driver.session() as session:
         ds_repo = Neo4jDatasetRepository(session)
         ap_repo = Neo4jAnalyticalPatternRepository(session)
         ml_repo = Neo4jMlModelRepository(session)
@@ -75,7 +76,7 @@ def services_with_ml(
         ap_svc = AnalyticalPatternService(ap_repo, ds_svc)
         ml_svc = MlModelService(ml_repo)
         yield ds_svc, ap_svc, ml_svc
-    driver.close()
+    await driver.close()
 
 
 # ---------------------------------------------------------------------------
@@ -111,7 +112,8 @@ def _make_ap(data_node_id: str) -> AnalyticalPattern:
 # Tests
 # ---------------------------------------------------------------------------
 
-def test_create_ap_referencing_nonexistent_dataset_fails(
+@pytest.mark.asyncio
+async def test_create_ap_referencing_nonexistent_dataset_fails(
     services: tuple[DatasetService, AnalyticalPatternService],
 ):
     """
@@ -124,10 +126,11 @@ def test_create_ap_referencing_nonexistent_dataset_fails(
     ap = _make_ap(orphan_data_id)
 
     with pytest.raises(ValidationError):
-        ap_svc.create(ap)
+        await ap_svc.create(ap)
 
 
-def test_create_ap_referencing_existing_dataset_succeeds(
+@pytest.mark.asyncio
+async def test_create_ap_referencing_existing_dataset_succeeds(
     services: tuple[DatasetService, AnalyticalPatternService],
 ):
     """
@@ -138,21 +141,22 @@ def test_create_ap_referencing_existing_dataset_succeeds(
 
     # Ingest a real dataset so its Data nodes are stored in Neo4j
     profile = json.loads(_LIGHT_PROFILE_PATH.read_text())
-    dataset = ds_svc.ingest(profile)
+    dataset = await ds_svc.ingest(profile)
 
     # Pick any Data node from the stored dataset as the AP's input target
     data_node = next(n for n in dataset.nodes if "Data" in n.labels)
     data_node_id = str(data_node.id)
 
     ap = _make_ap(data_node_id)
-    ap_id = ap_svc.create(ap)
+    ap_id = await ap_svc.create(ap)
 
     # AP must now be retrievable
-    retrieved = ap_svc.get(ap_id)
+    retrieved = await ap_svc.get(ap_id)
     assert retrieved is not None
 
 
-def test_delete_dataset_blocked_when_ap_references_it(
+@pytest.mark.asyncio
+async def test_delete_dataset_blocked_when_ap_references_it(
     services: tuple[DatasetService, AnalyticalPatternService],
 ):
     """
@@ -163,25 +167,26 @@ def test_delete_dataset_blocked_when_ap_references_it(
 
     # Ingest a dataset
     profile = json.loads(_LIGHT_PROFILE_PATH.read_text())
-    dataset = ds_svc.ingest(profile)
+    dataset = await ds_svc.ingest(profile)
     ds_node = next(n for n in dataset.nodes if "sc:Dataset" in n.labels)
     ds_id = str(ds_node.id)
 
     # Create an AP that references a data node from this dataset
     data_node = next(n for n in dataset.nodes if "Data" in n.labels)
     ap = _make_ap(str(data_node.id))
-    ap_id = ap_svc.create(ap)
+    ap_id = await ap_svc.create(ap)
 
     # Deleting the dataset must be blocked
     with pytest.raises(ConflictError):
-        ds_svc.delete(ds_id)
+        await ds_svc.delete(ds_id)
 
     # After deleting the AP, dataset deletion must succeed
-    ap_svc.delete(ap_id)
-    ds_svc.delete(ds_id)
+    await ap_svc.delete(ap_id)
+    await ds_svc.delete(ds_id)
 
 
-def test_delete_ml_model_blocked_when_referenced_by_ap(
+@pytest.mark.asyncio
+async def test_delete_ml_model_blocked_when_referenced_by_ap(
     services_with_ml: tuple[DatasetService, AnalyticalPatternService, MlModelService],
 ):
     """
@@ -192,7 +197,7 @@ def test_delete_ml_model_blocked_when_referenced_by_ap(
     _, ap_svc, ml_svc = services_with_ml
 
     # Create an ML_Model
-    ml_node = ml_svc.create(name="gpt-cross-test", type="LLM")
+    ml_node = await ml_svc.create(name="gpt-cross-test", type="LLM")
     ml_model_id = str(ml_node.id)
 
     # Create an AP whose Operator performs inference using the ML_Model.
@@ -216,14 +221,14 @@ def test_delete_ml_model_blocked_when_referenced_by_ap(
                  "labels": ["perform_inference"]}),
         ],
     )
-    ap_id = ap_svc.create(ap)
+    ap_id = await ap_svc.create(ap)
 
     # Attempt to delete the ML_Model while it is referenced must be blocked
     with pytest.raises(ConflictError):
-        ml_svc.delete(ml_model_id)
+        await ml_svc.delete(ml_model_id)
 
     # Delete the AP first
-    ap_svc.delete(ap_id)
+    await ap_svc.delete(ap_id)
 
     # Now the ML_Model deletion must succeed
-    ml_svc.delete(ml_model_id)
+    await ml_svc.delete(ml_model_id)

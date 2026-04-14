@@ -9,7 +9,7 @@ from typing import AsyncGenerator, Generator, List, Optional
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
-from neo4j import Driver, GraphDatabase, Session
+from neo4j import AsyncDriver, AsyncGraphDatabase, AsyncSession
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.filters import DatasetFilter
@@ -46,7 +46,7 @@ NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "datagems")
 
-driver: Driver
+driver: AsyncDriver
 _embedder: Optional[Embedder] = None
 
 _DEFAULT_EMBEDDER_MODEL = "all-MiniLM-L6-v2"
@@ -60,9 +60,11 @@ async def container_lifespan(_: FastAPI):
     and prevents connection leaks.
     """
     global driver, _embedder
-    driver = GraphDatabase.driver(
+    driver = AsyncGraphDatabase.driver(
         NEO4J_URI,
         auth=(NEO4J_USER, NEO4J_PASSWORD),
+        max_connection_pool_size=50,
+        connection_acquisition_timeout=10,
     )
 
     embedder_model = os.getenv("EMBEDDER_MODEL", _DEFAULT_EMBEDDER_MODEL)
@@ -72,12 +74,12 @@ async def container_lifespan(_: FastAPI):
                     embedder_model, _embedder.dimensions)
 
     yield
-    driver.close()
+    await driver.close()
 
 
-def get_db_session() -> Generator[Session, None, None]:
-    """Returns a session from the Neo4j driver."""
-    with driver.session() as session:
+async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+    """Returns an async session from the Neo4j driver."""
+    async with driver.session() as session:
         yield session
 
 
@@ -86,7 +88,7 @@ def get_mapping_file() -> Path:
     return Path(os.getenv("MAPPING_FILE", "moma_management/domain/mapping.yml"))
 
 
-def get_dataset_repo(session: Session = Depends(get_db_session)) -> DatasetRepository:
+def get_dataset_repo(session: AsyncSession = Depends(get_db_session)) -> DatasetRepository:
     """Return the repository for Dataset graph operations."""
     return Neo4jDatasetRepository(session)
 
@@ -99,7 +101,7 @@ def get_dataset_service(
     return DatasetService(repo, mapping_file)
 
 
-def get_node_repo(session: Session = Depends(get_db_session)) -> NodeRepository:
+def get_node_repo(session: AsyncSession = Depends(get_db_session)) -> NodeRepository:
     """Return the repository for single-node graph operations."""
     return Neo4jNodeRepository(session)
 
@@ -249,7 +251,7 @@ def require_permission(
         match id_type:
             # For nodes, we needs to check the dataset they belongs to
             case IdType.Node:
-                result = dataset_svc.list(DatasetFilter(nodeIds=[path_id]))
+                result = await dataset_svc.list(DatasetFilter(nodeIds=[path_id]))
                 dataset_ids = [
                     n.id
                     for d in result.get("datasets", [])
@@ -272,7 +274,7 @@ def require_permission(
             # Returns 404 to prevent enumeration of inaccessible APs.
             case IdType.AP:
                 # NotFoundError -> 404 via app handler
-                ap_result = ap_svc.get(path_id)
+                ap_result = await ap_svc.get(path_id)
                 input_node_ids = [
                     str(e.to)
                     for e in (ap_result.edges or [])
@@ -281,7 +283,7 @@ def require_permission(
                 if not input_node_ids:
                     # AP has no input constraint → no dataset to check, grant access
                     return user
-                result = dataset_svc.list(
+                result = await dataset_svc.list(
                     DatasetFilter(nodeIds=input_node_ids))
                 dataset_ids = [
                     str(n.id)
@@ -373,7 +375,7 @@ def require_browse_for_ap_creation():
             # No input references → no dataset constraint, grant access
             return user
 
-        result = dataset_svc.list(DatasetFilter(nodeIds=input_node_ids))
+        result = await dataset_svc.list(DatasetFilter(nodeIds=input_node_ids))
         dataset_ids = [
             str(n.id)
             for d in result.get("datasets", [])
@@ -414,7 +416,7 @@ def require_browse_for_ap_creation():
     return _check
 
 
-def get_ap_repo(session: Session = Depends(get_db_session)) -> AnalyticalPatternRepository:
+def get_ap_repo(session: AsyncSession = Depends(get_db_session)) -> AnalyticalPatternRepository:
     """Return the repository for AnalyticalPattern graph operations."""
     return Neo4jAnalyticalPatternRepository(session)
 
@@ -433,7 +435,7 @@ def get_ap_service(
     return AnalyticalPatternService(repo, dataset_svc, embedder=embedder)
 
 
-def get_task_repo(session: Session = Depends(get_db_session)) -> TaskRepository:
+def get_task_repo(session: AsyncSession = Depends(get_db_session)) -> TaskRepository:
     """Return the repository for Task node operations."""
     return Neo4jTaskRepository(session)
 
@@ -446,7 +448,7 @@ def get_task_service(
     return TaskService(task_repo, ap_repo)
 
 
-def get_ml_model_repo(session: Session = Depends(get_db_session)) -> MlModelRepository:
+def get_ml_model_repo(session: AsyncSession = Depends(get_db_session)) -> MlModelRepository:
     """Return the repository for ML_Model node operations."""
     return Neo4jMlModelRepository(session)
 
