@@ -351,16 +351,16 @@ async def node_repository(neo4j_container: Neo4jContainer) -> AsyncGenerator[Neo
 TESTS_ROOT = Path.cwd()
 
 
-@pytest.fixture(autouse=True)
-def auto_profile(request):
-    PROFILE_ROOT = (TESTS_ROOT / ".profiles")
-    # Turn profiling on
-    profiler = Profiler()
-    profiler.start()
+# @pytest.fixture(autouse=True)
+# def auto_profile(request):
+#     PROFILE_ROOT = (TESTS_ROOT / ".profiles")
+#     # Turn profiling on
+#     profiler = Profiler()
+#     profiler.start()
 
-    yield  # Run test
+#     yield  # Run test
 
-    profiler.stop()
-    PROFILE_ROOT.mkdir(exist_ok=True)
-    results_file = PROFILE_ROOT / f"{request.node.name}.html"
-    profiler.write_html(results_file)
+#     profiler.stop()
+#     PROFILE_ROOT.mkdir(exist_ok=True)
+#     results_file = PROFILE_ROOT / f"{request.node.name}.html"
+#     profiler.write_html(results_file)
