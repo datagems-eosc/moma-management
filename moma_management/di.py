@@ -1,4 +1,3 @@
-from functools import lru_cache
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -101,7 +100,7 @@ def get_node_service(repo: NodeRepository = Depends(get_node_repo)) -> NodeServi
     return NodeService(repo)
 
 
-# @lru_cache(maxsize=1)
+@lru_cache(maxsize=1)
 def get_authorization_service() -> Optional[DatagemsAuthorizationService]:
     """Return the dataset authorization service."""
     if not os.getenv("PERMISSIONS_GATEWAY_URL"):
@@ -113,7 +112,7 @@ def get_authorization_service() -> Optional[DatagemsAuthorizationService]:
     )
 
 
-# @lru_cache(maxsize=1)
+@lru_cache(maxsize=1)
 def get_authentication_service() -> Optional[Authentication]:
     """Return a JwtValidator configured from environment variables."""
     if not os.getenv("OIDC_ISSUER"):

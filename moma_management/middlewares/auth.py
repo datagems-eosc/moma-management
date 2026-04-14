@@ -200,7 +200,7 @@ def require_permission(
         try:
             # Short-circuit: if user holds admin/curator/system realm role,
             # they have permission on all datasets — skip per-dataset checks.
-            if authorization.has_realm_roles(
+            if await authorization.has_realm_roles(
                 token, [RealmRole.ADMIN, RealmRole.CURATOR, RealmRole.SYSTEM]
             ):
                 return user
@@ -208,11 +208,13 @@ def require_permission(
             # NOTE: This consider that having acess to ONE dataset is enough to access the node, even if it belongs to other datasets.
             # For now I don't know if it's possible to have a node belonging to multiple datasets, but if it is the case,
             # we might want to enforce permissions on ALL parent datasets instead of just one, at least for non-idempotent actions
+            #
+            # Realm roles were already checked above, so call has_dataset_grant
+            # directly to avoid a redundant HTTP round-trip.
             check = all if require_all else any
-            allowed = check(
-                authorization.has_dataset_permission(token, action, ds_id)
-                for ds_id in dataset_ids
-            )
+            results = [await authorization.has_dataset_grant(token, action, ds_id)
+                       for ds_id in dataset_ids]
+            allowed = check(results)
         except UserError as exc:
             logger.warning(
                 "Authorization failed: %s %s: %s",
@@ -294,16 +296,17 @@ def require_browse_for_ap_creation():
             )
 
         try:
-            if authorization.has_realm_roles(
+            if await authorization.has_realm_roles(
                 token, [RealmRole.ADMIN, RealmRole.CURATOR, RealmRole.SYSTEM]
             ):
                 return user
 
-            allowed = all(
-                authorization.has_dataset_permission(
-                    token, DatasetRole.BROWSE, ds_id)
-                for ds_id in dataset_ids
-            )
+            # Realm roles already checked above — use has_dataset_grant
+            # directly to avoid a redundant HTTP round-trip.
+            results = [await authorization.has_dataset_grant(
+                token, DatasetRole.BROWSE, ds_id)
+                for ds_id in dataset_ids]
+            allowed = all(results)
         except UserError as exc:
             logger.warning("Authorization failed: %s %s",
                            exc.status_code, exc.text)
@@ -357,7 +360,7 @@ def require_admin():
             return user
 
         try:
-            if not authorization.has_realm_roles(
+            if not await authorization.has_realm_roles(
                 token, [RealmRole.ADMIN, RealmRole.CURATOR, RealmRole.SYSTEM]
             ):
                 raise HTTPException(
@@ -406,7 +409,7 @@ def get_allowed_datasets_ids() -> AsyncGenerator[List[str]]:
             return None  # Authz disabled – RBAC disabled
 
         try:
-            return authorization.get_browseable_dataset_ids(token)
+            return await authorization.get_browseable_dataset_ids(token)
         except GatewayError:
             raise HTTPException(
                 status_code=502, detail="Permission gateway unavailable"

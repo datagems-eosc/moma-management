@@ -101,8 +101,8 @@ async def test_authz_disabled_returns_user():
 @pytest.mark.asyncio
 async def test_permission_granted():
     authz_svc = MagicMock()
-    authz_svc.has_realm_roles.return_value = False
-    authz_svc.has_dataset_permission.return_value = True
+    authz_svc.has_realm_roles = AsyncMock(return_value=False)
+    authz_svc.has_dataset_grant = AsyncMock(return_value=True)
 
     check = require_permission(DatasetRole.BROWSE)
     result = await check(
@@ -113,15 +113,15 @@ async def test_permission_granted():
         dataset_svc=MagicMock(),
     )
     assert result == {"sub": "user1"}
-    authz_svc.has_dataset_permission.assert_called_once_with(
+    authz_svc.has_dataset_grant.assert_called_once_with(
         "tok", DatasetRole.BROWSE, "ds-123")
 
 
 @pytest.mark.asyncio
 async def test_permission_denied_raises_403():
     authz_svc = MagicMock()
-    authz_svc.has_realm_roles.return_value = False
-    authz_svc.has_dataset_permission.return_value = False
+    authz_svc.has_realm_roles = AsyncMock(return_value=False)
+    authz_svc.has_dataset_grant = AsyncMock(return_value=False)
 
     check = require_permission(DatasetRole.BROWSE)
     with pytest.raises(HTTPException) as exc_info:
@@ -138,8 +138,8 @@ async def test_permission_denied_raises_403():
 @pytest.mark.asyncio
 async def test_gateway_error_raises_502():
     authz_svc = MagicMock()
-    authz_svc.has_realm_roles.return_value = False
-    authz_svc.has_dataset_permission.side_effect = GatewayError("down")
+    authz_svc.has_realm_roles = AsyncMock(return_value=False)
+    authz_svc.has_dataset_grant = AsyncMock(side_effect=GatewayError("down"))
 
     check = require_permission(DatasetRole.BROWSE)
     with pytest.raises(HTTPException) as exc_info:

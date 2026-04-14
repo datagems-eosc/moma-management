@@ -2,7 +2,7 @@ import logging
 from enum import Enum
 from typing import List
 
-import requests
+import aiohttp
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +45,9 @@ class GatewayError(Exception):
 
 
 class UserError(Exception):
-    def __init__(self, response: requests.Response):
-        self.text = response.text
-        self.status_code = response.status_code
+    def __init__(self, status_code: int, text: str):
+        self.text = text
+        self.status_code = status_code
         super().__init__(f"{self.status_code}: {self.text}")
 
 
@@ -56,29 +56,30 @@ class DatagemsAuthorizationService:
     def __init__(self, gateway_url: str) -> None:
         self._gateway_url = gateway_url.rstrip("/")
 
-    def has_realm_roles(self, who_token: str, any_of: List[RealmRole]) -> bool:
+    async def has_realm_roles(self, who_token: str, any_of: List[RealmRole]) -> bool:
         """
         Returns True if the user has any of the specified realm roles, False if not.
         Raises GatewayError if the Gateway is not available, UserError if the gateway returns an error
         """
         try:
-            resp = requests.get(
-                f"{self._gateway_url}/api/principal/me",
-                headers={"Authorization": f"Bearer {who_token}"},
-                timeout=10,
-            )
-        except requests.RequestException as exc:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{self._gateway_url}/api/principal/me",
+                    headers={"Authorization": f"Bearer {who_token}"},
+                    timeout=aiohttp.ClientTimeout(total=10),
+                ) as resp:
+                    if resp.status >= 400:
+                        text = await resp.text()
+                        raise UserError(resp.status, text)
+
+                    grants: dict[str, list[str]] = await resp.json()
+        except aiohttp.ClientError as exc:
             logger.error("Permission gateway unreachable: %s", exc)
             raise GatewayError(exc)
 
-        if not resp.ok:
-            raise UserError(resp)
-
-        # The gateway returns a JSON object like {"dataset_id": ["role1", "role2", ...]}
-        grants: dict[str, list[str]] = resp.json()
         return any(r == role.value for r in grants.get("roles", []) for role in any_of)
 
-    def has_dataset_permission(self, who_token: str, what: DatasetRole, on_which_id: str) -> bool:
+    async def has_dataset_permission(self, who_token: str, what: DatasetRole, on_which_id: str) -> bool:
         """
         Check if *who* can perform *what* on *on_which_id* by querying the permissions gateway.
         Arguments:
@@ -90,17 +91,19 @@ class DatagemsAuthorizationService:
             True if the user has the required grant, False if not.
 
         Raises:
-            GatewayErrir if the Gateway is not available
+            GatewayError if the Gateway is not available
         """
         if what == DatasetRole.CREATE:
             # The CREATE role is a special case, as it is not assigned to any dataset but to users that can create datasets.
-            return self.has_realm_roles(who_token, [RealmRole.ADMIN, RealmRole.UPLOADER, RealmRole.SYSTEM])
+            return await self.has_realm_roles(who_token, [RealmRole.ADMIN, RealmRole.UPLOADER, RealmRole.SYSTEM])
 
-        return self.has_realm_roles(who_token, [RealmRole.ADMIN, RealmRole.CURATOR, RealmRole.SYSTEM]) or self._has_dataset_grant(who_token, what, on_which_id)
+        return await self.has_realm_roles(who_token, [RealmRole.ADMIN, RealmRole.CURATOR, RealmRole.SYSTEM]) or await self.has_dataset_grant(who_token, what, on_which_id)
 
-    def _has_dataset_grant(self, who_token: str, what: DatasetRole, on_which_id: str) -> bool:
+    async def has_dataset_grant(self, who_token: str, what: DatasetRole, on_which_id: str) -> bool:
         """
-        Check if *who* can perform *what* on *on_which_id* by querying the permissions gateway.
+        Check if *who* has a dataset-specific grant for *what* on *on_which_id*.
+        Unlike ``has_dataset_permission``, this does **not** check realm roles.
+
         Arguments:
         who_token: The access token of the user
         what: The action to check
@@ -110,56 +113,59 @@ class DatagemsAuthorizationService:
             True if the user has the required grant, False if not.
 
         Raises:
-            GatewayErrir if the Gateway is not available
+            GatewayError if the Gateway is not available
         """
 
         try:
-            resp = requests.get(
-                f"{self._gateway_url}/api/principal/me/context-grants/dataset",
-                params={"id": on_which_id},
-                headers={"Authorization": f"Bearer {who_token}"},
-                timeout=10,
-            )
-        except requests.RequestException as exc:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{self._gateway_url}/api/principal/me/context-grants/dataset",
+                    params={"id": on_which_id},
+                    headers={"Authorization": f"Bearer {who_token}"},
+                    timeout=aiohttp.ClientTimeout(total=10),
+                ) as resp:
+                    # A 404 means the dataset doesn't exists. This is not exposed to prevent enumeration of dataset ids
+                    if resp.status == 404:
+                        return False
+
+                    if resp.status >= 400:
+                        text = await resp.text()
+                        raise UserError(resp.status, text)
+
+                    # The gateway returns a JSON object like {"dataset_id": ["role1", "role2", ...]}
+                    grants: dict[str, list[str]] = await resp.json()
+        except aiohttp.ClientError as exc:
             logger.error("Permission gateway unreachable: %s", exc)
             raise GatewayError(exc)
 
-        # A 404 means the dataset doesn't exists. This is not exposed to prevent enumeration of dataset ids
-        if resp.status_code == 404:
-            return False
-
-        if not resp.ok:
-            raise UserError(resp)
-
-        # The gateway returns a JSON object like {"dataset_id": ["role1", "role2", ...]}
-        grants: dict[str, list[str]] = resp.json()
         return any(role == what.value for role in grants.get(on_which_id, []))
 
-    def get_browseable_dataset_ids(self, who_token: str) -> List[str] | None:
+    async def get_browseable_dataset_ids(self, who_token: str) -> List[str] | None:
         """
         Returns all the dataset IDs the user has access to, or None if the
         user holds ADMIN / CURATOR realm roles (meaning they can see everything).
         """
-        if self.has_realm_roles(who_token, [RealmRole.ADMIN, RealmRole.CURATOR, RealmRole.SYSTEM]):
+        if await self.has_realm_roles(who_token, [RealmRole.ADMIN, RealmRole.CURATOR, RealmRole.SYSTEM]):
             return None
 
         try:
-            resp = requests.get(
-                f"{self._gateway_url}/api/principal/me/context-grants",
-                headers={
-                    "Authorization": f"Bearer {who_token}"
-                }
-            )
-        except requests.RequestException as exc:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{self._gateway_url}/api/principal/me/context-grants",
+                    headers={"Authorization": f"Bearer {who_token}"},
+                    timeout=aiohttp.ClientTimeout(total=10),
+                ) as resp:
+                    if resp.status >= 400:
+                        text = await resp.text()
+                        logger.error("Permission gateway returned %s: %s",
+                                     resp.status, text)
+                        raise UserError(resp.status, text)
+
+                    permissions = await resp.json()
+        except aiohttp.ClientError as exc:
             logger.error("Permission gateway unreachable: %s", exc)
             raise GatewayError(exc)
 
-        if not resp.ok:
-            logger.error("Permission gateway returned %s: %s",
-                         resp.status_code, resp.text)
-            raise UserError(resp)
-
-        permissions = resp.json()
         if not permissions or not isinstance(permissions, list):
             return []
 
