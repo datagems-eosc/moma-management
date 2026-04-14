@@ -3,7 +3,8 @@ from typing import Never
 from fastapi import Depends
 from pydantic import BaseModel
 
-from moma_management.di import get_task_service, require_authentication
+from moma_management.di import get_task_service
+from moma_management.middlewares.auth import require_authentication
 from moma_management.services.task import TaskService
 
 

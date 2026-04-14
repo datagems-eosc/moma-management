@@ -45,6 +45,7 @@ dev = [
     "datamodel-code-generator>=0.54.1",
     "pytest-xdist>=3.8.0",
     "pyinstrument>=5.1.2",
+    "aiohttp>=3.13.5",
 ]
 
 [build-system]

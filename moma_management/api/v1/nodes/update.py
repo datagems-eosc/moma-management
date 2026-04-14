@@ -2,8 +2,9 @@ from typing import Any, Dict, Never
 
 from fastapi import Depends
 
-from moma_management.di import IdType, get_node_service, require_permission
+from moma_management.di import get_node_service
 from moma_management.domain.generated.nodes.node_schema import Node
+from moma_management.middlewares.auth import IdType, require_permission
 from moma_management.services.authorization import DatasetRole
 from moma_management.services.node import NodeService
 

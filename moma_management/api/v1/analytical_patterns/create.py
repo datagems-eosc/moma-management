@@ -2,8 +2,9 @@ from typing import Never
 
 from fastapi import Depends
 
-from moma_management.di import get_ap_service, require_browse_for_ap_creation
+from moma_management.di import get_ap_service
 from moma_management.domain.analytical_pattern import AnalyticalPattern
+from moma_management.middlewares.auth import require_browse_for_ap_creation
 from moma_management.services.analytical_pattern import AnalyticalPatternService
 
 

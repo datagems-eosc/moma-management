@@ -3,7 +3,8 @@ from typing import Never
 from fastapi import Depends
 from pydantic import BaseModel
 
-from moma_management.di import get_ml_model_service, require_admin
+from moma_management.di import get_ml_model_service
+from moma_management.middlewares.auth import require_admin
 from moma_management.services.ml_model import MlModelService
 
 

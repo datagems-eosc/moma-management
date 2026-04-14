@@ -3,7 +3,7 @@ from typing import List
 
 from fastapi import Depends, Query
 
-from moma_management.di import get_allowed_datasets_ids, get_dataset_service
+from moma_management.di import get_dataset_service
 from moma_management.domain.filters import (
     DatasetFilter,
     DatasetProperty,
@@ -13,6 +13,7 @@ from moma_management.domain.filters import (
     SortDirection,
 )
 from moma_management.domain.generated.nodes.dataset.dataset_schema import Status
+from moma_management.middlewares.auth import get_allowed_datasets_ids
 from moma_management.services.dataset import DatasetService
 
 

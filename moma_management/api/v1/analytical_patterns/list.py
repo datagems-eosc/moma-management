@@ -3,8 +3,9 @@ from typing import List, Optional, Union
 from fastapi import Depends, Query
 from pydantic import BaseModel
 
-from moma_management.di import get_allowed_datasets_ids, get_ap_service
+from moma_management.di import get_ap_service
 from moma_management.domain.analytical_pattern import AnalyticalPattern
+from moma_management.middlewares.auth import get_allowed_datasets_ids
 from moma_management.services.analytical_pattern import AnalyticalPatternService
 
 

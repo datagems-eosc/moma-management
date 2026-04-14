@@ -2,7 +2,8 @@ from typing import Never
 
 from fastapi import Depends
 
-from moma_management.di import IdType, get_ap_service, require_permission
+from moma_management.di import get_ap_service
+from moma_management.middlewares.auth import IdType, require_permission
 from moma_management.services.analytical_pattern import AnalyticalPatternService
 from moma_management.services.authorization import DatasetRole
 

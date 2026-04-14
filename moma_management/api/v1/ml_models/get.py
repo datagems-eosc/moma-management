@@ -2,8 +2,9 @@ from typing import Never
 
 from fastapi import Depends
 
-from moma_management.di import get_ml_model_service, require_authentication
+from moma_management.di import get_ml_model_service
 from moma_management.domain.generated.nodes.node_schema import Node
+from moma_management.middlewares.auth import require_authentication
 from moma_management.services.ml_model import MlModelService
 
 

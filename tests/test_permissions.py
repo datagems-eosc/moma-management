@@ -8,7 +8,11 @@ import pytest
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 
-from moma_management.di import IdType, require_authentication, require_permission
+from moma_management.middlewares.auth import (
+    IdType,
+    require_authentication,
+    require_permission,
+)
 from moma_management.services.authorization import DatasetRole, GatewayError
 
 
@@ -97,6 +101,7 @@ async def test_authz_disabled_returns_user():
 @pytest.mark.asyncio
 async def test_permission_granted():
     authz_svc = MagicMock()
+    authz_svc.has_realm_roles.return_value = False
     authz_svc.has_dataset_permission.return_value = True
 
     check = require_permission(DatasetRole.BROWSE)
@@ -115,6 +120,7 @@ async def test_permission_granted():
 @pytest.mark.asyncio
 async def test_permission_denied_raises_403():
     authz_svc = MagicMock()
+    authz_svc.has_realm_roles.return_value = False
     authz_svc.has_dataset_permission.return_value = False
 
     check = require_permission(DatasetRole.BROWSE)
@@ -132,6 +138,7 @@ async def test_permission_denied_raises_403():
 @pytest.mark.asyncio
 async def test_gateway_error_raises_502():
     authz_svc = MagicMock()
+    authz_svc.has_realm_roles.return_value = False
     authz_svc.has_dataset_permission.side_effect = GatewayError("down")
 
     check = require_permission(DatasetRole.BROWSE)
