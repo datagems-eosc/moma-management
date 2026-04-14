@@ -13,7 +13,7 @@ from jose import JWTError
 from neo4j import AsyncDriver, AsyncGraphDatabase, AsyncSession
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
-from moma_management.domain.filters import DatasetFilter
+from moma_management.domain.filters import DatasetFilter, DatasetProperty
 from moma_management.repository import DatasetRepository, Neo4jDatasetRepository
 from moma_management.repository.analytical_pattern import (
     AnalyticalPatternRepository,
@@ -253,7 +253,8 @@ def require_permission(
         match id_type:
             # For nodes, we needs to check the dataset they belongs to
             case IdType.Node:
-                result = await dataset_svc.list(DatasetFilter(nodeIds=[path_id]))
+                result = await dataset_svc.list(DatasetFilter(
+                    nodeIds=[path_id], properties=[DatasetProperty.ID]))
                 dataset_ids = [
                     n.id
                     for d in result.get("datasets", [])
@@ -285,8 +286,8 @@ def require_permission(
                 if not input_node_ids:
                     # AP has no input constraint → no dataset to check, grant access
                     return user
-                result = await dataset_svc.list(
-                    DatasetFilter(nodeIds=input_node_ids))
+                result = await dataset_svc.list(DatasetFilter(
+                    nodeIds=input_node_ids, properties=[DatasetProperty.ID]))
                 dataset_ids = [
                     str(n.id)
                     for d in result.get("datasets", [])
@@ -308,6 +309,13 @@ def require_permission(
         # NOTE: This is kept but commented out in case we have to do the token exchange again
         # gw_token = _exchange(authentication, token)
         try:
+            # Short-circuit: if user holds admin/curator/system realm role,
+            # they have permission on all datasets — skip per-dataset checks.
+            if authorization.has_realm_roles(
+                token, [RealmRole.ADMIN, RealmRole.CURATOR, RealmRole.SYSTEM]
+            ):
+                return user
+
             # NOTE: This consider that having acess to ONE dataset is enough to access the node, even if it belongs to other datasets.
             # For now I don't know if it's possible to have a node belonging to multiple datasets, but if it is the case,
             # we might want to enforce permissions on ALL parent datasets instead of just one, at least for non-idempotent actions
@@ -377,7 +385,8 @@ def require_browse_for_ap_creation():
             # No input references → no dataset constraint, grant access
             return user
 
-        result = await dataset_svc.list(DatasetFilter(nodeIds=input_node_ids))
+        result = await dataset_svc.list(DatasetFilter(
+            nodeIds=input_node_ids, properties=[DatasetProperty.ID]))
         dataset_ids = [
             str(n.id)
             for d in result.get("datasets", [])
@@ -391,6 +400,11 @@ def require_browse_for_ap_creation():
             )
 
         try:
+            if authorization.has_realm_roles(
+                token, [RealmRole.ADMIN, RealmRole.CURATOR, RealmRole.SYSTEM]
+            ):
+                return user
+
             allowed = all(
                 authorization.has_dataset_permission(
                     token, DatasetRole.BROWSE, ds_id)
