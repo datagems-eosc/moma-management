@@ -13,8 +13,26 @@ logger = getLogger(__name__)
 class Neo4jMlModelRepository(Neo4jPgJsonMixin, MlModelRepository):
     """Synchronous Neo4j-backed implementation of ``MlModelRepository``."""
 
+    _INDEX_STATEMENTS: list[str] = [
+        "CREATE CONSTRAINT ml_model_id_unique IF NOT EXISTS "
+        "FOR (n:ML_Model) REQUIRE n.id IS UNIQUE",
+        "CREATE INDEX ml_model_id IF NOT EXISTS "
+        "FOR (n:ML_Model) ON (n.id)",
+    ]
+    _indexes_ensured: bool = False
+
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
+
+    @classmethod
+    async def create_with_indexes(cls, session: AsyncSession) -> "Neo4jMlModelRepository":
+        repo = cls(session)
+        if not cls._indexes_ensured:
+            for stmt in cls._INDEX_STATEMENTS:
+                await session.run(stmt)
+            cls._indexes_ensured = True
+            logger.info("Neo4jMlModelRepository indexes ensured")
+        return repo
 
     async def create(self, node: Node) -> Node:
         """Store the ML_Model node via MERGE/SET and return it."""

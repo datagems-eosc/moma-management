@@ -13,8 +13,26 @@ logger = getLogger(__name__)
 class Neo4jTaskRepository(Neo4jPgJsonMixin, TaskRepository):
     """Synchronous Neo4j-backed implementation of ``TaskRepository``."""
 
+    _INDEX_STATEMENTS: list[str] = [
+        "CREATE CONSTRAINT task_id_unique IF NOT EXISTS "
+        "FOR (n:Task) REQUIRE n.id IS UNIQUE",
+        "CREATE INDEX task_id IF NOT EXISTS "
+        "FOR (n:Task) ON (n.id)",
+    ]
+    _indexes_ensured: bool = False
+
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
+
+    @classmethod
+    async def create_with_indexes(cls, session: AsyncSession) -> "Neo4jTaskRepository":
+        repo = cls(session)
+        if not cls._indexes_ensured:
+            for stmt in cls._INDEX_STATEMENTS:
+                await session.run(stmt)
+            cls._indexes_ensured = True
+            logger.info("Neo4jTaskRepository indexes ensured")
+        return repo
 
     async def create(self, task: Node) -> Node:
         """Store the Task node via MERGE/SET and return it."""

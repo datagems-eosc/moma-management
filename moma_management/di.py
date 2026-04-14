@@ -66,6 +66,7 @@ async def container_lifespan(_: FastAPI):
         auth=(NEO4J_USER, NEO4J_PASSWORD),
         max_connection_pool_size=50,
         connection_acquisition_timeout=10,
+        max_transaction_retry_time=30,
     )
 
     embedder_model = os.getenv("EMBEDDER_MODEL", _DEFAULT_EMBEDDER_MODEL)
@@ -89,9 +90,9 @@ def get_mapping_file() -> Path:
     return Path(os.getenv("MAPPING_FILE", "moma_management/domain/mapping.yml"))
 
 
-def get_dataset_repo(session: AsyncSession = Depends(get_db_session)) -> DatasetRepository:
+async def get_dataset_repo(session: AsyncSession = Depends(get_db_session)) -> DatasetRepository:
     """Return the repository for Dataset graph operations."""
-    return Neo4jDatasetRepository(session)
+    return await Neo4jDatasetRepository.create_with_indexes(session)
 
 
 def get_dataset_service(
@@ -102,7 +103,7 @@ def get_dataset_service(
     return DatasetService(repo, mapping_file)
 
 
-def get_node_repo(session: AsyncSession = Depends(get_db_session)) -> NodeRepository:
+async def get_node_repo(session: AsyncSession = Depends(get_db_session)) -> NodeRepository:
     """Return the repository for single-node graph operations."""
     return Neo4jNodeRepository(session)
 
@@ -417,9 +418,9 @@ def require_browse_for_ap_creation():
     return _check
 
 
-def get_ap_repo(session: AsyncSession = Depends(get_db_session)) -> AnalyticalPatternRepository:
+async def get_ap_repo(session: AsyncSession = Depends(get_db_session)) -> AnalyticalPatternRepository:
     """Return the repository for AnalyticalPattern graph operations."""
-    return Neo4jAnalyticalPatternRepository(session)
+    return await Neo4jAnalyticalPatternRepository.create_with_indexes(session)
 
 
 def get_embedder() -> Optional[Embedder]:
@@ -436,9 +437,9 @@ def get_ap_service(
     return AnalyticalPatternService(repo, dataset_svc, embedder=embedder)
 
 
-def get_task_repo(session: AsyncSession = Depends(get_db_session)) -> TaskRepository:
+async def get_task_repo(session: AsyncSession = Depends(get_db_session)) -> TaskRepository:
     """Return the repository for Task node operations."""
-    return Neo4jTaskRepository(session)
+    return await Neo4jTaskRepository.create_with_indexes(session)
 
 
 def get_task_service(
@@ -449,9 +450,9 @@ def get_task_service(
     return TaskService(task_repo, ap_repo)
 
 
-def get_ml_model_repo(session: AsyncSession = Depends(get_db_session)) -> MlModelRepository:
+async def get_ml_model_repo(session: AsyncSession = Depends(get_db_session)) -> MlModelRepository:
     """Return the repository for ML_Model node operations."""
-    return Neo4jMlModelRepository(session)
+    return await Neo4jMlModelRepository.create_with_indexes(session)
 
 
 def get_ml_model_service(

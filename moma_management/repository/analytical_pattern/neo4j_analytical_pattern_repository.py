@@ -22,10 +22,27 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
     FORBIDDEN_EDGES: list[str] = ["input", "output",
                                   "perform", "perform_inference", "uses"]
 
-    _index_ensured: bool = False
+    _INDEX_STATEMENTS: list[str] = [
+        "CREATE CONSTRAINT ap_id_unique IF NOT EXISTS "
+        "FOR (n:Analytical_Pattern) REQUIRE n.id IS UNIQUE",
+        "CREATE INDEX ap_id IF NOT EXISTS "
+        "FOR (n:Analytical_Pattern) ON (n.id)",
+    ]
+    _indexes_ensured: bool = False
+    _vector_index_ensured: bool = False
 
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
+
+    @classmethod
+    async def create_with_indexes(cls, session: AsyncSession) -> "Neo4jAnalyticalPatternRepository":
+        repo = cls(session)
+        if not cls._indexes_ensured:
+            for stmt in cls._INDEX_STATEMENTS:
+                await session.run(stmt)
+            cls._indexes_ensured = True
+            logger.info("Neo4jAnalyticalPatternRepository indexes ensured")
+        return repo
 
     # ------------------------------------------------------------------
     # Write
@@ -66,7 +83,7 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
 
     async def _ensure_index(self, dimensions: int) -> None:
         """Create the vector index on first use (idempotent, class-level flag)."""
-        if Neo4jAnalyticalPatternRepository._index_ensured:
+        if Neo4jAnalyticalPatternRepository._vector_index_ensured:
             return
         await self._session.run(
             f"CREATE VECTOR INDEX `{_VECTOR_INDEX_NAME}` IF NOT EXISTS "
@@ -76,7 +93,7 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             "  `vector.similarity_function`: 'cosine'"
             "}}",
         )
-        Neo4jAnalyticalPatternRepository._index_ensured = True
+        Neo4jAnalyticalPatternRepository._vector_index_ensured = True
         logger.info("Vector index '%s' ensured (%d dimensions)",
                     _VECTOR_INDEX_NAME, dimensions)
 

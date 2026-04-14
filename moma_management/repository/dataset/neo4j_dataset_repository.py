@@ -18,8 +18,28 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
     FORBIDDEN_EDGES: list[str] = ["fitted_on", "input",
                                   "output", "perform_inference", "trained_on"]
 
+    _INDEX_STATEMENTS: list[str] = [
+        "CREATE CONSTRAINT dataset_id_unique IF NOT EXISTS "
+        "FOR (n:`sc:Dataset`) REQUIRE n.id IS UNIQUE",
+        "CREATE INDEX dataset_id IF NOT EXISTS "
+        "FOR (n:`sc:Dataset`) ON (n.id)",
+        "CREATE INDEX dataset_date_published IF NOT EXISTS "
+        "FOR (n:`sc:Dataset`) ON (n.datePublished)",
+    ]
+    _indexes_ensured: bool = False
+
     def __init__(self, session: AsyncSession):
         self._session = session
+
+    @classmethod
+    async def create_with_indexes(cls, session: AsyncSession) -> "Neo4jDatasetRepository":
+        repo = cls(session)
+        if not cls._indexes_ensured:
+            for stmt in cls._INDEX_STATEMENTS:
+                await session.run(stmt)
+            cls._indexes_ensured = True
+            logger.info("Neo4jDatasetRepository indexes ensured")
+        return repo
 
     async def create(self, dataset: Dataset) -> str:
         """Store a full PG-JSON graph (nodes + edges)."""
