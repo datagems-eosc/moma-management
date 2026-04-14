@@ -1,3 +1,4 @@
+import time
 from logging import getLogger
 from typing import List, Optional
 
@@ -87,50 +88,12 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
         return record is not None
 
     async def get(self, id: str) -> Optional[Dataset]:
-        """
-        Retrieve the dataset with the given ID
-        """
-        query = """//cypher
-            MATCH (root:`sc:Dataset` {id: $datasetId})
-            OPTIONAL MATCH path=(root)-[*1..4]-(m)
-            WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
-            RETURN root, m, relationships(path) AS r
-        """
-        result = await self._session.run(query, datasetId=id,
-                                         forbiddenEdges=self.FORBIDDEN_EDGES)
-        rows = [record async for record in result]
-
-        if not rows:
+        result = await self.list(DatasetFilter(nodeIds=[id], page=1, pageSize=1))
+        datasets = result.get("datasets", [])
+        if not datasets:
             return None
-
-        nodes: dict = {}
-        edges: dict = {}
-
-        # Always include the root node
-        root = rows[0]["root"]
-        nodes[root["id"]] = self._deserialize_node(root)
-
-        for record in rows:
-            m = record["m"]
-            rels = record["r"] or []
-
-            if m:
-                mid = m["id"]
-                if mid not in nodes:
-                    nodes[mid] = self._deserialize_node(m)
-
-            for rel in rels:
-                key = (rel.start_node["id"], rel.end_node["id"], rel.type)
-                if key not in edges:
-                    edges[key] = self._deserialize_edge(rel)
-
-        # Only keep edges whose both endpoints are in the collected node set
-        valid_edges = [
-            e for e in edges.values()
-            if e["from"] in nodes and e["to"] in nodes
-        ]
-
-        return Dataset(nodes=list(nodes.values()), edges=valid_edges)
+        graph = datasets[0]
+        return Dataset(nodes=graph.nodes, edges=graph.edges)
 
     async def list(self, criteria: DatasetFilter) -> List[Dataset]:
         try:
@@ -250,40 +213,42 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             // includes its PDF/Table/… siblings in the response).
             OPTIONAL MATCH (n)-[r1]-(h1)
             WHERE NOT type(r1) IN $forbiddenEdges
-            WITH n,
-                 collect(DISTINCT h1) AS h1n,
-                 collect(DISTINCT r1) AS h1r
+            WITH n, collect(DISTINCT h1) AS h1n
 
             // Hop 2 – expand from hop-1 nodes, skipping already-visited
             UNWIND CASE WHEN size(h1n) > 0 THEN h1n ELSE [null] END AS h1
             OPTIONAL MATCH (h1)-[r2]-(h2)
             WHERE NOT type(r2) IN $forbiddenEdges
-              AND NOT h2 IN h1n
-            WITH n, h1n, h1r,
-                 collect(DISTINCT h2) AS h2n,
-                 collect(DISTINCT r2) AS h2r
+              AND NOT h2 IN h1n AND h2 <> n
+            WITH n, h1n, collect(DISTINCT h2) AS h2n
 
             // Hop 3 – expand from hop-2 nodes, skipping already-visited
             UNWIND CASE WHEN size(h2n) > 0 THEN h2n ELSE [null] END AS h2
             OPTIONAL MATCH (h2)-[r3]-(h3)
             WHERE NOT type(r3) IN $forbiddenEdges
-              AND NOT h3 IN h1n AND NOT h3 IN h2n
-            WITH n, h1n, h1r, h2n, h2r,
-                 collect(DISTINCT h3) AS h3n,
-                 collect(DISTINCT r3) AS h3r
+              AND NOT h3 IN h1n AND NOT h3 IN h2n AND h3 <> n
+            WITH n, h1n, h2n, collect(DISTINCT h3) AS h3n
 
             // Hop 4 – expand from hop-3 nodes, skipping already-visited
             UNWIND CASE WHEN size(h3n) > 0 THEN h3n ELSE [null] END AS h3
             OPTIONAL MATCH (h3)-[r4]-(h4)
             WHERE NOT type(r4) IN $forbiddenEdges
-              AND NOT h4 IN h1n AND NOT h4 IN h2n AND NOT h4 IN h3n
-            WITH n, h1n, h1r, h2n, h2r, h3n, h3r,
-                 collect(DISTINCT h4) AS h4n,
-                 collect(DISTINCT r4) AS h4r
+              AND NOT h4 IN h1n AND NOT h4 IN h2n AND NOT h4 IN h3n AND h4 <> n
+            WITH n, h1n, h2n, h3n, collect(DISTINCT h4) AS h4n
+
+            // Assemble all discovered nodes into a single list
+            WITH n, [n] + h1n + h2n + h3n + h4n AS allNodes
+
+            // Final pass: collect ALL edges between the discovered nodes.
+            // Directed match (a)-[r]->(b) avoids counting each edge twice.
+            UNWIND allNodes AS a
+            OPTIONAL MATCH (a)-[r]->(b)
+            WHERE b IN allNodes AND NOT type(r) IN $forbiddenEdges
+            WITH n, allNodes, collect(DISTINCT r) AS allRels
 
             RETURN n AS dataset,
-                   [h1n + h2n + h3n + h4n] AS node_lists,
-                   [h1r + h2r + h3r + h4r] AS rel_lists
+                   [allNodes] AS node_lists,
+                   [allRels] AS rel_lists
             """
 
             result = await self._session.run(
