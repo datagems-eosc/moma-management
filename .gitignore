@@ -142,3 +142,4 @@ cython_debug/
 generated
 !moma_management/domain/generated
 assets/backups
+.profiles
