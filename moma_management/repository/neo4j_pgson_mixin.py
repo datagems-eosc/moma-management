@@ -279,3 +279,55 @@ class Neo4jPgJsonMixin:
             nodes=list(nodes_dict.values()),
             edges=valid_edges,
         )
+
+    def _build_dataset_from_maps(
+        self, node_maps: List[Dict], edge_maps: List[Dict]
+    ) -> MoMaGraphModel:
+        """
+        Build a :class:`MoMaGraphModel` from pre-projected Cypher maps.
+
+        Unlike :meth:`_build_dataset`, this method expects plain dicts
+        (``{id, labels, props}``) rather than full Neo4j ``Node``/``Relationship``
+        objects.  This avoids the Bolt deserialisation overhead for node/rel
+        wrappers and significantly reduces the data transferred over the wire.
+        """
+        nodes_dict: Dict[str, Any] = {}
+        for m in node_maps:
+            nid = m["id"]
+            if nid not in nodes_dict:
+                properties = {
+                    k.replace("__", ":"): v
+                    for k, v in (m.get("props") or {}).items()
+                    if v is not None and k != "id"
+                }
+                nodes_dict[nid] = {
+                    "id": nid,
+                    "labels": [lbl.replace("__", ":") for lbl in m["labels"]],
+                    "properties": properties,
+                }
+
+        edges: list[Dict[str, Any]] = []
+        seen: set[tuple] = set()
+        for e in edge_maps:
+            key = (e["from"], e["to"], e["type"])
+            if key in seen:
+                continue
+            seen.add(key)
+            if e["from"] in nodes_dict and e["to"] in nodes_dict:
+                label = e["type"].replace("___", "/")
+                properties = {
+                    k.replace("__", ":"): v
+                    for k, v in (e.get("props") or {}).items()
+                    if v is not None
+                }
+                edges.append({
+                    "from": e["from"],
+                    "to": e["to"],
+                    "labels": [label],
+                    "properties": properties,
+                })
+
+        return MoMaGraphModel(
+            nodes=list(nodes_dict.values()),
+            edges=edges,
+        )

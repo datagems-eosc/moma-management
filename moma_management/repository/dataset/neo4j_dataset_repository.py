@@ -40,6 +40,12 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                 await session.run(stmt)
             cls._indexes_ensured = True
             logger.info("Neo4jDatasetRepository indexes ensured")
+            # Warm-up: touch Dataset nodes so Neo4j loads them into page cache.
+            # This avoids the cold-cache penalty on the first real query.
+            await session.run(
+                "MATCH (n:`sc:Dataset`) RETURN count(n) AS c"
+            )
+            logger.info("Neo4jDatasetRepository page-cache warm-up done")
         return repo
 
     async def create(self, dataset: Dataset) -> str:
@@ -88,15 +94,70 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
         return record is not None
 
     async def get(self, id: str) -> Optional[Dataset]:
-        result = await self.list(DatasetFilter(nodeIds=[id], page=1, pageSize=1))
-        datasets = result.get("datasets", [])
-        if not datasets:
+        """Fetch a single dataset and its full subgraph by root node id."""
+        query = """//cypher
+        MATCH (n:`sc:Dataset` {id: $datasetId})
+
+        // Hop 1
+        OPTIONAL MATCH (n)-[r1]-(h1)
+        WHERE NOT type(r1) IN $forbiddenEdges
+        WITH n, collect(DISTINCT h1) AS h1n
+
+        // Hop 2
+        UNWIND CASE WHEN size(h1n) > 0 THEN h1n ELSE [null] END AS h1
+        OPTIONAL MATCH (h1)-[r2]-(h2)
+        WHERE NOT type(r2) IN $forbiddenEdges
+          AND NOT h2 IN h1n AND h2 <> n
+        WITH n, h1n, collect(DISTINCT h2) AS h2n
+
+        // Hop 3
+        UNWIND CASE WHEN size(h2n) > 0 THEN h2n ELSE [null] END AS h2
+        OPTIONAL MATCH (h2)-[r3]-(h3)
+        WHERE NOT type(r3) IN $forbiddenEdges
+          AND NOT h3 IN h1n AND NOT h3 IN h2n AND h3 <> n
+        WITH n, h1n, h2n, collect(DISTINCT h3) AS h3n
+
+        // Hop 4
+        UNWIND CASE WHEN size(h3n) > 0 THEN h3n ELSE [null] END AS h3
+        OPTIONAL MATCH (h3)-[r4]-(h4)
+        WHERE NOT type(r4) IN $forbiddenEdges
+          AND NOT h4 IN h1n AND NOT h4 IN h2n AND NOT h4 IN h3n AND h4 <> n
+        WITH n, h1n, h2n, h3n, collect(DISTINCT h4) AS h4n
+
+        WITH n, [n] + h1n + h2n + h3n + h4n AS allNodes
+
+        // Collect edges as lightweight maps instead of full Relationship objects
+        UNWIND allNodes AS a
+        OPTIONAL MATCH (a)-[r]->(b)
+        WHERE b IN allNodes AND NOT type(r) IN $forbiddenEdges
+        WITH allNodes,
+             collect(DISTINCT {from: startNode(r).id, to: endNode(r).id, type: type(r), props: properties(r)}) AS edgeMaps
+
+        // Project nodes as lightweight maps instead of full Node objects
+        RETURN [x IN allNodes | {id: x.id, labels: labels(x), props: properties(x)}] AS node_maps,
+               [e IN edgeMaps WHERE e.from IS NOT NULL] AS edge_maps
+        """
+        try:
+            result = await self._session.run(
+                query,
+                datasetId=id,
+                forbiddenEdges=self.FORBIDDEN_EDGES,
+            )
+            record = await result.single()
+            if not record:
+                return None
+            graph = self._build_dataset_from_maps(
+                record["node_maps"],
+                record["edge_maps"],
+            )
+            return Dataset(nodes=graph.nodes, edges=graph.edges)
+        except Exception as e:
+            logger.error("Neo4j get failed: %s", e)
             return None
-        graph = datasets[0]
-        return Dataset(nodes=graph.nodes, edges=graph.edges)
 
     async def list(self, criteria: DatasetFilter) -> List[Dataset]:
         try:
+            t0 = time.monotonic()
             skip = (criteria.page - 1) * criteria.pageSize
             limit = criteria.pageSize
 
@@ -126,8 +187,9 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                 forbiddenEdges=self.FORBIDDEN_EDGES,
             )
 
-            # ---------------- COUNT QUERY ----------------
-
+            # Fallback count query – only used when the main query returns no
+            # rows (pagination past the last page).  By that point the page
+            # cache is already warm, so the cost is negligible.
             count_query = """//cypher
             MATCH (n:`sc:Dataset`)
             WHERE (
@@ -153,19 +215,12 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             RETURN count(DISTINCT n) AS total
             """
 
-            count_result = await self._session.run(count_query, **params)
-            total_record = await count_result.single()
-            total = total_record["total"] if total_record else 0
-
-            if total == 0:
-                return {
-                    "datasets": [],
-                    "page": criteria.page,
-                    "pageSize": criteria.pageSize,
-                    "total": total,
-                }
-
-            # ---------------- DATA QUERY ----------------
+            # ---------------- DATA + COUNT QUERY ----------------
+            # The count and data fetch are combined into a single Cypher
+            # statement.  This avoids running the expensive EXISTS filters
+            # twice (which was the main cause of slow first-run queries
+            # because Neo4j had to traverse the same paths for count AND
+            # data before its page cache was warm).
             # SKIP/LIMIT is applied to dataset nodes (n) BEFORE the subgraph
             # traversal so pagination is dataset-accurate.
             #
@@ -201,7 +256,12 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                    AND ANY(t IN $types WHERE t IN labels(m))
                }})
 
-            WITH n
+            // Count ALL matching datasets before pagination so the total
+            // is computed from the same filtered set without a second query.
+            WITH collect(n) AS all_matches
+            WITH all_matches, size(all_matches) AS total
+            UNWIND all_matches AS n
+            WITH n, total
             ORDER BY {order_clause}
             SKIP $skip
             LIMIT $limit
@@ -213,53 +273,77 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             // includes its PDF/Table/… siblings in the response).
             OPTIONAL MATCH (n)-[r1]-(h1)
             WHERE NOT type(r1) IN $forbiddenEdges
-            WITH n, collect(DISTINCT h1) AS h1n
+            WITH n, total, collect(DISTINCT h1) AS h1n
 
             // Hop 2 – expand from hop-1 nodes, skipping already-visited
             UNWIND CASE WHEN size(h1n) > 0 THEN h1n ELSE [null] END AS h1
             OPTIONAL MATCH (h1)-[r2]-(h2)
             WHERE NOT type(r2) IN $forbiddenEdges
               AND NOT h2 IN h1n AND h2 <> n
-            WITH n, h1n, collect(DISTINCT h2) AS h2n
+            With n, total, h1n, collect(DISTINCT h2) AS h2n
 
             // Hop 3 – expand from hop-2 nodes, skipping already-visited
             UNWIND CASE WHEN size(h2n) > 0 THEN h2n ELSE [null] END AS h2
             OPTIONAL MATCH (h2)-[r3]-(h3)
             WHERE NOT type(r3) IN $forbiddenEdges
               AND NOT h3 IN h1n AND NOT h3 IN h2n AND h3 <> n
-            WITH n, h1n, h2n, collect(DISTINCT h3) AS h3n
+            WITH n, total, h1n, h2n, collect(DISTINCT h3) AS h3n
 
             // Hop 4 – expand from hop-3 nodes, skipping already-visited
             UNWIND CASE WHEN size(h3n) > 0 THEN h3n ELSE [null] END AS h3
             OPTIONAL MATCH (h3)-[r4]-(h4)
             WHERE NOT type(r4) IN $forbiddenEdges
               AND NOT h4 IN h1n AND NOT h4 IN h2n AND NOT h4 IN h3n AND h4 <> n
-            WITH n, h1n, h2n, h3n, collect(DISTINCT h4) AS h4n
+            WITH n, total, h1n, h2n, h3n, collect(DISTINCT h4) AS h4n
 
             // Assemble all discovered nodes into a single list
-            WITH n, [n] + h1n + h2n + h3n + h4n AS allNodes
+            With n, total, [n] + h1n + h2n + h3n + h4n AS allNodes
 
             // Final pass: collect ALL edges between the discovered nodes.
             // Directed match (a)-[r]->(b) avoids counting each edge twice.
             UNWIND allNodes AS a
             OPTIONAL MATCH (a)-[r]->(b)
             WHERE b IN allNodes AND NOT type(r) IN $forbiddenEdges
-            WITH n, allNodes, collect(DISTINCT r) AS allRels
+            WITH n, total, allNodes,
+                 collect(DISTINCT {{from: startNode(r).id, to: endNode(r).id, type: type(r), props: properties(r)}}) AS edgeMaps
 
-            RETURN n AS dataset,
-                   [allNodes] AS node_lists,
-                   [allRels] AS rel_lists
+            // Project nodes as lightweight maps instead of full Node objects
+            RETURN total,
+                   [x IN allNodes | {{id: x.id, labels: labels(x), props: properties(x)}}] AS node_maps,
+                   [e IN edgeMaps WHERE e.from IS NOT NULL] AS edge_maps
             """
 
+            t1 = time.monotonic()
             result = await self._session.run(
                 query, **params, skip=skip, limit=limit)
             records = [record async for record in result]
+            t2 = time.monotonic()
+            logger.info(
+                "Dataset list query: build=%.3fs  neo4j=%.3fs  rows=%d",
+                t1 - t0, t2 - t1, len(records),
+            )
+
+            if not records:
+                # No rows means either zero matches or pagination past the
+                # last page.  Run the count query to tell the caller the real
+                # total (the page-cache is already warm from the main query).
+                count_result = await self._session.run(
+                    count_query, **params,
+                )
+                count_record = await count_result.single()
+                return {
+                    "datasets": [],
+                    "page": criteria.page,
+                    "pageSize": criteria.pageSize,
+                    "total": count_record["total"] if count_record else 0,
+                }
+
+            total = records[0]["total"]
 
             datasets = [
-                self._build_dataset(
-                    record["dataset"],
-                    record["node_lists"],
-                    record["rel_lists"],
+                self._build_dataset_from_maps(
+                    record["node_maps"],
+                    record["edge_maps"],
                 )
                 for record in records
             ]
