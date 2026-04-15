@@ -2,6 +2,7 @@ from datetime import date
 from typing import List
 
 from fastapi import Depends, Query
+from fastapi.responses import JSONResponse
 
 from moma_management.di import get_dataset_service
 from moma_management.domain.filters import (
@@ -78,6 +79,13 @@ async def list_datasets(
 
         # An empty merged list means zero accessible datasets
         if not filters.nodeIds:
-            return {"datasets": [], "page": filters.page, "pageSize": filters.pageSize, "total": 0}
+            return JSONResponse({"datasets": [], "page": filters.page, "pageSize": filters.pageSize, "total": 0})
 
-    return await svc.list(filters)
+    ds = await svc.list(filters)
+    datasets = [d.model_dump(mode="json") for d in ds.get("datasets", [])]
+    return JSONResponse({
+        "datasets": datasets,
+        "page": ds.get("page", filters.page),
+        "pageSize": ds.get("pageSize", filters.pageSize),
+        "total": ds.get("total", 0),
+    })
