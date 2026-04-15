@@ -1,11 +1,13 @@
 import logging
+import os
 from os import getenv
 from pathlib import Path
 from tomllib import loads as loads_toml
 
 import uvicorn
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
+from pyinstrument import Profiler
 
 from moma_management.api.v1.routes import router
 from moma_management.di import container_lifespan
@@ -90,6 +92,17 @@ async def moma_error_handler(request: Request, exc: MomaError) -> JSONResponse:
 async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
     logger.exception("Unhandled exception")
     return JSONResponse(status_code=500, content={"detail": "An unexpected error occurred."})
+
+PROFILING = os.getenv("PROFILING", "false").lower() == "true"
+
+if PROFILING:
+    @app.middleware("http")
+    async def profile_request(request: Request, call_next):
+        profiler = Profiler()
+        profiler.start()
+        await call_next(request)
+        profiler.stop()
+        return HTMLResponse(profiler.output_html())
 
 
 if __name__ == "__main__":
