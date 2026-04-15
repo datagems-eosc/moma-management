@@ -108,7 +108,7 @@ class DatasetFilter(BaseModel):
     publishedTo:   Optional[date] = None
     status:        Optional[Status] = None
     page:     int = Field(default=1,  ge=1)
-    pageSize: int = Field(default=25, ge=1, le=100)
+    pageSize: int = Field(default=10, ge=1, le=100)
 
     @property
     def resolved_types(self) -> List[str]:
