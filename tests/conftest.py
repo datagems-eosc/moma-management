@@ -348,6 +348,45 @@ async def node_repository(neo4j_container: Neo4jContainer) -> AsyncGenerator[Neo
     await driver.close()
 
 
+# ---------------------------------------------------------------------------
+# Module-scoped fixtures for performance tests
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="module")
+def neo4j_container_module() -> Generator[Neo4jContainer, None, None]:
+    """Module-scoped Neo4j container shared by all tests in a module."""
+    container = Neo4jContainer(image="neo4j:latest")
+    container.start()
+    yield container
+    container.stop()
+
+
+@pytest_asyncio.fixture(scope="module")
+async def heavy_dataset_repository(
+    neo4j_container_module: Neo4jContainer,
+) -> AsyncGenerator[Neo4jDatasetRepository, None]:
+    """
+    Module-scoped repository pre-loaded with all heavy datasets.
+
+    Uses ``create_with_indexes`` so indexes and VIRTUAL_BELONGS_TO backfill
+    run once, mirroring production start-up.
+    """
+    from moma_management.domain.dataset import Dataset
+
+    uri = neo4j_container_module.get_connection_url()
+    auth = (neo4j_container_module.username, neo4j_container_module.password)
+    driver = AsyncGraphDatabase.driver(uri, auth=auth)
+    async with driver.session() as session:
+        repo = await Neo4jDatasetRepository.create_with_indexes(session)
+        heavy_dir = DATASETS_DIR / "heavy"
+        for path in sorted(heavy_dir.glob("*.json")):
+            ds = Dataset.model_validate_json(path.read_text())
+            result = await repo.create(ds)
+            assert result == "success", f"Failed to ingest {path.name}: {result}"
+        yield repo
+    await driver.close()
+
+
 TESTS_ROOT = Path.cwd()
 
 
