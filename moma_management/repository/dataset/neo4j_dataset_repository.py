@@ -17,7 +17,8 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
 
     # These edges links datasets to models or APs so must be excluded when maniulating datasets in isolation
     FORBIDDEN_EDGES: list[str] = ["fitted_on", "input",
-                                  "output", "perform_inference", "trained_on"]
+                                  "output", "perform_inference", "trained_on",
+                                  "VIRTUAL_BELONGS_TO"]
 
     _INDEX_STATEMENTS: list[str] = [
         "CREATE CONSTRAINT dataset_id_unique IF NOT EXISTS "
@@ -42,6 +43,28 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                 await session.run(stmt)
             cls._indexes_ensured = True
             logger.info("Neo4jDatasetRepository indexes ensured")
+
+            # Backfill VIRTUAL_BELONGS_TO for existing datasets.
+            # Uses MERGE so it is idempotent and safe to re-run.
+            backfill_edges = [
+                "fitted_on", "input", "output",
+                "perform_inference", "trained_on",
+            ]
+            await session.run(
+                """//cypher
+                MATCH (d:`sc:Dataset`)
+                OPTIONAL MATCH path=(d)-[*1..4]-(m)
+                WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
+                  AND m <> d
+                WITH d, collect(DISTINCT m) AS children
+                UNWIND children AS child
+                MERGE (child)-[:VIRTUAL_BELONGS_TO]->(d)
+                """,
+                forbiddenEdges=backfill_edges,
+            )
+            logger.info(
+                "Neo4jDatasetRepository VIRTUAL_BELONGS_TO backfill done")
+
             # Warm-up: touch Dataset nodes so Neo4j loads them into page cache.
             # This avoids the cold-cache penalty on the first real query.
             await session.run(
@@ -50,10 +73,32 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             logger.info("Neo4jDatasetRepository page-cache warm-up done")
         return repo
 
+    async def _create_dataset_with_virtual_edges(
+        self, tx: AsyncManagedTransaction, dataset: Dataset
+    ) -> None:
+        """Write the full PG-JSON graph and add VIRTUAL_BELONGS_TO edges."""
+        await self.create_pgson(tx, dataset)
+
+        root_id = dataset.root_id
+        child_ids = [str(n.id) for n in dataset.nodes if str(n.id) != root_id]
+        if child_ids:
+            await tx.run(
+                """//cypher
+                UNWIND $childIds AS childId
+                MATCH (child {id: childId})
+                MATCH (root:`sc:Dataset` {id: $rootId})
+                MERGE (child)-[:VIRTUAL_BELONGS_TO]->(root)
+                """,
+                childIds=child_ids,
+                rootId=root_id,
+            )
+
     async def create(self, dataset: Dataset) -> str:
         """Store a full PG-JSON graph (nodes + edges)."""
         try:
-            await self._session.execute_write(self.create_pgson, dataset)
+            await self._session.execute_write(
+                self._create_dataset_with_virtual_edges, dataset
+            )
             return "success"
         except Exception as e:
             logger.error("Neo4j upload failed: %s", e)
@@ -194,10 +239,10 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             MATCH (n:`sc:Dataset`)
             WHERE (
                 $nodeIds = []
+                OR n.id IN $nodeIds
                 OR EXISTS {
-                    MATCH path=(n)-[*0..4]-(m)
+                    MATCH (m)-[:VIRTUAL_BELONGS_TO]->(n)
                     WHERE m.id IN $nodeIds
-                    AND NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
                 }
             )
             AND ($publishedDateFrom IS NULL OR n.datePublished >= $publishedDateFrom)
@@ -217,10 +262,10 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             MATCH (n:`sc:Dataset`)
             WHERE (
                 $nodeIds = []
+                OR n.id IN $nodeIds
                 OR EXISTS {{
-                    MATCH path=(n)-[*0..4]-(m)
+                    MATCH (m)-[:VIRTUAL_BELONGS_TO]->(n)
                     WHERE m.id IN $nodeIds
-                    AND NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
                 }}
             )
             AND ($publishedDateFrom IS NULL OR n.datePublished >= $publishedDateFrom)
