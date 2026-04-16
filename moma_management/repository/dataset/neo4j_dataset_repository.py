@@ -26,6 +26,8 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
         "FOR (n:`sc:Dataset`) ON (n.id)",
         "CREATE INDEX dataset_date_published IF NOT EXISTS "
         "FOR (n:`sc:Dataset`) ON (n.datePublished)",
+        "CREATE INDEX dataset_status IF NOT EXISTS "
+        "FOR (n:`sc:Dataset`) ON (n.status)",
     ]
     _indexes_ensured: bool = False
 
@@ -158,17 +160,14 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
     async def list(self, criteria: DatasetFilter) -> List[Dataset]:
         try:
             t0 = time.monotonic()
+
             skip = (criteria.page - 1) * criteria.pageSize
             limit = criteria.pageSize
-
             order = criteria.direction.value.upper()
-            # datePublished is stored as an ISO string; wrap it in date() so
-            # that any pre-normalised values still sort chronologically, not
-            # lexicographically (e.g. "10-03-2025" < "2025-03-10" as strings).
 
             def _order_expr(field: DatasetSortField) -> str:
                 if field.value == "datePublished":
-                    return f"date(coalesce(n.`datePublished`, '1970-01-01')) {order}"
+                    return f"n.`datePublished` {order}"
                 return f"n.`{field.value}` {order}"
 
             order_clause = (
@@ -180,16 +179,17 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
 
             params = dict(
                 nodeIds=criteria.nodeIds or [],
-                publishedDateFrom=criteria.publishedFrom,
-                publishedDateTo=criteria.publishedTo,
+                publishedDateFrom=criteria.publishedFrom.isoformat(
+                ) if criteria.publishedFrom else None,
+                publishedDateTo=criteria.publishedTo.isoformat() if criteria.publishedTo else None,
                 status=criteria.status.value if criteria.status is not None else None,
                 types=types,
                 forbiddenEdges=self.FORBIDDEN_EDGES,
+                skip=skip,
+                limit=limit,
             )
 
-            # Fallback count query – only used when the main query returns no
-            # rows (pagination past the last page).  By that point the page
-            # cache is already warm, so the cost is negligible.
+            # ---------------- COUNT QUERY ----------------
             count_query = """//cypher
             MATCH (n:`sc:Dataset`)
             WHERE (
@@ -200,43 +200,20 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                     AND NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
                 }
             )
-            AND ($publishedDateFrom IS NULL OR date(n.datePublished) >= $publishedDateFrom)
-            AND ($publishedDateTo IS NULL OR date(n.datePublished) <= $publishedDateTo)
+            AND ($publishedDateFrom IS NULL OR n.datePublished >= $publishedDateFrom)
+            AND ($publishedDateTo IS NULL OR n.datePublished <= $publishedDateTo)
             AND ($status IS NULL OR n.status = $status)
-
-            WITH n
-            WHERE $types = []
-               OR EXISTS {
-                   MATCH path=(n)-[*1..4]-(m)
-                   WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
-                   AND ANY(t IN $types WHERE t IN labels(m))
-               }
-
+            AND ($types = []
+            OR EXISTS {
+                MATCH path=(n)-[*1..4]-(m)
+                WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
+                AND ANY(t IN $types WHERE t IN labels(m))
+            })
             RETURN count(DISTINCT n) AS total
             """
 
-            # ---------------- DATA + COUNT QUERY ----------------
-            # The count and data fetch are combined into a single Cypher
-            # statement.  This avoids running the expensive EXISTS filters
-            # twice (which was the main cause of slow first-run queries
-            # because Neo4j had to traverse the same paths for count AND
-            # data before its page cache was warm).
-            # SKIP/LIMIT is applied to dataset nodes (n) BEFORE the subgraph
-            # traversal so pagination is dataset-accurate.
-            #
-            # Subgraph expansion uses explicit hop-by-hop traversal with
-            # DISTINCT at each level to avoid the path-explosion problem that
-            # occurs when collect(nodes(p)) is used with variable-length paths.
-            # Collecting entire PATH objects forces Neo4j to materialise every
-            # distinct route to every node, which causes OOM on large subgraphs
-            # (many fields × statistics).  Collecting DISTINCT node/rel objects
-            # directly is O(|nodes| + |rels|) instead of O(|paths|).
-            #
-            # CASE WHEN … ELSE [null] END on each UNWIND ensures that datasets
-            # with no neighbours at a given hop still produce a row so the root
-            # node (n) is included in the final result.
-
-            query = f"""//cypher
+            # ---------------- ID QUERY (PAGINATED) ----------------
+            id_query = f"""//cypher
             MATCH (n:`sc:Dataset`)
             WHERE (
                 $nodeIds = []
@@ -246,108 +223,62 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                     AND NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
                 }}
             )
-            AND ($publishedDateFrom IS NULL OR date(n.datePublished) >= $publishedDateFrom)
-            AND ($publishedDateTo IS NULL OR date(n.datePublished) <= $publishedDateTo)
+            AND ($publishedDateFrom IS NULL OR n.datePublished >= $publishedDateFrom)
+            AND ($publishedDateTo IS NULL OR n.datePublished <= $publishedDateTo)
             AND ($status IS NULL OR n.status = $status)
             AND ($types = []
-               OR EXISTS {{
-                   MATCH path=(n)-[*1..4]-(m)
-                   WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
-                   AND ANY(t IN $types WHERE t IN labels(m))
-               }})
+            OR EXISTS {{
+                MATCH path=(n)-[*1..4]-(m)
+                WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
+                AND ANY(t IN $types WHERE t IN labels(m))
+            }})
 
-            // Count ALL matching datasets before pagination so the total
-            // is computed from the same filtered set without a second query.
-            WITH collect(n) AS all_matches
-            WITH all_matches, size(all_matches) AS total
-            UNWIND all_matches AS n
-            WITH n, total
+            WITH n
             ORDER BY {order_clause}
             SKIP $skip
             LIMIT $limit
 
-            // Hop 1 – direct neighbours of the dataset root.
-            // NOTE: $types is intentionally NOT applied here.  The filter above
-            // already selected only qualifying datasets; the subgraph expansion
-            // must return ALL connected nodes (so a CSV-filtered dataset still
-            // includes its PDF/Table/… siblings in the response).
-            OPTIONAL MATCH (n)-[r1]-(h1)
-            WHERE NOT type(r1) IN $forbiddenEdges
-            WITH n, total, collect(DISTINCT h1) AS h1n
-
-            // Hop 2 – expand from hop-1 nodes, skipping already-visited
-            UNWIND CASE WHEN size(h1n) > 0 THEN h1n ELSE [null] END AS h1
-            OPTIONAL MATCH (h1)-[r2]-(h2)
-            WHERE NOT type(r2) IN $forbiddenEdges
-              AND NOT h2 IN h1n AND h2 <> n
-            With n, total, h1n, collect(DISTINCT h2) AS h2n
-
-            // Hop 3 – expand from hop-2 nodes, skipping already-visited
-            UNWIND CASE WHEN size(h2n) > 0 THEN h2n ELSE [null] END AS h2
-            OPTIONAL MATCH (h2)-[r3]-(h3)
-            WHERE NOT type(r3) IN $forbiddenEdges
-              AND NOT h3 IN h1n AND NOT h3 IN h2n AND h3 <> n
-            WITH n, total, h1n, h2n, collect(DISTINCT h3) AS h3n
-
-            // Hop 4 – expand from hop-3 nodes, skipping already-visited
-            UNWIND CASE WHEN size(h3n) > 0 THEN h3n ELSE [null] END AS h3
-            OPTIONAL MATCH (h3)-[r4]-(h4)
-            WHERE NOT type(r4) IN $forbiddenEdges
-              AND NOT h4 IN h1n AND NOT h4 IN h2n AND NOT h4 IN h3n AND h4 <> n
-            WITH n, total, h1n, h2n, h3n, collect(DISTINCT h4) AS h4n
-
-            // Assemble all discovered nodes into a single list
-            With n, total, [n] + h1n + h2n + h3n + h4n AS allNodes
-
-            // Final pass: collect ALL edges between the discovered nodes.
-            // Directed match (a)-[r]->(b) avoids counting each edge twice.
-            UNWIND allNodes AS a
-            OPTIONAL MATCH (a)-[r]->(b)
-            WHERE b IN allNodes AND NOT type(r) IN $forbiddenEdges
-            WITH n, total, allNodes,
-                 collect(DISTINCT {{from: startNode(r).id, to: endNode(r).id, type: type(r), props: properties(r)}}) AS edgeMaps
-
-            // Project nodes as lightweight maps instead of full Node objects
-            RETURN total,
-                   [x IN allNodes | {{id: x.id, labels: labels(x), props: properties(x)}}] AS node_maps,
-                   [e IN edgeMaps WHERE e.from IS NOT NULL] AS edge_maps
+            RETURN n.id AS id
             """
 
+            # Execute both queries
             t1 = time.monotonic()
-            result = await self._session.run(
-                query, **params, skip=skip, limit=limit)
-            records = [record async for record in result]
-            t2 = time.monotonic()
-            logger.info(
-                "Dataset list query: build=%.3fs  neo4j=%.3fs  rows=%d",
-                t1 - t0, t2 - t1, len(records),
-            )
 
-            if not records:
-                # No rows means either zero matches or pagination past the
-                # last page.  Run the count query to tell the caller the real
-                # total (the page-cache is already warm from the main query).
-                count_result = await self._session.run(
-                    count_query, **params,
-                )
-                count_record = await count_result.single()
+            count_result = await self._session.run(count_query, **params)
+            count_record = await count_result.single()
+            total = count_record["total"] if count_record else 0
+
+            id_result = await self._session.run(id_query, **params)
+            ids = [record["id"] async for record in id_result]
+
+            t2 = time.monotonic()
+
+            if not ids:
                 return {
                     "datasets": [],
                     "page": criteria.page,
                     "pageSize": criteria.pageSize,
-                    "total": count_record["total"] if count_record else 0,
+                    "total": total,
                 }
 
-            total = records[0]["total"]
+            # ---------------- FETCH SUBGRAPHS (PARALLEL) ----------------
+            datasets = []
+            for id_ in ids:
+                ds = await self.get(id_)
+                if ds is not None:
+                    datasets.append(ds)
 
-            datasets = [
-                self._build_dataset_from_maps(
-                    record["node_maps"],
-                    record["edge_maps"],
-                )
-                for record in records
-            ]
+            # Filter None (safety)
+            datasets = [ds for ds in datasets if ds is not None]
 
+            t3 = time.monotonic()
+
+            logger.info(
+                "Dataset list: filter+ids=%.3fs  subgraphs=%.3fs  total=%d",
+                t2 - t1, t3 - t2, len(datasets),
+            )
+
+            # ---------------- PROPERTY FILTERING (UNCHANGED) ----------------
             if criteria.properties:
                 prop_values = {p.value for p in criteria.properties}
                 scalar_props = prop_values - {"distribution", "recordSet"}
