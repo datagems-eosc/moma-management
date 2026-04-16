@@ -154,6 +154,9 @@ async def test_create_ap_referencing_existing_dataset_succeeds(
     retrieved = await ap_svc.get(ap_id)
     assert retrieved is not None
 
+    # Clean up so subsequent tests are not affected
+    await ap_svc.delete(ap_id)
+
 
 @pytest.mark.asyncio
 async def test_delete_dataset_blocked_when_ap_references_it(

@@ -14,11 +14,11 @@ from moma_management.domain.generated.nodes.node_schema import Node
 from moma_management.repository.task import Neo4jTaskRepository
 
 
-@pytest_asyncio.fixture
-async def task_repository(neo4j_container: Neo4jContainer) -> AsyncGenerator[Neo4jTaskRepository, None]:
-    """Task repository backed by a fresh Neo4j container."""
-    uri = neo4j_container.get_connection_url()
-    auth = (neo4j_container.username, neo4j_container.password)
+@pytest_asyncio.fixture(scope="module")
+async def task_repository(neo4j_container_module: Neo4jContainer) -> AsyncGenerator[Neo4jTaskRepository, None]:
+    """Task repository backed by a module-scoped Neo4j container."""
+    uri = neo4j_container_module.get_connection_url()
+    auth = (neo4j_container_module.username, neo4j_container_module.password)
     driver = AsyncGraphDatabase.driver(uri, auth=auth)
     async with driver.session() as session:
         yield Neo4jTaskRepository(session)

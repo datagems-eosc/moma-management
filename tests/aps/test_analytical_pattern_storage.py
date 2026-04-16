@@ -1,16 +1,16 @@
 """
 Storage (integration) tests for Neo4jAnalyticalPatternRepository.
 
-Each test spins up a fresh Neo4j container (function-scoped) so tests are
-fully independent.
+All tests in this module share a single Neo4j container (module-scoped).
+Tests use uuid4() for node IDs so they are fully independent of each other.
 """
 
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator
 from uuid import uuid4
 
 import pytest
 import pytest_asyncio
-from neo4j import AsyncGraphDatabase, GraphDatabase
+from neo4j import AsyncGraphDatabase
 from testcontainers.neo4j import Neo4jContainer
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
@@ -60,11 +60,11 @@ def _make_ap(
     )
 
 
-@pytest_asyncio.fixture
-async def ap_repository(neo4j_container: Neo4jContainer) -> AsyncGenerator[Neo4jAnalyticalPatternRepository, None]:
-    """AP repository backed by a fresh Neo4j container."""
-    uri = neo4j_container.get_connection_url()
-    auth = (neo4j_container.username, neo4j_container.password)
+@pytest_asyncio.fixture(scope="module")
+async def ap_repository(neo4j_container_module: Neo4jContainer) -> AsyncGenerator[Neo4jAnalyticalPatternRepository, None]:
+    """AP repository backed by a module-scoped Neo4j container."""
+    uri = neo4j_container_module.get_connection_url()
+    auth = (neo4j_container_module.username, neo4j_container_module.password)
     driver = AsyncGraphDatabase.driver(uri, auth=auth)
     async with driver.session() as session:
         yield Neo4jAnalyticalPatternRepository(session)
@@ -111,7 +111,7 @@ async def test_get_nonexistent_returns_none(ap_repository: Neo4jAnalyticalPatter
 @pytest.mark.asyncio
 async def test_shallow_retrieval_does_not_include_deep_dataset_nodes(
     ap_repository: Neo4jAnalyticalPatternRepository,
-    neo4j_container: Neo4jContainer,
+    neo4j_container_module: Neo4jContainer,
 ):
     """
     When an AP's input node is also part of a dataset subgraph, the AP's
@@ -142,8 +142,8 @@ async def test_shallow_retrieval_does_not_include_deep_dataset_nodes(
         ],
     )
 
-    uri = neo4j_container.get_connection_url()
-    auth = (neo4j_container.username, neo4j_container.password)
+    uri = neo4j_container_module.get_connection_url()
+    auth = (neo4j_container_module.username, neo4j_container_module.password)
     driver = AsyncGraphDatabase.driver(uri, auth=auth)
     try:
         async with driver.session() as ds_session:

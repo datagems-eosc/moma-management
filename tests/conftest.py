@@ -3,8 +3,7 @@ from typing import AsyncGenerator, Generator, List
 
 import pytest
 import pytest_asyncio
-from neo4j import AsyncGraphDatabase, GraphDatabase
-from pyinstrument import Profiler
+from neo4j import AsyncGraphDatabase
 from testcontainers.neo4j import Neo4jContainer
 
 from moma_management.repository.dataset import Neo4jDatasetRepository
@@ -129,11 +128,11 @@ def neo4j_container_class() -> Generator[Neo4jContainer, None, None]:
     container.stop()
 
 
-@pytest_asyncio.fixture
-async def dataset_repository(neo4j_container: Neo4jContainer) -> AsyncGenerator[Neo4jDatasetRepository, None]:
-    """Provide a Neo4jDatasetRepository backed by a throwaway Neo4j container session."""
-    uri = neo4j_container.get_connection_url()
-    auth = (neo4j_container.username, neo4j_container.password)
+@pytest_asyncio.fixture(scope="module")
+async def dataset_repository(neo4j_container_module: Neo4jContainer) -> AsyncGenerator[Neo4jDatasetRepository, None]:
+    """Provide a Neo4jDatasetRepository backed by a module-scoped Neo4j container."""
+    uri = neo4j_container_module.get_connection_url()
+    auth = (neo4j_container_module.username, neo4j_container_module.password)
     driver = AsyncGraphDatabase.driver(uri, auth=auth)
     async with driver.session() as session:
         yield Neo4jDatasetRepository(session)
@@ -337,11 +336,11 @@ async def mixed_types_repository(
     await driver.close()
 
 
-@pytest_asyncio.fixture(scope="function")
-async def node_repository(neo4j_container: Neo4jContainer) -> AsyncGenerator[Neo4jNodeRepository, None]:
-    """Provide a Neo4jNodeRepository backed by a throwaway Neo4j container session."""
-    uri = neo4j_container.get_connection_url()
-    auth = (neo4j_container.username, neo4j_container.password)
+@pytest_asyncio.fixture(scope="module")
+async def node_repository(neo4j_container_module: Neo4jContainer) -> AsyncGenerator[Neo4jNodeRepository, None]:
+    """Provide a Neo4jNodeRepository backed by a module-scoped Neo4j container."""
+    uri = neo4j_container_module.get_connection_url()
+    auth = (neo4j_container_module.username, neo4j_container_module.password)
     driver = AsyncGraphDatabase.driver(uri, auth=auth)
     async with driver.session() as session:
         yield Neo4jNodeRepository(session)

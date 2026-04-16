@@ -6,9 +6,13 @@ Basically, we need to kow if manipulating the dataset in neo4j works
 import copy
 from datetime import date
 from pathlib import Path
+from typing import AsyncGenerator
 
 import pytest
+import pytest_asyncio
+from neo4j import AsyncGraphDatabase
 from pydantic import ValidationError
+from testcontainers.neo4j import Neo4jContainer
 
 from moma_management.domain.dataset import Dataset
 from moma_management.domain.filters import (
@@ -37,6 +41,30 @@ from tests.utils import (
     DS_PDF_ONLY_ID,
     ORANGE_NODE_BASE,
 )
+
+# ---------------------------------------------------------------------------
+# Local fixture override
+# ---------------------------------------------------------------------------
+# test_round_trip, test_deletion, and test_prevent_ap_or_ml_traversal all
+# create and/or delete nodes. They need isolated containers so that:
+#  1. Deletions in one test don't affect another test's data.
+#  2. Many parameterised variants don't all start containers simultaneously
+#     (which causes Docker timeout failures when running with xdist).
+# The conftest module-scoped dataset_repository is intentionally overridden
+# here with a function-scoped one. test_dataset_service.py still uses the
+# module-scoped conftest fixture unchanged.
+
+
+@pytest_asyncio.fixture(scope="function")
+async def dataset_repository(neo4j_container: Neo4jContainer) -> AsyncGenerator[Neo4jDatasetRepository, None]:
+    """Function-scoped repository providing full test isolation for mutation tests."""
+    uri = neo4j_container.get_connection_url()
+    auth = (neo4j_container.username, neo4j_container.password)
+    driver = AsyncGraphDatabase.driver(uri, auth=auth)
+    async with driver.session() as session:
+        yield Neo4jDatasetRepository(session)
+    await driver.close()
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -194,7 +222,7 @@ class TestListMethod:
     @pytest.mark.asyncio
     async def test_multiple_ids(self, populated_repository):
         result = await _list(populated_repository, nodeIds=[
-                       DS_ALPHA_ID, DS_GAMMA_ID])
+            DS_ALPHA_ID, DS_GAMMA_ID])
         assert result["total"] == 2
 
     @pytest.mark.asyncio
@@ -272,13 +300,13 @@ class TestListMethod:
     @pytest.mark.asyncio
     async def test_from_date_excludes_older(self, populated_repository):
         result = await _list(populated_repository,
-                       publishedFrom=date(2024, 6, 1))
+                             publishedFrom=date(2024, 6, 1))
         assert result["total"] == 2  # ds-beta and ds-gamma
 
     @pytest.mark.asyncio
     async def test_to_date_excludes_newer(self, populated_repository):
         result = await _list(populated_repository,
-                       publishedTo=date(2024, 12, 31))
+                             publishedTo=date(2024, 12, 31))
         assert result["total"] == 2  # ds-alpha and ds-beta
 
     @pytest.mark.asyncio
@@ -337,7 +365,7 @@ class TestListMethod:
     @pytest.mark.asyncio
     async def test_order_asc_by_id(self, populated_repository):
         result = await _list(populated_repository, orderBy=[
-                       "id"], direction=SortDirection.ASC)
+            "id"], direction=SortDirection.ASC)
         root_ids = [
             n.id for ds in result["datasets"]
             for n in ds.nodes if "sc:Dataset" in n.labels
@@ -347,7 +375,7 @@ class TestListMethod:
     @pytest.mark.asyncio
     async def test_order_desc_by_id(self, populated_repository):
         result = await _list(populated_repository, orderBy=[
-                       "id"], direction=SortDirection.DESC)
+            "id"], direction=SortDirection.DESC)
         root_ids = [
             n.id for ds in result["datasets"]
             for n in ds.nodes if "sc:Dataset" in n.labels
@@ -367,7 +395,7 @@ class TestListMethod:
     @pytest.mark.asyncio
     async def test_page_two_skips_first_page(self, populated_repository):
         result = await _list(populated_repository, page=2,
-                       pageSize=2, orderBy=["id"])
+                             pageSize=2, orderBy=["id"])
         assert len(result["datasets"]) == 1
         assert result["page"] == 2
 
@@ -427,7 +455,7 @@ class TestListMethod:
         # MimeType.CSV matches ds-alpha and ds-beta; MimeType.PDF matches none.
         # The union should still be just the two CSV datasets.
         result = await _list(populated_repository, mimeTypes=[
-                       MimeType.CSV, MimeType.PDF])
+            MimeType.CSV, MimeType.PDF])
         assert result["total"] == 2
 
     @pytest.mark.asyncio
