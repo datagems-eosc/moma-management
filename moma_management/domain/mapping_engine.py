@@ -1,189 +1,378 @@
-"""
-Thrown-togetether mapping engine to convert Croissant JSON-LD to PG-JSON according to a mapping specification.
-"""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Dict, List, Tuple
+
+from pydantic import BaseModel
+
+# =========================================================
+# Errors
+# =========================================================
 
 
-def _get(data: dict, path: str) -> Any:
-    """Traverse a dot-separated path through nested dicts.
+class MappingError(Exception):
+    pass
 
-    "@type" / "@id" are treated as ordinary keys (no special handling needed
-    since they exist as-is in the Croissant JSON).
-    """
-    val = data
-    for key in path.split("."):
-        if not isinstance(val, dict):
+
+# =========================================================
+# JSON path helper
+# =========================================================
+
+def get_path(data: dict, path: str) -> Any:
+    """Simple dot-path resolver."""
+    cur = data
+    for part in path.split("."):
+        if not isinstance(cur, dict):
             return None
-        val = val.get(key)
-    return val
+        cur = cur.get(part)
+    return cur
 
 
-def _clean(value: Any) -> Any:
-    """Remove None items from lists; pass scalars through unchanged."""
-    if isinstance(value, list):
-        return [v for v in value if v is not None]
-    return value
+# =========================================================
+# Truth evaluator
+# =========================================================
+
+def truthy(data: dict, expr: str) -> bool:
+    if "||" in expr:
+        return any(truthy(data, part.strip()) for part in expr.split("||"))
+    if "&&" in expr:
+        return all(truthy(data, part.strip()) for part in expr.split("&&"))
+    if "^=" in expr:
+        left, right = expr.split("^=", 1)
+        return str(get_path(data, left.strip())).startswith(right.strip().strip("'\""))
+    if "==" in expr:
+        left, right = expr.split("==", 1)
+        return str(get_path(data, left.strip())) == right.strip().strip("'\"")
+    return get_path(data, expr) is not None
 
 
-def _make_edge(from_id: str, to_id: str, label: str) -> dict:
-    return {"from": from_id, "to": to_id, "labels": [label], "properties": {}}
+# =========================================================
+# Label resolver (NO None allowed)
+# =========================================================
+
+def resolve_labels(data: dict, spec: Any) -> List[str]:
+    if not spec:
+        return []
+
+    if isinstance(spec, list) and spec and isinstance(spec[0], dict):
+        for rule in spec:
+            if "case" in rule and truthy(data, rule["case"]):
+                return _expand_labels(data, rule["value"])
+            if "default" in rule:
+                return _expand_labels(data, rule["default"])
+
+    return _expand_labels(data, spec)
 
 
-def _resolve_labels(data: dict, spec) -> list[str]:
-    """Return the label list for *data* given a labels spec.
+def _expand_labels(data: dict, labels: List[str]) -> List[str]:
+    out: List[str] = []
 
-    Spec can be:
-    - a plain list                    ->  used as-is
-    - a dict with default/by_encoding ->  pick by encodingFormat, with optional
-                                          when/then/else conditional
-
-    "@field" tokens in a list (e.g. "@type") are expanded to their data values.
-    """
-    if not isinstance(spec, dict):
-        labels = list(spec)
-    else:
-        default = spec.get("default", [])
-        encoding = data.get("encodingFormat", "").lower()
-        override = spec.get("by_encoding", {}).get(encoding, default)
-
-        if isinstance(override, dict) and "when" in override:
-            field_present = _get(data, override["when"]) is not None
-            labels = override["then"] if field_present else override["else"]
+    for l in labels:
+        if isinstance(l, str) and l.startswith("@"):
+            key = l[1:]  # strip the dereference marker
+            # try the bare key first, then the original @-prefixed key
+            v = data.get(key) if key in data else data.get(l)
+            if v is not None:   # 🔥 critical fix
+                out.append(v)
         else:
-            labels = list(override)
+            if l is not None:
+                out.append(l)
 
-    # Expand "@field" placeholders (e.g. "@type") to their actual data values
-    return [data.get(label) if label.startswith("@") else label for label in labels]
-
-
-def _resolve_properties(
-    data: dict,
-    prop_spec,
-    exclude: list | None = None,
-    strip_prefix: str | None = None,
-) -> dict:
-    """Build a properties dict from the mapping's properties declaration.
-
-    Two forms:
-    - prop_spec == "*"   wildcard: copy all non-None fields except those in *exclude*
-    - prop_spec is dict  explicit mapping: { moma_property: croissant_path }
-                         croissant_path uses dot-notation; "@type" / "@id" work as keys
-
-    Reading the rules:
-        "MoMa property <moma_property> comes from Croissant field <croissant_path>"
-    """
-    if prop_spec == "*":
-        excluded = set(exclude or [])
-        props = {}
-        for k, v in data.items():
-            if v is None or k in excluded:
-                continue
-            key = k.removeprefix(strip_prefix) if strip_prefix else k
-            props[key] = _clean(v)
-        return props
-
-    props = {}
-    for moma_key, croissant_path in (prop_spec or {}).items():
-        if (value := _get(data, str(croissant_path))) is not None:
-            props[moma_key] = _clean(value)
-    return props
+    return out
 
 
-def _active_variant(data: dict, spec: dict) -> dict:
-    """Merge the first matching variant into *spec*, or return *spec* unchanged.
+# =========================================================
+# Schema registry from generated Pydantic models
+# =========================================================
 
-    A variant with 'when' matches when that dot-path is present in the data.
-    A variant with 'else: true' is the unconditional fallback.
-    """
-    for variant in spec.get("variants", []):
-        if "when" in variant:
-            if _get(data, variant["when"]) is not None:
-                return {**spec, **variant}
-        elif variant.get("else"):
-            return {**spec, **variant}
+SchemaRegistry = Dict[str, set]
+
+# PG-JSON envelope fields that live at node top-level, not inside properties.
+_PGJSON_ENVELOPE_FIELDS = frozenset({"id", "labels", "properties"})
+
+
+def get_model_fields(model: type[BaseModel]) -> set:
+    """Extract JSON-side field names (aliases where present) from a Pydantic model,
+    excluding PG-JSON envelope fields that are structural, not content."""
+    fields: set = set()
+    for name, info in model.model_fields.items():
+        alias = info.alias if info.alias else name
+        if alias not in _PGJSON_ENVELOPE_FIELDS:
+            fields.add(alias)
+    return fields
+
+
+def build_schema_registry() -> SchemaRegistry:
+    """Build a type-name → field-set mapping from the generated Pydantic classes."""
+    from moma_management.domain.generated.nodes.dataset.column_schema import Column
+    from moma_management.domain.generated.nodes.dataset.data_schema import Data
+    from moma_management.domain.generated.nodes.dataset.dataset_schema import Dataset
+    from moma_management.domain.generated.nodes.dataset.text_schema import Text
+
+    return {
+        "Dataset": get_model_fields(Dataset),
+        "Distribution": get_model_fields(Data),
+        "Column": get_model_fields(Column),
+        "Text": get_model_fields(Text),
+    }
+
+
+# =========================================================
+# Map resolver (STRICT schema projection)
+# =========================================================
+
+def resolve_map(data: dict, spec: Dict[str, str], schema_fields: set) -> Dict[str, Any]:
+    out: Dict[str, Any] = {}
+
+    for k, path in (spec or {}).items():
+        v = get_path(data, path)
+        if v is None:
+            continue
+        if k in schema_fields:
+            out[k] = v
+
+    return out
+
+
+# =========================================================
+# Schema completion (compatibility layer)
+# =========================================================
+
+def apply_schema_defaults(node: dict, schema_fields: set) -> None:
+    props = node.get("properties", {})
+
+    for field in schema_fields:
+        if field in ("id", "type"):
+            continue
+
+        # old engine behavior: missing = empty string
+        props.setdefault(field, "")
+
+    node["properties"] = props
+
+
+# =========================================================
+# Variant resolver
+# =========================================================
+
+def resolve_variant(data: dict, spec: dict) -> dict:
+    variants = spec.get("variants")
+    if not variants:
+        return spec
+
+    for v in variants:
+        if "when" in v and truthy(data, v["when"]):
+            return {**spec, **v}
+        if "default" in v:
+            return {**spec, **v}
+
     return spec
 
 
-def _build(
+# =========================================================
+# Edge resolver
+# =========================================================
+
+def resolve_edges(
+    data: dict,
+    spec: dict,
+    node_id: str,
+    parent_id: str | None,
+) -> List[dict]:
+    """Build PG-JSON edges from the 'edges' section of a mapping spec."""
+    edge_specs = spec.get("edges")
+    if not edge_specs:
+        return []
+
+    edges: List[dict] = []
+    for edge_spec in edge_specs:
+        from_ref = edge_spec["from"]
+        to_ref = edge_spec["to"]
+        label = edge_spec["label"]
+
+        from_id = _resolve_edge_ref(data, from_ref, node_id, parent_id)
+        to_id = _resolve_edge_ref(data, to_ref, node_id, parent_id)
+
+        if from_id and to_id:
+            edges.append({
+                "from": from_id,
+                "to": to_id,
+                "labels": [label],
+                "properties": {},
+            })
+
+    return edges
+
+
+def _resolve_edge_ref(
+    data: dict,
+    ref: str,
+    node_id: str,
+    parent_id: str | None,
+) -> str | None:
+    """Resolve an edge endpoint reference ('self', 'parent', or a dot-path)."""
+    if ref == "self":
+        return node_id
+    if ref == "parent":
+        return parent_id
+    return get_path(data, ref)
+
+
+# =========================================================
+# Node builder
+# =========================================================
+
+def _resolve_schema_fields(
+    type_name: str,
+    spec: dict,
+    schema_registry: SchemaRegistry,
+) -> set:
+    """Look up schema fields for *type_name*; fall back to the spec's own map keys."""
+    fields = schema_registry.get(type_name)
+    if fields is not None:
+        return fields
+    return set(spec.get("map", {}).keys())
+
+
+def build_node(
     data: dict,
     spec: dict,
     parent_id: str | None,
-) -> tuple[list[dict], list[dict]]:
-    """Build nodes and edges for one Croissant item according to *spec*.
+    type_name: str,
+    schema_registry: SchemaRegistry,
+) -> Tuple[List[dict], List[dict]]:
 
-    Returns (nodes, edges).
-    """
-    node_id = _get(data, spec["id"])
+    node_id = get_path(data, spec["id"])
     if not node_id:
         return [], []
 
-    active = _active_variant(data, spec)
-
-    labels = _resolve_labels(data, active.get("labels", []))
-    properties = _resolve_properties(
-        data, active.get("properties"), active.get("exclude"), active.get("strip_prefix"))
-
-    # Wildcard node with no properties -> skip (e.g. empty statistics object)
-    if active.get("properties") == "*" and not properties:
+    if "match" in spec and not truthy(data, spec["match"]):
         return [], []
 
-    nodes: list[dict] = [
-        {"id": node_id, "labels": labels, "properties": properties}]
-    edges: list[dict] = []
+    schema_fields = _resolve_schema_fields(type_name, spec, schema_registry)
 
-    # $self / $parent are special tokens; any other value is a dot-path into data.
-    def _resolve_endpoint(token: str) -> str | None:
-        if token == "$self":
-            return node_id
-        if token == "$parent":
-            return parent_id
-        return _get(data, token)
+    node = {
+        "id": node_id,
+        "labels": resolve_labels(data, spec.get("labels")),
+        "properties": resolve_map(data, spec.get("map"), schema_fields),
+    }
 
-    for edge_spec in active.get("edges", []):
-        from_id = _resolve_endpoint(edge_spec.get("from", "$parent"))
-        to_id = _resolve_endpoint(edge_spec.get("to",   "$self"))
-        if from_id and to_id:
-            edges.append(_make_edge(from_id, to_id, edge_spec["label"]))
+    edges = resolve_edges(data, spec, node_id, parent_id)
+
+    return [node], edges
+
+
+# =========================================================
+# Recursive traversal
+# =========================================================
+
+def run_spec(
+    data: dict,
+    spec: dict,
+    mapping: dict,
+    parent_id: str | None,
+    type_name: str,
+    schema_registry: SchemaRegistry,
+) -> Tuple[List[dict], List[dict]]:
+
+    spec = resolve_variant(data, spec)
+
+    # A variant may declare its own type (e.g. Column, Text, PDF).
+    effective_type = spec.get("type", type_name)
+
+    nodes, edges = build_node(data, spec, parent_id,
+                              effective_type, schema_registry)
+
+    if not nodes:
+        return [], []
+
+    node_id = nodes[0]["id"]
+
+    children = spec.get("children", {})
+
+    if not isinstance(children, dict):
+        raise MappingError(f"Invalid children format in node {node_id}")
+
+    for key, child_type in children.items():
+
+        if child_type not in mapping:
+            raise MappingError(
+                f"Unknown child type '{child_type}' in node '{node_id}'. "
+                f"Available: {list(mapping.keys())}"
+            )
+
+        child_spec = mapping[child_type]
+        child_data = data.get(key, [])
+
+        if isinstance(child_data, list):
+            for item in child_data:
+                n, e = run_spec(item, child_spec, mapping,
+                                node_id, child_type, schema_registry)
+                nodes.extend(n)
+                edges.extend(e)
+
+        elif isinstance(child_data, dict):
+            n, e = run_spec(child_data, child_spec,
+                            mapping, node_id, child_type, schema_registry)
+            nodes.extend(n)
+            edges.extend(e)
 
     return nodes, edges
 
 
-def croissant_to_pgjson(data: dict, mapping: dict) -> dict:
-    """Convert a Croissant JSON-LD dict to PG-JSON using the given mapping.
+# =========================================================
+# Entry point
+# =========================================================
 
-    The mapping is a dict loaded from mapping.yml.  Each top-level key is a
-    MoMa node type; the spec under it declares:
+def _enrich_field_sources(data: dict) -> None:
+    """Inject resolved source distribution into each field's data.
 
-        croissant_type  which Croissant @type this node comes from
-        id              dot-path to the node's identifier in Croissant
-        labels          MoMa labels (plain list or by_encoding dict)
-        properties      { moma_property: croissant_path } – explicit field mapping
-        children        [ { node: <key>, path: <field> } ] – nested Croissant items
-        edges           edge specs using $self / $parent tokens
-        variants        conditional sub-specs (when / else)
+    For each field in every recordSet, resolve the ``source.fileObject.@id``
+    or ``source.fileSet.@id`` back to the matching distribution entry and
+    store it as ``_source`` on the field dict.  This lets variant conditions
+    reference properties of the source distribution (e.g.
+    ``_source.encodingFormat``).
     """
-    nodes: list[dict] = []
-    edges: list[dict] = []
+    dist_index: dict[str, dict] = {}
+    for dist in data.get("distribution", []):
+        did = dist.get("@id")
+        if did:
+            dist_index[did] = dist
 
-    # Inject node_type from the mapping key so variants can override it selectively.
-    for key, spec in mapping.items():
-        spec.setdefault("node_type", key)
+    for rs in data.get("recordSet", []):
+        for field in rs.get("field", []):
+            source = field.get("source", {})
+            for ref_key in ("fileObject", "fileSet"):
+                ref = source.get(ref_key)
+                if isinstance(ref, dict):
+                    ref_id = ref.get("@id")
+                    if ref_id and ref_id in dist_index:
+                        field["_source"] = dist_index[ref_id]
+                        break
 
-    def _collect(items, spec: dict, parent_id: str | None = None) -> None:
-        for item in (items if isinstance(items, list) else [items]):
-            ns, es = _build(item, spec, parent_id)
-            nodes.extend(ns)
-            edges.extend(es)
-            if ns:
-                node_id = ns[0]["id"]
-                for child_ref in spec.get("children", []):
-                    child_spec = mapping[child_ref["node"]]
-                    _collect(
-                        item.get(child_ref["path"], []), child_spec, parent_id=node_id)
 
-    root_spec = next(iter(mapping.values()))
-    _collect(data, root_spec)
+def croissant_to_pgjson(
+    data: dict,
+    mapping: dict,
+    schema_registry: SchemaRegistry | None = None,
+) -> dict:
+    if schema_registry is None:
+        schema_registry = build_schema_registry()
 
-    return {"nodes": nodes, "edges": edges}
+    _enrich_field_sources(data)
+
+    root = next(iter(mapping))
+    root_spec = mapping[root]
+
+    nodes, edges = run_spec(
+        data,
+        root_spec,
+        mapping,
+        parent_id=None,
+        type_name=root,
+        schema_registry=schema_registry,
+    )
+
+    return {
+        "nodes": nodes,
+        "edges": edges
+    }
