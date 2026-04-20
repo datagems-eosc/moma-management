@@ -1,0 +1,57 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "PdfSet",
+    "allOf": [
+        {
+            "$ref": "./unstructuredData.schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "subject": {
+                    "type": "string",
+                    "description": "The subject or topic of the PDF document"
+                },
+                "author": {
+                    "type": "string",
+                    "description": "The name of the person or entity that authored the document"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "The title of the PDF document"
+                },
+                "producer": {
+                    "type": "string",
+                    "description": "The software or application used to convert the document into a PDF"
+                },
+                "creator": {
+                    "type": "string",
+                    "description": "The original application used to create the document before it was converted to PDF"
+                },
+                "creationDate": {
+                    "type": "string",
+                    "description": "The date and time the PDF was originally created"
+                },
+                "modificationDate": {
+                    "type": "string",
+                    "description": "The date and time the PDF was last modified"
+                },
+                "pagesCount": {
+                    "type": "integer",
+                    "description": "The total number of pages in the PDF document"
+                },
+                "keywords": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "A list of keywords associated with the PDF document"
+                },
+                "summary": {
+                    "type": "string",
+                    "description": "A generated or extracted summary of the PDF's content"
+                }
+            }
+        }
+    ]
+}
