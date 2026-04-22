@@ -1,7 +1,7 @@
 Dataset:
   id: "@id"
   match: "@type == 'sc:Dataset'"
-  labels: ["sc:Dataset"]
+  labels: [ "sc:Dataset" ]
 
   map:
     type: "@type"
@@ -33,35 +33,34 @@ Distribution:
   id: "@id"
 
   labels:
-      
-      # CSV
+
+    # CSV
     - case: "encodingFormat == 'text/csv' && @type == 'cr:FileSet'"
-      value: ["CSVSet", "Data", "@type"]
+      value: [ "CSVSet", "Data", "@type" ]
     - case: "encodingFormat == 'text/csv' && @type == 'cr:FileObject'"
-      value: ["CSV", "Data", "@type"]
-      
+      value: [ "CSV", "Data", "@type" ]
       # PDF
     - case: "encodingFormat == 'application/pdf' && @type == 'cr:FileSet'"
-      value: ["PDFSet", "Data", "@type"]
+      value: [ "PDFSet", "Data", "@type" ]
     - case: "encodingFormat == 'application/pdf' && @type == 'cr:FileObject'"
-      value: ["PDF", "Data", "@type"]
-      
+      value: [ "PDF", "Data", "@type" ]
       # SQL
     - case: "encodingFormat == 'text/sql' && @type == 'cr:FileObject'"
-      value: ["Data", "Table", "@type"]
+      value: [ "Data", "Table", "@type" ]
     - case: "encodingFormat == 'text/sql'"
-      value: ["Data", "RelationalDatabase", "@type"]
-
+      value: [ "Data", "RelationalDatabase", "@type" ]
       # XML-like worksheets. We check if it's contained in something to determine if it's a sheet or a workbook.
       # We can't use the croissnat type to differentiate between sheets and workbooks because some datasets use FileObjects for both.
-    - case: "encodingFormat == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && containedIn"
-      value: ["Data", "Sheet", "@type"]
-    - case: "encodingFormat == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'"
-      value: ["Data", "EXCEL", "@type"]
-
+    - case: "encodingFormat ==
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' &&
+        containedIn"
+      value: [ "Data", "Sheet", "@type" ]
+    - case: "encodingFormat ==
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'"
+      value: [ "Data", "EXCEL", "@type" ]
       # Else. 
       # TODO: Might have to fail gracefully if we don't have a type or encodingFormat.
-    - default: ["Data", "@type"]
+    - default: [ "Data", "@type" ]
 
   map:
     type: "@type"
@@ -87,8 +86,8 @@ RecordSet:
   id: "@id"
   match: "@type == 'cr:RecordSet'"
 
-  labels: ["cr:RecordSet"]
-
+  # Default case 
+  labels: [ "cr:RecordSet" ]
   map:
     name: name
     description: description
@@ -102,19 +101,57 @@ RecordSet:
   children:
     field: Field
 
+  variants:
+
+    # A RecordSet whose source is a PDF has additional metadata
+    - when: "_source.encodingFormat == 'application/pdf'"
+      labels: [ "cr:RecordSet" ]
+      map:
+        name: name
+        description: description
+        examples: examples
+        subject: subject
+        author: author
+        title: title
+        producer: producer
+        creator: creator
+        creationDate: creationDate
+        modificationDate: modificationDate
+        pagesCount: pagesCount
+        keywords: keywords
+        summary: summary
+
+    - when: "_source.encodingFormat == 'text/plain'"
+      labels: [ "cr:RecordSet" ]
+      map:
+        name: name
+        description: description
+        examples: examples
+        summary: summary
+        keywords: keywords
+        language: language
+        numLines: numLines
+        numWords: numWords
+        numCharacters: numCharacters
+        avgSentenceLength: avgSentenceLength
+        numParagraphs: numParagraphs
+        fleschKincaidGrade: fleschKincaidGrade
+
 Field:
   id: "@id"
   match: "@type == 'cr:Field'"
 
   children:
     statistics: Statistics
-    
+
   variants:
 
     # Column: source is a CSV, SQL table, or spreadsheet (FileObject with tabular encoding)
-    - when: "_source.encodingFormat == 'text/csv' || _source.encodingFormat == 'text/sql' || _source.encodingFormat == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'"
+    - when: "_source.encodingFormat == 'text/csv' || _source.encodingFormat ==
+        'text/sql' || _source.encodingFormat ==
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'"
       type: Column
-      labels: ["Column", "@type"]
+      labels: [ "Column", "@type" ]
       map:
         name: name
         column: source.extract.column
@@ -129,46 +166,11 @@ Field:
           to: source.fileObject.@id
           label: source/fileObject
 
-    # Text: source is a text/document FileSet (PDF, DOCX, etc.)
-    - when: "_source.encodingFormat == 'application/pdf'"
-      type: Text
-      labels: ["Text", "@type"]
-      map:
-        name: name
-        summary: dg:summary
-
-      edges:
-        - from: parent
-          to: self
-          label: field
-
-        - from: self
-          to: source.fileSet.@id
-          label: source/fileSet
-
-    # Image: source is an image FileSet
-    - when: "_source.encodingFormat ^= 'image/'"
-      type: Image
-      labels: ["Image", "@type"]
-      map:
-        name: name
-
-      edges:
-        - from: parent
-          to: self
-          label: field
-
-        - from: self
-          to: source.fileSet.@id
-          label: source/fileSet
-
-
-
 # Statistics for a field. 
 # This is a child of a Field, but it doesn't have to be because not all datasets have statistics. 
 Statistics:
   id: "@id"
-  labels: ["Statistics", "@type"]
+  labels: [ "Statistics", "@type" ]
 
   map:
     type: "@type"

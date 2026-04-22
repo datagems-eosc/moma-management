@@ -106,12 +106,14 @@ def build_schema_registry() -> SchemaRegistry:
     from moma_management.domain.generated.nodes.dataset.column_schema import Column
     from moma_management.domain.generated.nodes.dataset.data_schema import Data
     from moma_management.domain.generated.nodes.dataset.dataset_schema import Dataset
+    from moma_management.domain.generated.nodes.dataset.pdfSet_schema import PdfSet
     from moma_management.domain.generated.nodes.dataset.text_schema import Text
 
     return {
         "Dataset": get_model_fields(Dataset),
         "Distribution": get_model_fields(Data),
         "Column": get_model_fields(Column),
+        "PdfSet": get_model_fields(PdfSet),
         "Text": get_model_fields(Text),
     }
 
@@ -331,6 +333,10 @@ def _enrich_field_sources(data: dict) -> None:
     store it as ``_source`` on the field dict.  This lets variant conditions
     reference properties of the source distribution (e.g.
     ``_source.encodingFormat``).
+
+    Also injects ``_source`` into each RecordSet itself by resolving the
+    ``source.@id`` (direct FileObject ref used in PDF profiles), as well as
+    ``source.fileObject.@id`` / ``source.fileSet.@id``.
     """
     dist_index: dict[str, dict] = {}
     for dist in data.get("distribution", []):
@@ -339,6 +345,22 @@ def _enrich_field_sources(data: dict) -> None:
             dist_index[did] = dist
 
     for rs in data.get("recordSet", []):
+        # Enrich the RecordSet itself so variant conditions can use _source.
+        rs_source = rs.get("source", {})
+        if isinstance(rs_source, dict):
+            # Direct @id reference (e.g. PDF profiles: source: {"@id": "..."})
+            direct_id = rs_source.get("@id")
+            if direct_id and direct_id in dist_index:
+                rs["_source"] = dist_index[direct_id]
+            else:
+                for ref_key in ("fileObject", "fileSet"):
+                    ref = rs_source.get(ref_key)
+                    if isinstance(ref, dict):
+                        ref_id = ref.get("@id")
+                        if ref_id and ref_id in dist_index:
+                            rs["_source"] = dist_index[ref_id]
+                            break
+
         for field in rs.get("field", []):
             source = field.get("source", {})
             for ref_key in ("fileObject", "fileSet"):

@@ -1,0 +1,140 @@
+{
+    "@context": {
+        "@language": "en",
+        "@vocab": "https://schema.org/",
+        "cr": "http://mlcommons.org/croissant/",
+        "rai": "http://mlcommons.org/croissant/RAI/",
+        "dg": "http://datagems.eu/TBD/",
+        "dct": "http://purl.org/dc/terms/",
+        "data": {
+            "@id": "cr:data",
+            "@type": "@json"
+        },
+        "dataType": {
+            "@id": "cr:dataType",
+            "@type": "@vocab"
+        },
+        "examples": {
+            "@id": "cr:examples",
+            "@type": "@json"
+        },
+        "conformsTo": "dct:conformsTo",
+        "citeAs": "cr:citeAs",
+        "column": "cr:column",
+        "extract": "cr:extract",
+        "field": "cr:field",
+        "fileProperty": "cr:fileProperty",
+        "fileObject": "cr:fileObject",
+        "fileSet": "cr:fileSet",
+        "format": "cr:format",
+        "includes": "cr:includes",
+        "isLiveDataset": "cr:isLiveDataset",
+        "jsonPath": "cr:jsonPath",
+        "key": "cr:key",
+        "md5": "cr:md5",
+        "parentField": "cr:parentField",
+        "path": "cr:path",
+        "recordSet": "cr:recordSet",
+        "references": "cr:references",
+        "regex": "cr:regex",
+        "repeated": "cr:repeated",
+        "replace": "cr:replace",
+        "sc": "https://schema.org/",
+        "separator": "cr:separator",
+        "source": "cr:source",
+        "subField": "cr:subField",
+        "transform": "cr:transform",
+        "access": "dg:access",
+        "uploadedBy": "dg:uploadedBy",
+        "statistics": "dg:statistics",
+        "doi": "dg:doi",
+        "fieldOfScience": "dg:fieldOfScience",
+        "status": "dg:status",
+        "rowCount": "dg:rowCount",
+        "mean": "dg:mean",
+        "median": "dg:median",
+        "standardDeviation": "dg:standardDeviation",
+        "min": "dg:min",
+        "max": "dg:max",
+        "missingCount": "dg:missingCount",
+        "missingPercentage": "dg:missingPercentage",
+        "histogram": "dg:histogram",
+        "uniqueCount": "dg:uniqueCount",
+        "wd": "https://www.wikidata.org/wiki/",
+        "containedIn": "cr:containedIn"
+    },
+    "@type": "sc:Dataset",
+    "@id": "9b25bc46-8bd3-4f7f-94b4-52dbc38c130f",
+    "name": "Pedagogic Resources MathE Database",
+    "description": "MathE is a mathematical platform developed under the MathE project (mathe.ipb.pt) for higher education.  \n\nThe dataset is based on the 410 pdf documents organized by keywords in a cvs file.",
+    "archivedAt": "9b25bc46-8bd3-4f7f-94b4-52dbc38c130f",
+    "conformsTo": "",
+    "citeAs": "",
+    "license": "CC0 1.0",
+    "url": "https://mathe.ipb.pt",
+    "doi": "",
+    "version": "",
+    "headline": "Math pedagogical material provided in the MathE platform.",
+    "keywords": [
+        "math",
+        "student",
+        "higher education"
+    ],
+    "fieldOfScience": [
+        "MATHEMATICS"
+    ],
+    "inLanguage": [
+        "en"
+    ],
+    "country": "PT",
+    "datePublished": "2025-08-23",
+    "access": "",
+    "status": "loaded",
+    "uploadedBy": "ADMIN",
+    "distribution": [
+        {
+            "@type": "cr:FileSet",
+            "@id": "6a840e59-cac2-43e9-a554-1d76afd5ca2d",
+            "name": "my_pdf",
+            "contentSize": "24865 B",
+            "contentUrl": "my_pdf",
+            "encodingFormat": "application/pdf",
+            "includes": "my_pdf/*"
+        },
+        {
+            "@type": "cr:FileObject",
+            "@id": "16c29cbd-b224-4625-a3ba-358a13413d04",
+            "name": "1.pdf",
+            "description": "",
+            "contentSize": "24865 B",
+            "contentUrl": "tests/assets/single_pdf/data/my_pdf/1.pdf",
+            "encodingFormat": "application/pdf",
+            "sha256": "3bc5056e0ac9072e6d15eef40044eb27518f080e38a1d641ea3741a67d543c5a",
+            "containedIn": {
+                "@id": "6a840e59-cac2-43e9-a554-1d76afd5ca2d"
+            }
+        }
+    ],
+    "recordSet": [
+        {
+            "@type": "cr:RecordSet",
+            "@id": "cec62ab3-7db2-4f20-a96b-d0451d0fe769",
+            "name": "1.pdf",
+            "source": {
+                "@type": "cr:FileObject",
+                "@id": "16c29cbd-b224-4625-a3ba-358a13413d04"
+            },
+            "subject": "Test03",
+            "author": "Laboratorio",
+            "title": "Test03",
+            "producer": "PDFCreator 2.1.2.0",
+            "creator": "PDFCreator 2.1.2.0",
+            "creationDate": "D:20150730161033+02'00'",
+            "modificationDate": "D:20150730161033+02'00'",
+            "pagesCount": 1,
+            "keywords": [],
+            "summary": "",
+            "field": []
+        }
+    ]
+}

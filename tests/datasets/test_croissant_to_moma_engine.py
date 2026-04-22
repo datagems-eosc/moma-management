@@ -10,12 +10,25 @@ from moma_management.domain.mapping_engine import croissant_to_pgjson
 from moma_management.legacy.converters import Croissant2PGjson
 from tests.utils import normalize, save
 
+# Profiles that introduce node types not yet supported by the legacy converter.
+# These are tested by dedicated tests below instead of the legacy comparison.
+_LEGACY_INCOMPATIBLE_PROFILES = {"single_pdf.json", "single_txt.json"}
+
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+PROFILES_DIR = PROJECT_ROOT / "assets" / "profiles"
+
 
 def test_old_vs_new_light(light_profile: Path, generated_dir: Path, mapping_file: Path):
     """
     Compare the old and new implementations of the Croissant to PgJSon transformation on a light profile.
     Saves the outputs to files for visual inspection if needed.
     """
+    if light_profile.name in _LEGACY_INCOMPATIBLE_PROFILES:
+        pytest.skip(
+            f"{light_profile.name} uses node types not supported by the legacy converter. "
+            "Use the dedicated test instead."
+        )
+
     profile = json.load(light_profile.open("r"))
     mapping = yaml.safe_load(mapping_file.open("r"))
 
@@ -126,3 +139,67 @@ def test_column_statistics_type_property(mapping_file: Path):
     col_a_stats = next(n for n in stats_nodes if n["id"] == "stats-1")
     assert col_a_stats["properties"].get("rowCount") == 100
     assert col_a_stats["properties"].get("mean") == 3.5
+
+
+def test_pdf_recordset_attributes(mapping_file: Path):
+    """
+    A cr:RecordSet sourced from a PDF FileObject must map all PDF metadata
+    fields onto the node: subject, author, title, producer, creator,
+    creationDate, modificationDate, pagesCount, keywords, summary.
+    """
+    profile_path = PROFILES_DIR / "light" / "single_pdf.json"
+    profile = json.load(profile_path.open("r"))
+    mapping = yaml.safe_load(mapping_file.open("r"))
+
+    result = croissant_to_pgjson(profile, mapping)
+
+    recordset_nodes = [
+        n for n in result["nodes"] if "cr:RecordSet" in n.get("labels", [])
+    ]
+    assert len(recordset_nodes) == 1, (
+        f"Expected exactly 1 RecordSet node, got {len(recordset_nodes)}"
+    )
+
+    props = recordset_nodes[0]["properties"]
+    expected_keys = {
+        "name", "subject", "author", "title", "producer", "creator",
+        "creationDate", "modificationDate", "pagesCount",
+    }
+    missing = expected_keys - props.keys()
+    assert not missing, f"PDF RecordSet is missing properties: {missing}"
+
+    assert props["author"] == "Laboratorio"
+    assert props["pagesCount"] == 1
+    assert props["producer"] == "PDFCreator 2.1.2.0"
+
+
+def test_text_recordset_attributes(mapping_file: Path):
+    """
+    A cr:RecordSet sourced from a plain-text FileObject must map all text
+    statistics fields: language, numLines, numWords, numCharacters,
+    avgSentenceLength, numParagraphs, fleschKincaidGrade, summary, keywords.
+    """
+    profile_path = PROFILES_DIR / "light" / "single_txt.json"
+    profile = json.load(profile_path.open("r"))
+    mapping = yaml.safe_load(mapping_file.open("r"))
+
+    result = croissant_to_pgjson(profile, mapping)
+
+    recordset_nodes = [
+        n for n in result["nodes"] if "cr:RecordSet" in n.get("labels", [])
+    ]
+    assert len(recordset_nodes) == 1, (
+        f"Expected exactly 1 RecordSet node, got {len(recordset_nodes)}"
+    )
+
+    props = recordset_nodes[0]["properties"]
+    expected_keys = {
+        "name", "language", "numLines", "numWords", "numCharacters",
+        "avgSentenceLength", "numParagraphs", "fleschKincaidGrade",
+    }
+    missing = expected_keys - props.keys()
+    assert not missing, f"Text RecordSet is missing properties: {missing}"
+
+    assert props["language"] == "n/a"
+    assert props["numLines"] == 1
+    assert props["numCharacters"] == 2
