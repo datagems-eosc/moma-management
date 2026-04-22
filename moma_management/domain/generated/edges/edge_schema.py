@@ -23,7 +23,8 @@ class Edge(BaseModel):
     """
     Edge type labels (e.g. distribution, field, statistics)
     """
-    properties: dict[constr(pattern=r'^[a-z@][a-zA-Z0-9]*$'), Any] | None = None
+    properties: dict[constr(
+        pattern=r'^[a-z@][a-zA-Z0-9_]*$'), Any] | None = None
     """
     Additional edge properties
     """

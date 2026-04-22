@@ -22,7 +22,7 @@
             "type": "object",
             "description": "Additional edge properties",
             "propertyNames": {
-              "pattern": "^[a-z@][a-zA-Z0-9]*$"
+              "pattern": "^[a-z@][a-zA-Z0-9_]*$"
             }
         }
     },

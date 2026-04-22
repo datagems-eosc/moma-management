@@ -19,7 +19,7 @@
             "description": "Node attributes as defined by the MoMa node type",
             "additionalProperties": true,
             "propertyNames": {
-              "pattern": "^[a-z@][a-zA-Z0-9]*$"
+              "pattern": "^[a-z@][a-zA-Z0-9_]*$"
             }
         }
     },

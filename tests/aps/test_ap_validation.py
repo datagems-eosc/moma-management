@@ -99,7 +99,7 @@ class TestJsonSchemaValidation:
         assert any("labels" in e.message for e in errors)
 
     def test_node_bad_property_name(self):
-        """Property names must match ^[a-z@][a-zA-Z0-9]*$."""
+        """Property names must match ^[a-z@][a-zA-Z0-9_]*$."""
         v = LocalSchemaValidator()
         data = {
             "nodes": [

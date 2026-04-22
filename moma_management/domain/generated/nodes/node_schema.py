@@ -19,7 +19,7 @@ class Node(BaseModel):
     """
     Node type labels (e.g. Dataset, CSV, Column)
     """
-    properties: dict[constr(pattern=r'^[a-z@][a-zA-Z0-9]*$'), Any]
+    properties: dict[constr(pattern=r'^[a-z@][a-zA-Z0-9_]*$'), Any]
     """
     Node attributes as defined by the MoMa node type
     """

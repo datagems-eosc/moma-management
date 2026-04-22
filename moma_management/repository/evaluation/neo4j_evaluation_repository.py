@@ -101,20 +101,29 @@ class Neo4jEvaluationRepository(EvaluationRepository):
         dimension: str | None = None,
     ) -> list[EvaluationRecord]:
         """List Evaluations linked to an AP, optionally filtered."""
+        where_clauses: list[str] = []
+        params: dict[str, Any] = {"ap_id": str(ap_id)}
+
+        if execution_id is not None:
+            where_clauses.append("evaluation.id = $execution_id")
+            params["execution_id"] = execution_id
+        if dimension is not None:
+            where_clauses.append(
+                "$dimension IN coalesce(evaluation.dimensions, [])")
+            params["dimension"] = dimension
+
+        where = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
         result = await self._session.run(
-            """//cypher
-            MATCH (evaluation:Evaluation)-[:measure]->(:Analytical_Pattern {id: $ap_id})
-            WHERE ($execution_id IS NULL OR evaluation.id = $execution_id)
-              AND ($dimension IS NULL OR $dimension IN coalesce(evaluation.dimensions, []))
+            f"""//cypher
+            MATCH (evaluation:Evaluation)-[:measure]->(:Analytical_Pattern {{id: $ap_id}})
+            {where}
             RETURN evaluation
             ORDER BY evaluation.created_at DESC, evaluation.id ASC
             """,
-            ap_id=str(ap_id),
-            execution_id=execution_id,
-            dimension=dimension,
+            **params,
         )
         records = await result.values("evaluation")
-        return [self._deserialize_evaluation(record) for record in records]
+        return [self._deserialize_evaluation(record[0]) for record in records]
 
     async def delete(self, execution_id: str) -> int:
         """Delete an Evaluation by execution ID."""
