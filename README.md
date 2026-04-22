@@ -5,11 +5,30 @@
 
 ## Overview
 
-The **MoMa Management API** manages CRUD operations on MoMa, a data-flow graph. It handles **datasets**, **analytical patterns (APs)**, **tasks**, **ML models**, and individual graph **nodes**, backed by a Neo4j property graph store.
+The **MoMa Management API** manages CRUD operations on MoMa, a data-flow graph. It handles **datasets**, **analytical patterns (APs)**, **tasks**, **ML models**, **evaluations**, and individual graph **nodes**, backed by a Neo4j property graph store.
 
 ## Graph Data Model
 
 The diagram below shows all MoMa node types and their relationships. Solid arrows are graph edges stored in Neo4j; dashed arrows denote type-hierarchy ("is-a") specialisations.
+
+### Nodes
+
+| Node | Description |
+|------|-------------|
+| `sc:Dataset` | Top-level dataset descriptor (Schema.org) |
+| `Data` | Generic data distribution node; specialised by sub-types below |
+| `RelationalDatabase`, `CsvSet`, `JSONSet`, `XMLSet` | Structured data container types |
+| `TextSet`, `PDFSet`, `VideoSet`, `ImageSet` | Unstructured data container types |
+| `Table`, `CSV`, `JSON`, `XML`, `Text`, `PDF`, `Video`, `Image` | Leaf-level data items |
+| `ColumnTable`, `ColumnCSV`, `Column` | Column-level descriptors within relational or CSV data |
+| `Statistics` | Column statistics node |
+| `cr:RecordSet` | Croissant record-set node |
+| `Analytical_Pattern` | Root node of an Analytical Pattern subgraph |
+| `Operator` | Single processing step within an AP |
+| `ML_Model` | Registered machine-learning model |
+| `Task` | Scientific task that can be fulfilled by one or more APs |
+| `User` | User who triggers or configures an Operator |
+| `Evaluation` | Persistent evaluation record for an AP execution; stores system, data, human, and ecological assessment dimensions |
 
 ```mermaid
 graph LR
@@ -23,6 +42,7 @@ graph LR
   classDef operator fill:#EF5350,stroke:#E53935,color:#fff
   classDef ml fill:#43A047,stroke:#2E7D32,color:#fff
   classDef misc fill:#78909C,stroke:#546E7A,color:#fff
+  classDef evaluation fill:#F57C00,stroke:#E65100,color:#fff
 
   %% ── Dataset subgraph ────────────────────────────────────
   Dataset["sc:Dataset"]:::dataset
@@ -34,6 +54,7 @@ graph LR
   JSONSet["JSON Set"]:::dataChild
   XMLSet["XML Set"]:::dataChild
   TextSet["Text Set"]:::dataChild
+  PDFSet["PDF Set"]:::dataChild
   VideoSet["Video Set"]:::dataChild
   ImageSet["Image Set"]:::dataChild
   Table:::dataLeaf
@@ -41,40 +62,40 @@ graph LR
   JSON:::dataLeaf
   XML:::dataLeaf
   Text:::dataLeaf
+  PDF:::dataLeaf
   Video:::dataLeaf
   Image:::dataLeaf
   ColumnTable["Column Table"]:::dataLeaf
   ColumnCSV["Column CSV"]:::dataLeaf
   Column:::dataLeaf
-  PDF:::dataLeaf
   Statistics:::dataLeaf
   RecordSet["cr:RecordSet"]:::record
 
   Dataset -- distribution --> Data
   Dataset -- recordSet --> RecordSet
   Data -- linkTo --> Data
-  Data -. "is-a" .-> StructuredData
-  Data -. "is-a" .-> UnstructuredData
-  StructuredData -. "is-a" .-> RelDB
-  StructuredData -. "is-a" .-> CsvSet
-  StructuredData -. "is-a" .-> JSONSet
-  StructuredData -. "is-a" .-> XMLSet
-  UnstructuredData -. "is-a" .-> TextSet
-  UnstructuredData -. "is-a" .-> VideoSet
-  UnstructuredData -. "is-a" .-> ImageSet
-  RelDB -- containedIn --> Table
-  CsvSet -- containedIn --> CSV
-  JSONSet -- containedIn --> JSON
-  XMLSet -- containedIn --> XML
-  TextSet -- containedIn --> Text
-  VideoSet -- containedIn --> Video
-  ImageSet -- containedIn --> Image
-  Table -- containedIn --> ColumnTable
-  CSV -- containedIn --> ColumnCSV
+  StructuredData -. "is-a" .-> Data
+  UnstructuredData -. "is-a" .-> Data
+  RelDB -. "is-a" .-> StructuredData
+  CsvSet -. "is-a" .-> StructuredData
+  JSONSet -. "is-a" .-> StructuredData
+  XMLSet -. "is-a" .-> StructuredData
+  TextSet -. "is-a" .-> UnstructuredData
+  PDFSet -. "is-a" .-> UnstructuredData
+  VideoSet -. "is-a" .-> UnstructuredData
+  ImageSet -. "is-a" .-> UnstructuredData
+  Table -- containedIn --> RelDB
+  CSV -- containedIn --> CsvSet
+  JSON -- containedIn --> JSONSet
+  XML -- containedIn --> XMLSet
+  Text -- containedIn --> TextSet
+  PDF -- containedIn --> PDFSet
+  Video -- containedIn --> VideoSet
+  Image -- containedIn --> ImageSet
+  ColumnTable -- containedIn --> Table
+  ColumnCSV -- containedIn --> CSV
   RecordSet -- field --> Column
-  RecordSet -- field --> PDF
   Column -- "source/fileObject" --> Data
-  PDF -- "source/fileSet" --> Data
   Column -- statistics --> Statistics
 
   %% ── Analytical-Pattern subgraph ─────────────────────────
@@ -94,6 +115,11 @@ graph LR
   MLModel["ML_Model"]:::ml
 
   Operator -- perform_inference --> MLModel
+
+  %% ── Evaluation subgraph ────────────────────────────────
+  Evaluation:::evaluation
+
+  Evaluation -- measure --> AP
 ```
 
 | Colour | Domain |
@@ -101,7 +127,29 @@ graph LR
 | 🟦 Blue shades | Dataset & Data nodes |
 | 🟥 Red shades | Analytical Pattern & Operators |
 | 🟩 Green | ML Model |
+| 🟠 Orange | Evaluation |
 | ⬜ Grey | Task & User |
+
+### Edges
+
+| Edge | From | To | Description |
+|------|------|----|-------------|
+| `distribution` | `sc:Dataset` | `Data` | A dataset exposes a data distribution |
+| `recordSet` | `sc:Dataset` | `cr:RecordSet` | A dataset exposes a Croissant record set |
+| `linkTo` | `Data` | `Data` | A data node references another data node |
+| `containedIn` | `Data` / sub-types | `Data` / sub-types | Child points to its container (e.g. `CSV → CsvSet`, `ColumnTable → Table`) |
+| `field` | `cr:RecordSet` | `Column` / `PDF` | Record set declares a column or PDF field |
+| `source/fileObject` | `Column` | `Data` | Column is sourced from a file object |
+| `source/fileSet` | `PDF` | `Data` | PDF field is sourced from a file set |
+| `statistics` | `Column` | `Statistics` | Column links to its computed statistics |
+| `consist_of` | `Analytical_Pattern` | `Operator` | AP is composed of operator steps |
+| `input` | `Operator` | `Data` | Operator reads from a data node |
+| `output` | `Operator` | `Data` | Operator writes to a data node |
+| `follows` | `Operator` | `Operator` | Operator executes after another operator |
+| `uses` | `User` | `Operator` | User triggers or configures an operator |
+| `perform_inference` | `Operator` | `ML_Model` | Operator runs inference against an ML model |
+| `is_accomplished_by` | `Task` | `Analytical_Pattern` | Task is fulfilled by an AP |
+| `measure` | `Evaluation` | `Analytical_Pattern` | Evaluation captures the assessment of one AP execution |
 
 ## Quick Start
 
@@ -199,8 +247,24 @@ Configuration is managed entirely through environment variables:
 | `POST`   | `/aps`           | Create an AP (caller must be able to browse input datasets) |
 | `GET`    | `/aps`           | List APs (supports semantic search via `q` parameter)  |
 | `GET`    | `/aps/{id}`      | Retrieve an AP by root node ID                         |
-| `DELETE` | `/aps/{id}`      | Delete an AP (leaves referenced dataset nodes intact)  |
+| `DELETE` | `/aps/{id}`      | Delete an AP (leaves referenced dataset nodes intact; cascades to linked Evaluations)  |
 | `POST`   | `/aps/validate`  | Validate a PG-JSON AP against the MoMa schema          |
+
+### Evaluations (`/aps/{ap_id}/evaluations`, `/aps/evaluations`)
+
+| Method   | Path                                       | Description                                                       |
+| -------- | ------------------------------------------ | ----------------------------------------------------------------- |
+| `POST`   | `/aps/{ap_id}/evaluations`                 | Create an Evaluation for an AP execution                          |
+| `GET`    | `/aps/{ap_id}/evaluations`                 | List Evaluations for an AP (filterable by `execution_id`, `dimension`) |
+| `GET`    | `/aps/evaluations/{execution_id}`          | Retrieve the full Evaluation snapshot by execution ID             |
+| `DELETE` | `/aps/evaluations/{execution_id}`          | Delete an Evaluation by execution ID                              |
+
+#### `GET /aps/{ap_id}/evaluations` query parameters
+
+| Parameter      | Type                | Default | Description                              |
+| -------------- | ------------------- | ------- | ---------------------------------------- |
+| `execution_id` | `string`            | —       | Filter to a specific execution ID        |
+| `dimension`    | `EvaluationDimension` | —     | Filter to evaluations containing this dimension (`system`, `data`, `human`, `ecological`) |
 
 #### `GET /aps` query parameters
 
@@ -255,6 +319,7 @@ moma_management/
 ├── services/
 │   ├── dataset.py             # Dataset CRUD + Croissant ingestion
 │   ├── analytical_pattern.py  # AP CRUD + semantic search
+│   ├── evaluation.py          # Evaluation CRUD
 │   ├── node.py                # Node CRUD
 │   ├── task.py                # Task CRUD
 │   ├── ml_model.py            # ML Model CRUD + delete protection
@@ -265,6 +330,7 @@ moma_management/
 │   ├── pg_json_graph.py       # Base class for validated PG-JSON graphs
 │   ├── dataset.py             # Dataset model
 │   ├── analytical_pattern.py  # AnalyticalPattern model
+│   ├── evaluation.py          # Evaluation domain model (EvaluationDimension enum, Evaluation, EvaluationRecord)
 │   ├── schema_validator.py    # JSON-Schema validation with AJV-style errors
 │   ├── filters.py             # Query filter / pagination models
 │   ├── mapping_engine.py      # Croissant → PG-JSON conversion logic
@@ -274,6 +340,7 @@ moma_management/
 ├── repository/
 │   ├── dataset/               # Dataset repository (Neo4j)
 │   ├── analytical_pattern/    # AP repository (Neo4j + vector index)
+│   ├── evaluation/            # Evaluation repository (Neo4j)
 │   ├── node/                  # Node repository (Neo4j)
 │   ├── task/                  # Task repository (Neo4j)
 │   └── ml_model/              # ML Model repository (Neo4j)

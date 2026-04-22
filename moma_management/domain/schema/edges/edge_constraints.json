@@ -148,5 +148,11 @@
         "label": "perform_inference",
         "toLabel": "ML_Model",
         "description": "Operator performs inference using an ML model"
+    },
+    {
+        "fromLabel": "Evaluation",
+        "label": "measure",
+        "toLabel": "Analytical_Pattern",
+        "description": "Evaluation measures an Analytical Pattern execution"
     }
 ]

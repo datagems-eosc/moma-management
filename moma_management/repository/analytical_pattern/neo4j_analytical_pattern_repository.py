@@ -19,8 +19,8 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
 
     # Edges that link APs/Operators to external entities (Data, User, …) and
     # must NOT be traversed when manipulating an AP subgraph in isolation.
-    FORBIDDEN_EDGES: list[str] = ["input", "output",
-                                  "perform", "perform_inference", "uses"]
+    FORBIDDEN_EDGES: list[str] = ["input", "output", "perform",
+                                  "perform_inference", "uses", "measure"]
 
     _INDEX_STATEMENTS: list[str] = [
         "CREATE CONSTRAINT ap_id_unique IF NOT EXISTS "
@@ -67,9 +67,11 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
         await self._session.run(
             """//cypher
             MATCH (root:Analytical_Pattern {id: $ap_id})
+            OPTIONAL MATCH (root)<-[:measure]-(evaluation:Evaluation)
             OPTIONAL MATCH path=(root)-[*1..10]-(m)
             WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
-            WITH root, collect(DISTINCT m) AS related
+            WITH root, collect(DISTINCT evaluation) AS evaluations, collect(DISTINCT m) AS related
+            FOREACH (evaluation IN evaluations | DETACH DELETE evaluation)
             FOREACH (n IN related | DETACH DELETE n)
             DETACH DELETE root
             """,

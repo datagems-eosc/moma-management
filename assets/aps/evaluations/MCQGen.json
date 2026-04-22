@@ -1,0 +1,92 @@
+{
+    "system": {
+
+        "Model performance (+)": [
+        {"model": "Llama3.1:8b", "finetuning_method": "DPO vs Base", "value": 20.1},
+        {"model": "Llama3.1:8b", "finetuning_method": "KTO vs Base", "value": 16.7},
+
+        {"model": "OpenBioLLM:8b", "finetuning_method": "DPO vs Base", "value": 24.9},
+        {"model": "OpenBioLLM:8b", "finetuning_method": "KTO vs Base", "value": 22.3},
+
+        {"model": "Gemma2:9b", "finetuning_method": "DPO vs Base", "value": 20.5},
+        {"model": "Gemma2:9b", "finetuning_method": "KTO vs Base", "value": 33.3},
+
+        {"model": "MedGemma:4b", "finetuning_method": "DPO vs Base", "value": 4.4},
+        {"model": "MedGemma:4b", "finetuning_method": "KTO vs Base", "value": 4.7},
+
+        {"model": "MedGemma:27b", "finetuning_method": "DPO vs Base", "value": 5.5},
+        {"model": "MedGemma:27b", "finetuning_method": "KTO vs Base", "value": 15.5}
+        ]
+      
+    },
+    "data": {
+      "Distractor quality %": [
+        {"model": "Llama3.1:8b", "finetuning_method": "base", "value": 48.4},
+        {"model": "Llama3.1:8b", "finetuning_method": "DPO", "value": 68.53},
+        {"model": "Llama3.1:8b", "finetuning_method": "KTO", "value": 65.09},
+
+        {"model": "OpenbioLLM:8b", "finetuning_method": "base", "value": 41.34},
+        {"model": "OpenbioLLM:8b", "finetuning_method": "DPO", "value": 66.23},
+        {"model": "OpenbioLLM:8b", "finetuning_method": "KTO", "value": 63.65},
+
+        {"model": "Gemma2:9b", "finetuning_method": "base", "value": 49.3},
+        {"model": "Gemma2:9b", "finetuning_method": "DPO", "value": 69.79},
+        {"model": "Gemma2:9b", "finetuning_method": "KTO", "value": 82.6},
+
+        {"model": "MedGemma:4b", "finetuning_method": "base", "value": 52.4},
+        {"model": "MedGemma:4b", "finetuning_method": "DPO", "value": 56.8},
+        {"model": "MedGemma:4b", "finetuning_method": "KTO", "value": 57.1},
+
+        {"model": "MedGemma:27b", "finetuning_method": "base", "value": 56.7},
+        {"model": "MedGemma:27b", "finetuning_method": "DPO", "value": 62.24},
+        {"model": "MedGemma:27b", "finetuning_method": "KTO", "value": 72.2}
+        ],
+
+
+        "Answer-ability": [
+        {"model": "Llama3.1:8b", "finetuning_method": "base", "dataset": "MedMCQQA", "value": 78.4},
+        {"model": "Llama3.1:8b", "finetuning_method": "base", "dataset": "UNESS", "value": 59.22},
+        {"model": "Llama3.1:8b", "finetuning_method": "DPO", "dataset": "MedMCQQA", "value": 78.41},
+        {"model": "Llama3.1:8b", "finetuning_method": "KTO", "dataset": "MedMCQQA", "value": 78.95},
+        {"model": "Llama3.1:8b", "finetuning_method": "DPO", "dataset": "UNESS", "value": 58.40},
+        {"model": "Llama3.1:8b", "finetuning_method": "KTO", "dataset": "UNESS", "value": 59.18},
+
+        {"model": "OpenBioLLM:8b", "finetuning_method": "base", "dataset": "MedMCQQA", "value": 25.6},
+        {"model": "OpenBioLLM:8b", "finetuning_method": "base", "dataset": "UNESS", "value": 17.76},
+        {"model": "OpenBioLLM:8b", "finetuning_method": "DPO", "dataset": "MedMCQQA", "value": 33.7},
+        {"model": "OpenBioLLM:8b", "finetuning_method": "KTO", "dataset": "MedMCQQA", "value": 42.7},
+        {"model": "OpenBioLLM:8b", "finetuning_method": "DPO", "dataset": "UNESS", "value": 48.51},
+        {"model": "OpenBioLLM:8b", "finetuning_method": "KTO", "dataset": "UNESS", "value": 48.97},
+
+        {"model": "Gemma2:9b", "finetuning_method": "base", "dataset": "MedMCQQA", "value": 62.97},
+        {"model": "Gemma2:9b", "finetuning_method": "base", "dataset": "UNESS", "value": 58.29},
+        {"model": "Gemma2:9b", "finetuning_method": "DPO", "dataset": "MedMCQQA", "value": 62.63},
+        {"model": "Gemma2:9b", "finetuning_method": "KTO", "dataset": "MedMCQQA", "value": 62.42},
+        {"model": "Gemma2:9b", "finetuning_method": "DPO", "dataset": "UNESS", "value": 58.17},
+        {"model": "Gemma2:9b", "finetuning_method": "KTO", "dataset": "UNESS", "value": 59.01},
+
+        {"model": "MedGemma:4b", "finetuning_method": "base", "dataset": "MedMCQQA", "value": 63.2},
+        {"model": "MedGemma:4b", "finetuning_method": "base", "dataset": "UNESS", "value": 52.35},
+        {"model": "MedGemma:4b", "finetuning_method": "DPO", "dataset": "MedMCQQA", "value": 63.11},
+        {"model": "MedGemma:4b", "finetuning_method": "KTO", "dataset": "MedMCQQA", "value": 62.93},
+        {"model": "MedGemma:4b", "finetuning_method": "DPO", "dataset": "UNESS", "value": 52.64},
+        {"model": "MedGemma:4b", "finetuning_method": "KTO", "dataset": "UNESS", "value": 52.78},
+
+        {"model": "MedGemma:27b", "finetuning_method": "base", "dataset": "MedMCQQA", "value": 78.1},
+        {"model": "MedGemma:27b", "finetuning_method": "base", "dataset": "UNESS", "value": 69.49},
+        {"model": "MedGemma:27b", "finetuning_method": "DPO", "dataset": "MedMCQQA", "value": 78.08},
+        {"model": "MedGemma:27b", "finetuning_method": "KTO", "dataset": "MedMCQQA", "value": 78.85},
+        {"model": "MedGemma:27b", "finetuning_method": "DPO", "dataset": "UNESS", "value": 69.29},
+        {"model": "MedGemma:27b", "finetuning_method": "KTO", "dataset": "UNESS", "value": 69.55}
+        ]
+
+
+    },
+    "human": {
+      
+    },
+    "ecological": {
+      
+    }
+  }
+  

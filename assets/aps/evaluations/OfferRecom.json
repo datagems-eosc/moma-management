@@ -1,0 +1,113 @@
+{
+    "system": {
+          "Steps": [
+            {"algo": "Offline", "user_request": "Deep UR", "variant": "Noise Injection", "value":  10},
+            {"algo": "Offline", "user_request": "Deep UR", "variant": "UR Values Injection", "value":   10},
+            {"algo": "Offline", "user_request": "Deep UR", "variant": "Targeted Noise Injection", "value":  10},
+            
+            {"algo": "Offline", "user_request": "Shallow UR", "variant": "Noise Injection", "value":  10},
+            {"algo": "Offline", "user_request": "Shallow UR", "variant": "UR Values Injection", "value":  10},
+            {"algo": "Offline", "user_request": "Shallow UR", "variant": "Targeted Noise Injection", "value":  10}, 
+
+            {"algo": "RL Noise", "user_request": "Deep UR", "variant": "Noise Injection", "value": 1},
+            {"algo": "RL Noise", "user_request": "Deep UR", "variant": "UR Values Injection", "value": 1},
+            {"algo": "RL Noise  ", "user_request": "Deep UR", "variant": "Targeted Noise Injection", "value": 1},
+            
+            {"algo": "RL Noise", "user_request": "Shallow UR", "variant": "Noise Injection", "value": 2},
+            {"algo": "RL Noise  ", "user_request": "Shallow UR", "variant": "UR Values Injection", "value": 2},
+            {"algo": "RL Noise  ", "user_request": "Shallow UR", "variant": "Targeted Noise Injection", "value": 2},
+
+            {"algo": "RL Value  ", "user_request": "Deep UR", "variant": "Noise Injection", "value": 3},
+            {"algo": "RL Value  ", "user_request": "Deep UR", "variant": "UR Values Injection", "value": 3},
+            {"algo": "RL Value  ", "user_request": "Deep UR", "variant": "Targeted Noise Injection", "value": 3},
+            
+            {"algo": "RL Value  ", "user_request": "Shallow UR", "variant": "Noise Injection", "value": 1},
+            {"algo": "RL Value  ", "user_request": "Shallow UR", "variant": "UR Values Injection", "value": 1},
+            {"algo": "RL Value  ", "user_request": "Shallow UR", "variant": "Targeted Noise Injection", "value": 1},
+
+            {"algo": "RL TgtNoise", "user_request": "Deep UR", "variant": "Noise Injection", "value":  1},
+            {"algo": "RL TgtNoise  ", "user_request": "Deep UR", "variant": "UR Values Injection", "value": 10},
+            {"algo": "RL TgtNoise  ", "user_request": "Deep UR", "variant": "Targeted Noise Injection", "value": 1},
+            
+            {"algo": "RL TgtNoise  ", "user_request": "Shallow UR", "variant": "Noise Injection", "value": 0},
+            {"algo": "RL TgtNoise  ", "user_request": "Shallow UR", "variant": "UR Values Injection", "value": 0},
+            {"algo": "RL TgtNoise  ", "user_request": "Shallow UR", "variant": "Targeted Noise Injection", "value": 0}
+          ]
+    },
+    "data": {
+      "Coverage": [
+        {"algo": "Offline", "user_request": "Deep UR", "variant": "Noise Injection", "value":  0.67},
+        {"algo": "Offline", "user_request": "Deep UR", "variant": "UR Values Injection", "value":   1},
+        {"algo": "Offline", "user_request": "Deep UR", "variant": "Targeted Noise Injection", "value":  0.91},
+        
+        {"algo": "Offline", "user_request": "Shallow UR", "variant": "Noise Injection", "value": 0.071 },
+        {"algo": "Offline", "user_request": "Shallow UR", "variant": "UR Values Injection", "value":  1},
+        {"algo": "Offline", "user_request": "Shallow UR", "variant": "Targeted Noise Injection", "value":  1}, 
+
+        {"algo": "RL Noise  ", "user_request": "Deep UR", "variant": "Noise Injection", "value":  0.67},
+        {"algo": "RL Noise  ", "user_request": "Deep UR", "variant": "UR Values Injection", "value": 1},
+        {"algo": "RL Noise  ", "user_request": "Deep UR", "variant": "Targeted Noise Injection", "value":0.91 },
+        
+        {"algo": "RL Noise  ", "user_request": "Shallow UR", "variant": "Noise Injection", "value": 0.071},
+        {"algo": "RL Noise  ", "user_request": "Shallow UR", "variant": "UR Values Injection", "value": 1},
+        {"algo": "RL Noise  ", "user_request": "Shallow UR", "variant": "Targeted Noise Injection", "value": 1},
+
+        {"algo": "RL Value  ", "user_request": "Deep UR", "variant": "Noise Injection", "value": 0.67},
+        {"algo": "RL Value  ", "user_request": "Deep UR", "variant": "UR Values Injection", "value": 1},
+        {"algo": "RL Value  ", "user_request": "Deep UR", "variant": "Targeted Noise Injection", "value": 0.91},
+        
+        {"algo": "RL Value  ", "user_request": "Shallow UR", "variant": "Noise Injection", "value": 0.071},
+        {"algo": "RL Value  ", "user_request": "Shallow UR", "variant": "UR Values Injection", "value": 0.85},
+        {"algo": "RL Value  ", "user_request": "Shallow UR", "variant": "Targeted Noise Injection", "value": 1},
+
+        {"algo": "RL TgtNoise  ", "user_request": "Deep UR", "variant": "Noise Injection", "value":  0.67},
+        {"algo": "RL TgtNoise  ", "user_request": "Deep UR", "variant": "UR Values Injection", "value": 1},
+        {"algo": "RL TgtNoise  ", "user_request": "Deep UR", "variant": "Targeted Noise Injection", "value": 0.91},
+        
+        {"algo": "RL TgtNoise  ", "user_request": "Shallow UR", "variant": "Noise Injection", "value": 0},
+        {"algo": "RL TgtNoise  ", "user_request": "Shallow UR", "variant": "UR Values Injection", "value": 0},
+        {"algo": "RL TgtNoise  ", "user_request": "Shallow UR", "variant": "Targeted Noise Injection", "value": 0}
+  ],
+  "Penalty": [
+    {"algo": "Offline", "user_request": "Deep UR", "variant": "Noise Injection", "value":  0.59},
+        {"algo": "Offline", "user_request": "Deep UR", "variant": "UR Values Injection", "value": 0},
+        {"algo": "Offline", "user_request": "Deep UR", "variant": "Targeted Noise Injection", "value":  0.565},
+        
+        {"algo": "Offline", "user_request": "Shallow UR", "variant": "Noise Injection", "value": 0.857 },
+        {"algo": "Offline", "user_request": "Shallow UR", "variant": "UR Values Injection", "value":  0.428},
+        {"algo": "Offline", "user_request": "Shallow UR", "variant": "Targeted Noise Injection", "value":  0.799}, 
+
+        {"algo": "RL Noise  ", "user_request": "Deep UR", "variant": "Noise Injection", "value":  0.59},
+        {"algo": "RL Noise  ", "user_request": "Deep UR", "variant": "UR Values Injection", "value": 0.320},
+        {"algo": "RL Noise  ", "user_request": "Deep UR", "variant": "Targeted Noise Injection", "value":0.565 },
+        
+        {"algo": "RL Noise  ", "user_request": "Shallow UR", "variant": "Noise Injection", "value": 0.857},
+        {"algo": "RL Noise  ", "user_request": "Shallow UR", "variant": "UR Values Injection", "value": 0.795},
+        {"algo": "RL Noise  ", "user_request": "Shallow UR", "variant": "Targeted Noise Injection", "value": 0.811},
+
+        {"algo": "RL Value  ", "user_request": "Deep UR", "variant": "Noise Injection", "value": 0.59},
+        {"algo": "RL Value  ", "user_request": "Deep UR", "variant": "UR Values Injection", "value": 0.066},
+        {"algo": "RL Value  ", "user_request": "Deep UR", "variant": "Targeted Noise Injection", "value": 0.565},
+        
+        {"algo": "RL Value  ", "user_request": "Shallow UR", "variant": "Noise Injection", "value": 0.857},
+        {"algo": "RL Value  ", "user_request": "Shallow UR", "variant": "UR Values Injection", "value": 0.795},
+        {"algo": "RL Value  ", "user_request": "Shallow UR", "variant": "Targeted Noise Injection", "value": 0.799},
+
+        {"algo": "RL TgtNoise  ", "user_request": "Deep UR", "variant": "Noise Injection", "value":  0.59},
+        {"algo": "RL TgtNoise  ", "user_request": "Deep UR", "variant": "UR Values Injection", "value": 0.320},
+        {"algo": "RL TgtNoise  ", "user_request": "Deep UR", "variant": "Targeted Noise Injection", "value": 0.565},
+        
+        {"algo": "RL TgtNoise  ", "user_request": "Shallow UR", "variant": "Noise Injection", "value": 0},
+        {"algo": "RL TgtNoise  ", "user_request": "Shallow UR", "variant": "UR Values Injection", "value": 0},
+        {"algo": "RL TgtNoise  ", "user_request": "Shallow UR", "variant": "Targeted Noise Injection", "value": 0}
+  ]
+
+    },
+    "human": {
+      
+    },
+    "ecological": {
+      
+    }
+  }
+  

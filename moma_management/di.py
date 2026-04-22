@@ -13,6 +13,10 @@ from moma_management.repository.analytical_pattern import (
     AnalyticalPatternRepository,
     Neo4jAnalyticalPatternRepository,
 )
+from moma_management.repository.evaluation import (
+    EvaluationRepository,
+    Neo4jEvaluationRepository,
+)
 from moma_management.repository.ml_model import (
     MlModelRepository,
     Neo4jMlModelRepository,
@@ -24,6 +28,7 @@ from moma_management.services.authentication import Authentication
 from moma_management.services.authorization import DatagemsAuthorizationService
 from moma_management.services.dataset import DatasetService
 from moma_management.services.embeddings import Embedder, LocalEmbedder
+from moma_management.services.evaluation import EvaluationService
 from moma_management.services.ml_model import MlModelService
 from moma_management.services.node import NodeService
 from moma_management.services.task import TaskService
@@ -145,6 +150,19 @@ def get_ap_service(
 ) -> AnalyticalPatternService:
     """Return the service for AnalyticalPattern operations."""
     return AnalyticalPatternService(repo, dataset_svc, embedder=embedder)
+
+
+async def get_evaluation_repo(session: AsyncSession = Depends(get_db_session)) -> EvaluationRepository:
+    """Return the repository for Evaluation node operations."""
+    return await Neo4jEvaluationRepository.create_with_indexes(session)
+
+
+def get_evaluation_service(
+    repo: EvaluationRepository = Depends(get_evaluation_repo),
+    ap_svc: AnalyticalPatternService = Depends(get_ap_service),
+) -> EvaluationService:
+    """Return the service for Evaluation operations."""
+    return EvaluationService(repo, ap_svc)
 
 
 async def get_task_repo(session: AsyncSession = Depends(get_db_session)) -> TaskRepository:

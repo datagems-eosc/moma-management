@@ -2,11 +2,14 @@ from fastapi import APIRouter
 
 from .create import create_ap
 from .delete import delete_ap
+from .evaluations.routes import router as evaluation_routes
 from .get import get_ap
 from .list import list_aps
 from .validate import validate_ap
 
 router = APIRouter(tags=["analytical patterns"])
+
+router.include_router(evaluation_routes)
 
 router.add_api_route(
     "/",

@@ -1,0 +1,101 @@
+{
+    "system": {
+      "Number of iterations": [
+        {"algo": "DQN", "domain": "Medical", "value": 20},
+        {"algo": "DQN", "domain": "Math", "value": 31},
+        {"algo": "SARSA", "domain": "Medical", "value": 29},
+        {"algo": "SARSA", "domain": "Math", "value": 30},
+        {"algo": "A2C", "domain": "Medical", "value": 25},
+        {"algo": "A2C", "domain": "Math", "value": 33},
+        {"algo": "A3C", "domain": "Medical", "value": 17},
+        {"algo": "A3C", "domain": "Math", "value": 33}
+      ],
+      "Time (sec)": [
+        {"algo": "DQN", "domain": "Medical", "value": 0.04},
+        {"algo": "DQN", "domain": "Math", "value": 0.07},
+        {"algo": "SARSA", "domain": "Medical", "value": 0.07},
+        {"algo": "SARSA", "domain": "Math", "value": 0.06},
+        {"algo": "A2C", "domain": "Medical", "value": 0.05},
+        {"algo": "A2C", "domain": "Math", "value": 0.06},
+        {"algo": "A3C", "domain": "Medical", "value": 0.04},
+        {"algo": "A3C", "domain": "Math", "value": 0.08}
+      ],
+      "Iterations across targets": [
+        {"algo": "DQN", "target": "Tuniform_Tbias", "value": 100},
+        {"algo": "SARSA", "target": "Tuniform_Tbias", "value": 100},
+        {"algo": "A2C", "target": "Tuniform_Tbias", "value": 83},
+        {"algo": "A3C", "target": "Tuniform_Tbias", "value": 95},
+        
+      
+        {"algo": "DQN", "target": "Tbias_Tuniform", "value": 24},
+        {"algo": "SARSA", "target": "Tbias_Tuniform", "value": 62},
+        {"algo": "A2C", "target": "Tbias_Tuniform", "value": 67},
+        {"algo": "A3C", "target": "Tbias_Tuniform", "value": 97},
+        
+      
+        {"algo": "DQN", "target": "Tbias_T'bias", "value": 48},
+        {"algo": "SARSA", "target": "Tbias_T'bias", "value": 84},
+        {"algo": "A2C", "target": "Tbias_T'bias", "value": 52},
+        {"algo": "A3C", "target": "Tbias_T'bias", "value": 50}
+         ],
+        "Iterations across datasets": [
+        {"algo": "DQN", "domain": "Medical_Math", "value": 12},
+        {"algo": "SARSA", "domain": "Medical_Math", "value": 8},
+        {"algo": "A2C", "domain": "Medical_Math", "value": 16},
+        {"algo": "A3C", "domain": "Medical_Math", "value": 11},
+        
+      
+        {"algo": "DQN", "domain": "Math_Medical", "value":20},
+        {"algo": "SARSA", "domain": "Math_Medical", "value": 12},
+        {"algo": "A2C", "domain": "Math_Medical", "value": 9},
+        {"algo": "A3C", "domain": "Math_Medical", "value": 12}
+         ]
+    },
+    "data": {
+      "reward": [
+        {"alpha": 0.0, "value": 0.9897},
+        {"alpha": 0.25, "value": 0.9661},
+        {"alpha": 0.5, "value": 0.9448},
+        {"alpha": 0.75, "value": 0.9482},
+        {"alpha": 1.0, "value": 0.9639}
+      ],
+      "Similarity across targets": [
+        {"algo": "DQN", "target": "Tuniform_Tbias", "value": 0.756},
+        {"algo": "SARSA", "target": "Tuniform_Tbias", "value": 0.791},
+        {"algo": "A2C", "target": "Tuniform_Tbias", "value": 0.800},
+        {"algo": "A3C", "target": "Tuniform_Tbias", "value": 0.775},
+        
+      
+        {"algo": "DQN", "target": "Tbias_Tuniform", "value": 0.866},
+        {"algo": "SARSA", "target": "Tbias_Tuniform", "value": 0.855},
+        {"algo": "A2C", "target": "Tbias_Tuniform", "value": 0.852},
+        {"algo": "A3C", "target": "Tbias_Tuniform", "value": 0.833},
+        
+
+        {"algo": "DQN", "target": "Tbias_T'bias", "value": 0.856},
+        {"algo": "SARSA", "target": "Tbias_T'bias", "value": 0.851},
+        {"algo": "A2C", "target": "Tbias_T'bias", "value": 0.866},
+        {"algo": "A3C", "target": "Tbias_T'bias", "value": 0.866}
+        ],
+
+        "Similarity across datasets": [
+        {"algo": "DQN", "domain": "Medical_Math", "value": 0.877},
+        {"algo": "SARSA", "domain": "Medical_Math", "value": 0.881},
+        {"algo": "A2C", "domain": "Medical_Math", "value": 0.865},
+        {"algo": "A3C", "domain": "Medical_Math", "value": 0.864},
+        
+      
+        {"algo": "DQN", "domain": "Math_Medical", "value":0.868},
+        {"algo": "SARSA", "domain": "Math_Medical", "value": 0.874},
+        {"algo": "A2C", "domain": "Math_Medical", "value": 0.867},
+        {"algo": "A3C", "domain": "Math_Medical", "value": 0.874}
+         ]
+    },
+    "human": {
+      
+    },
+    "ecological": {
+      
+    }
+  }
+  
