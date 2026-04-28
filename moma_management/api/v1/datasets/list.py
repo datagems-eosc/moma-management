@@ -82,7 +82,9 @@ async def list_datasets(
             return JSONResponse({"datasets": [], "page": filters.page, "pageSize": filters.pageSize, "total": 0})
 
     ds = await svc.list(filters)
-    datasets = [d.model_dump(mode="json") for d in ds.get("datasets", [])]
+    datasets = [
+        d.model_dump(mode="json", by_alias=True) for d in ds.get("datasets", [])
+    ]
     return JSONResponse({
         "datasets": datasets,
         "page": ds.get("page", filters.page),
