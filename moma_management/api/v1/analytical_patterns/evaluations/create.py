@@ -1,31 +1,38 @@
 from typing import Never
+from uuid import UUID
 
 from fastapi import Depends
+from pydantic import BaseModel
 
-from moma_management.api.v1.analytical_patterns.evaluations.models import (
-    EvaluationCreatedResponse,
-    EvaluationCreateRequest,
+from moma_management.di import get_ap_service
+from moma_management.domain.generated.nodes.ap.evaluation_schema import (
+    Type as EvaluationType,
 )
-from moma_management.di import get_evaluation_service
-from moma_management.middlewares.auth import require_authentication
-from moma_management.services.evaluation import EvaluationService
+from moma_management.middlewares.auth import (
+    IdType,
+    require_permission,
+)
+from moma_management.services.analytical_pattern import AnalyticalPatternService
+from moma_management.services.authorization import DatasetRole
+
+
+class EvaluationRequest(BaseModel):
+    dimension: EvaluationType
+    evaluation: str  # JSON-encoded metrics for the given dimension
+    execution_id: UUID
+
+
+class EvaluationResponse(BaseModel):
+    # Node ID of the created Evaluation node
+    id: UUID
 
 
 async def create_evaluation(
-    ap_id: str,
-    body: EvaluationCreateRequest,
-    svc: EvaluationService = Depends(get_evaluation_service),
-    _auth: Never = Depends(require_authentication()),
-) -> EvaluationCreatedResponse:
+    id: str, rq: EvaluationRequest,
+    svc: AnalyticalPatternService = Depends(get_ap_service),
+    _auth: Never = Depends(require_permission(
+        DatasetRole.BROWSE, id_type=IdType.AP)),
+) -> EvaluationResponse:
     """Create an immutable Evaluation snapshot for an Analytical Pattern."""
-    created = await svc.create(
-        ap_id=ap_id,
-        execution_id=str(
-            body.execution_id) if body.execution_id is not None else None,
-        evaluation=body.evaluation,
-    )
-    return EvaluationCreatedResponse(
-        execution_id=created["execution_id"],
-        ap_id=created["ap_id"],
-        dimensions=created["dimensions"],
-    )
+    eval_node_id = await svc.add_evaluation(ap_id=id, type=rq.dimension, eval=rq.evaluation, execution_id=rq.execution_id)
+    return EvaluationResponse(id=eval_node_id)

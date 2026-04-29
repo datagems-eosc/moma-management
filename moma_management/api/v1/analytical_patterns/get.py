@@ -1,6 +1,6 @@
 from typing import Never
 
-from fastapi import Depends
+from fastapi import Depends, Query
 
 from moma_management.di import get_ap_service
 from moma_management.domain.analytical_pattern import AnalyticalPattern
@@ -14,6 +14,10 @@ async def get_ap(
     svc: AnalyticalPatternService = Depends(get_ap_service),
     _auth: Never = Depends(require_permission(
         DatasetRole.BROWSE, id_type=IdType.AP)),
+    include_evaluations: bool = Query(
+        default=False,
+        description="Include evaluations for the returned AnalyticalPattern.",
+    ),
 ) -> AnalyticalPattern:
     """
     Retrieve an AnalyticalPattern (shallow) by its root node ID.
@@ -26,4 +30,4 @@ async def get_ap(
     dataset, or realm role ``dg_admin`` / ``dg_dataset-curator``.
     Returns 404 on permission denial to prevent enumeration.
     """
-    return await svc.get(id)
+    return await svc.get(id, include_evaluations=include_evaluations)

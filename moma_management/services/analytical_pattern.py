@@ -1,9 +1,16 @@
 import logging
-from typing import List, Optional, Tuple
+from typing import List, Optional
+from uuid import UUID
+from uuid import uuid4 as uuidv4
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.exceptions import NotFoundError, ValidationError
-from moma_management.domain.filters import DatasetFilter
+from moma_management.domain.filters import AnalyticalPatternFilter, DatasetFilter
+from moma_management.domain.generated.edges.edge_schema import Edge
+from moma_management.domain.generated.nodes.ap.evaluation_schema import Evaluation
+from moma_management.domain.generated.nodes.ap.evaluation_schema import (
+    Type as EvaluationType,
+)
 from moma_management.domain.schema_validator import LocalSchemaValidator, SchemaError
 from moma_management.repository.analytical_pattern.analytical_pattern_repository import (
     AnalyticalPatternRepository,
@@ -72,30 +79,14 @@ class AnalyticalPatternService:
             return None
         return self._embedder.embed(text)
 
-    async def search(
-        self,
-        q: str,
-        top_k: int = 10,
-        accessible_dataset_ids: list[str] | None = None,
-    ) -> List[Tuple[AnalyticalPattern, float]]:
-        """Semantic search over APs by natural-language query.
-
-        Raises ``ValidationError`` when no embedder is configured.
-        """
-        if self._embedder is None:
-            raise ValidationError(
-                "Semantic search is not available: no embedder configured.")
-        query_vector = self._embedder.embed(q)
-        return await self._repo.search(query_vector, top_k, accessible_dataset_ids=accessible_dataset_ids)
-
-    async def get(self, ap_id: str) -> AnalyticalPattern:
+    async def get(self, ap_id: str, include_evaluations: bool = False) -> AnalyticalPattern:
         """
         Retrieve an AnalyticalPattern by its root node ID (shallow).
 
         Raises:
             NotFoundError: if no AP with *ap_id* exists.
         """
-        result = await self._repo.get(ap_id)
+        result = await self._repo.get(ap_id, include_evaluations=include_evaluations)
         if result is None:
             raise NotFoundError(f"AnalyticalPattern '{ap_id}' not found.")
         return result
@@ -110,15 +101,69 @@ class AnalyticalPatternService:
             raise NotFoundError(f"AnalyticalPattern '{ap_id}' not found.")
         await self._repo.delete(ap_id)
 
-    async def list(self, accessible_dataset_ids: list[str] | None = None) -> List[AnalyticalPattern]:
-        """
-        Return all AnalyticalPattern subgraphs (shallow retrieval).
+    async def list(self, filter: AnalyticalPatternFilter, accessible_dataset_ids: list[str] | None = None) -> dict:
+        """Unified list/search entry-point for the AP list endpoint.
 
-        When *accessible_dataset_ids* is provided, only APs whose ``input``
-        edges reference a Data node that belongs to one of those datasets are
-        returned.  APs with no ``input`` edges are always included.
+        Returns a dict with shape::
+
+            {
+                "aps": [{"ap": AnalyticalPattern}, ...],
+                "page": int,
+                "pageSize": int,
+                "total": int,
+            }
+
+        When ``filter.search`` is set a vector-similarity search is performed;
+        ``top_k`` caps the number of candidates fetched from the DB, then
+        threshold filtering and standard pagination are applied to the result.
+        Otherwise a standard paginated list is returned.
+
+        When ``filter.include_evaluations`` is ``True``, Evaluation nodes are
+        included in each AP's subgraph (``ap.nodes``).  When ``False``
+        (default), Evaluation nodes are excluded from the traversal entirely.
         """
-        return await self._repo.list(accessible_dataset_ids=accessible_dataset_ids)
+        query_vector = None
+        if filter.search is not None:
+            if self._embedder is None:
+                raise ValidationError(
+                    "Semantic search is not available: no embedder configured.")
+            query_vector = self._embedder.embed(filter.search.q)
+
+        repo_result = await self._repo.list(filter, accessible_dataset_ids=accessible_dataset_ids, query_vector=query_vector)
+
+        return {
+            "aps": repo_result["aps"],
+            "page": filter.page,
+            "pageSize": filter.pageSize,
+            "total": repo_result["total"],
+        }
+
+    async def add_evaluation(self, ap_id: str, type: EvaluationType, eval: str, execution_id: UUID | None = uuidv4()) -> str:
+        """Create and persist an Evaluation node linked to the AP.
+
+        Raises:
+            NotFoundError: if the AP does not exist.
+        """
+        eval_node: Evaluation = Evaluation.model_validate({
+            "id": uuidv4(),
+            "labels": ["Evaluation", type.value],
+            "type": type.value,
+            "properties": {
+                "executionId": str(execution_id or uuidv4()),
+                "evaluation": eval,
+            },
+        })
+        ap = await self.get(ap_id)  # raises NotFoundError if AP is missing
+        ap.nodes.append(eval_node)
+        ap.edges.append(Edge.model_validate({
+            "from": ap.root.id,
+            "to": eval_node.id,
+            "labels": ["is_measured_by"],
+        }))
+        AnalyticalPattern.model_validate(ap)
+
+        await self._repo.create(ap)
+        return str(eval_node.id)
 
     def validate(self, candidate: dict) -> list[SchemaError]:
         """Validate a raw PG-JSON dict as an AnalyticalPattern.

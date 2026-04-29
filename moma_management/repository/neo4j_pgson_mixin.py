@@ -163,7 +163,10 @@ class Neo4jPgJsonMixin:
         await tx.run(cast(LiteralString, query), parameters)
 
     @staticmethod
-    def _deserialize_node(neo4j_node: Any) -> Dict[str, Any]:
+    def _deserialize_node(
+        neo4j_node: Any,
+        ignore_props: frozenset[str] = frozenset(),
+    ) -> Dict[str, Any]:
         """
         Convert a raw Neo4j node object into a PG-JSON node dict.
 
@@ -174,6 +177,8 @@ class Neo4jPgJsonMixin:
 
         Args:
             neo4j_node: A Neo4j ``Node`` object as returned by the driver.
+            ignore_props: Property keys (as stored in Neo4j) to exclude from
+                the returned ``properties`` dict.
 
         Returns:
             A PG-JSON node dict with keys ``id``, ``labels``, ``properties``.
@@ -181,7 +186,7 @@ class Neo4jPgJsonMixin:
         properties = {
             k.replace("__", ":"): v
             for k, v in dict(neo4j_node).items()
-            if v is not None and k != "id"
+            if v is not None and k != "id" and k not in ignore_props
         }
         return {
             "id": neo4j_node["id"],
@@ -279,6 +284,69 @@ class Neo4jPgJsonMixin:
             nodes=list(nodes_dict.values()),
             edges=valid_edges,
         )
+
+    def _group_flat_records(
+        self,
+        records: list,
+        *,
+        with_score: bool,
+        ignore_props: frozenset[str] = frozenset(),
+    ) -> list:
+        """Group flat ``(root, m, rels[, score])`` Neo4j rows by root ID.
+
+        Each element of the returned list is either a :class:`MoMaGraphModel`
+        (when *with_score* is ``False``) or a ``(MoMaGraphModel, float)`` tuple.
+        Nodes and edges are deduplicated; edges whose endpoints are not both
+        present in the collected node set are discarded.
+        """
+        group_map: Dict[str, Dict[str, Any]] = {}
+
+        for record in records:
+            root = record["root"]
+            if root is None:
+                continue
+            root_id = root["id"]
+
+            if root_id not in group_map:
+                group_map[root_id] = {
+                    "nodes": {root_id: self._deserialize_node(root, ignore_props=ignore_props)},
+                    "edges": {},
+                }
+                if with_score:
+                    group_map[root_id]["score"] = record["score"]
+
+            entry = group_map[root_id]
+            m = record["m"]
+            rels = record["rels"] or []
+
+            if m:
+                mid = m["id"]
+                if mid not in entry["nodes"]:
+                    entry["nodes"][mid] = self._deserialize_node(
+                        m, ignore_props=ignore_props)
+
+            for rel in rels:
+                key = (rel.start_node["id"], rel.end_node["id"], rel.type)
+                if key not in entry["edges"]:
+                    entry["edges"][key] = self._deserialize_edge(rel)
+
+        results = []
+        for entry in group_map.values():
+            nodes = entry["nodes"]
+            valid_edges = [
+                e for e in entry["edges"].values()
+                if e["from"] in nodes and e["to"] in nodes
+            ]
+            graph = MoMaGraphModel(
+                nodes=list(nodes.values()),
+                edges=valid_edges or None,
+            )
+            if with_score:
+                results.append((graph, entry["score"]))
+            else:
+                results.append(graph)
+
+        return results
 
     def _build_dataset_from_maps(
         self, node_maps: List[Dict], edge_maps: List[Dict]

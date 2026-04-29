@@ -85,6 +85,7 @@ def require_permission(
     *,
     id_type: IdType = IdType.Dataset,
     require_all: bool = False,
+    param_name: str = "id",
 ):
     """Validate the caller's token and enforce *action*.
 
@@ -137,7 +138,7 @@ def require_permission(
 
         # Now, we have to know if the user can perform the requested action.
         # A permission can be either asked for datasets or nodes within datasets
-        path_id = request.path_params.get("id")
+        path_id = request.path_params.get(param_name)
         dataset_ids = []
         match id_type:
             # For nodes, we needs to check the dataset they belongs to

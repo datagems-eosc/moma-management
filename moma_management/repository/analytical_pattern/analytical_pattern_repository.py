@@ -1,6 +1,7 @@
-from typing import List, Optional, Protocol, Tuple, runtime_checkable
+from typing import List, Optional, Protocol, runtime_checkable
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
+from moma_management.domain.filters import AnalyticalPatternFilter
 
 
 @runtime_checkable
@@ -15,7 +16,7 @@ class AnalyticalPatternRepository(Protocol):
         """
         ...
 
-    async def get(self, ap_id: str) -> Optional[AnalyticalPattern]:
+    async def get(self, ap_id: str, include_evaluations: bool = False) -> Optional[AnalyticalPattern]:
         """
         Retrieve an AnalyticalPattern by its root node ID.
 
@@ -23,13 +24,24 @@ class AnalyticalPatternRepository(Protocol):
         nodes reachable from the operators (shallow retrieval — does NOT
         recurse into the full dataset subgraph).
 
+        When *include_evaluations* is ``True``, Evaluation nodes linked via
+        ``is_measured_by`` are included in the subgraph.
+
         Returns ``None`` if not found.
         """
         ...
 
-    async def list(self, accessible_dataset_ids: Optional[List[str]] = None) -> List[AnalyticalPattern]:
-        """Return all AnalyticalPattern subgraphs (shallow retrieval).
+    async def list(
+        self,
+        filter: AnalyticalPatternFilter,
+        accessible_dataset_ids: Optional[List[str]] = None,
+        query_vector: Optional[List[float]] = None,
+    ) -> dict:
+        """Return a paginated dict ``{"aps": [...], "total": int}`` (shallow retrieval).
 
+        When *query_vector* is provided, a vector-similarity search is performed
+        instead of a full scan; ``filter.search.threshold`` and
+        ``filter.search.top_k`` are used to control the search.
         When *accessible_dataset_ids* is provided, only APs whose input data
         nodes belong to one of those datasets are returned.
         """
@@ -44,13 +56,4 @@ class AnalyticalPatternRepository(Protocol):
 
     async def delete(self, ap_id: str) -> None:
         """Delete an AP and its Operator nodes (not the referenced data nodes)."""
-        ...
-
-    async def search(
-        self,
-        query_vector: List[float],
-        top_k: int = 10,
-        accessible_dataset_ids: Optional[List[str]] = None,
-    ) -> List[Tuple[AnalyticalPattern, float]]:
-        """Return APs ranked by cosine similarity to *query_vector*."""
         ...

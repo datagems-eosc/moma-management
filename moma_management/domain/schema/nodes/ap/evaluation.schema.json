@@ -1,0 +1,50 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "evaluation.schema.json",
+    "title": "Evaluation",
+    "allOf": [
+        {
+            "$ref": "../node.schema.json"
+        }
+    ],
+    "type": "object",
+    "description": "An immutable snapshot of quality metrics collected for one execution of an AnalyticalPattern",
+    "properties": {
+        "id": {
+            "type": "string",
+            "format": "uuid"
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "EcologicalEvaluation",
+                "HumanEvaluation",
+                "SystemEvaluation",
+                "DataEvaluation"
+            ]
+        },
+        "properties": {
+            "type": "object",
+            "properties": {
+                "executionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Unique identifier for this evaluation run. Can be shared across multiple nodes if the evaluation is recorded in parts (e.g. separate nodes for system vs human metrics)."
+                },
+                "evaluation": {
+                    "type": "string",
+                    "description": "The JSON-encoded evaluation data"
+                }
+            },
+            "required": [
+                "executionId",
+                "evaluation"
+            ]
+        }
+    },
+    "required": [
+        "id",
+        "type",
+        "properties"
+    ]
+}

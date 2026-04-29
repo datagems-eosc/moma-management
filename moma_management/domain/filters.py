@@ -114,3 +114,25 @@ class DatasetFilter(BaseModel):
     def resolved_types(self) -> List[str]:
         """Node labels to filter on: explicit types + those derived from mimeTypes."""
         return [t.value for t in self.types] + [MIME_TYPE_TO_NODE_LABEL[mt] for mt in self.mimeTypes]
+
+
+class APSearchParams(BaseModel):
+    """Semantic-search parameters for AnalyticalPattern list queries."""
+
+    q: str
+    top_k: int = Field(default=10, ge=1, le=100,
+                       description="Maximum number of results.")
+    threshold: float = Field(default=0.0, ge=0.0, le=1.0,
+                             description="Minimum similarity score.")
+
+
+class AnalyticalPatternFilter(BaseModel):
+    """Filtering, pagination and enrichment criteria for AnalyticalPattern list queries."""
+
+    search: Optional[APSearchParams] = None
+    page: int = Field(default=1, ge=1)
+    pageSize: int = Field(default=25, ge=1, le=100)
+    include_evaluations: bool = Field(
+        default=False,
+        description="When True, each AP result includes its associated evaluations.",
+    )

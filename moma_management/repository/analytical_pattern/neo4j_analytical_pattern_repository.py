@@ -1,9 +1,13 @@
+
+import json
 from logging import getLogger
 from typing import Any, Dict, List, Optional, Tuple
 
 from neo4j import AsyncSession
 
+from moma_management.domain import EDGE_CONSTRAINTS_PATH
 from moma_management.domain.analytical_pattern import AnalyticalPattern
+from moma_management.domain.filters import AnalyticalPatternFilter
 from moma_management.repository.analytical_pattern.analytical_pattern_repository import (
     AnalyticalPatternRepository,
 )
@@ -13,6 +17,13 @@ logger = getLogger(__name__)
 
 _VECTOR_INDEX_NAME = "ap_description_embedding"
 
+_edge_constraints: list[dict] = json.loads(EDGE_CONSTRAINTS_PATH.read_text())
+_EVALUATION_EDGE: str = next(
+    c["label"]
+    for c in _edge_constraints
+    if c["fromLabel"] == "Analytical_Pattern" and c["toLabel"] == "Evaluation"
+)
+
 
 class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternRepository):
     """Synchronous Neo4j-backed implementation of ``AnalyticalPatternRepository``."""
@@ -20,16 +31,33 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
     # Edges that link APs/Operators to external entities (Data, User, …) and
     # must NOT be traversed when manipulating an AP subgraph in isolation.
     FORBIDDEN_EDGES: list[str] = ["input", "output", "perform",
-                                  "perform_inference", "uses", "measure"]
+                                  "perform_inference", "uses"]
 
     _INDEX_STATEMENTS: list[str] = [
         "CREATE CONSTRAINT ap_id_unique IF NOT EXISTS "
         "FOR (n:Analytical_Pattern) REQUIRE n.id IS UNIQUE",
         "CREATE INDEX ap_id IF NOT EXISTS "
         "FOR (n:Analytical_Pattern) ON (n.id)",
+        "CREATE CONSTRAINT evaluation_id_unique IF NOT EXISTS "
+        "FOR (n:Evaluation) REQUIRE n.id IS UNIQUE",
+        "CREATE INDEX evaluation_ap_id IF NOT EXISTS "
+        "FOR (n:Evaluation) ON (n.ap_id)",
     ]
     _indexes_ensured: bool = False
     _vector_index_ensured: bool = False
+    # When deserializing nodes, ignore these properties
+    _NODE_IGNORE_PROPS: frozenset[str] = frozenset({"description_embedding"})
+
+    def _effective_forbidden_edges(self, include_evaluations: bool) -> list[str]:
+        """Return the forbidden-edge list for subgraph traversal.
+
+        When *include_evaluations* is ``False`` (the default), the
+        ``is_measured_by`` edge is added to the forbidden list so Evaluation
+        nodes are excluded from the traversal entirely.
+        """
+        if include_evaluations:
+            return self.FORBIDDEN_EDGES
+        return self.FORBIDDEN_EDGES + [_EVALUATION_EDGE]
 
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
@@ -67,11 +95,9 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
         await self._session.run(
             """//cypher
             MATCH (root:Analytical_Pattern {id: $ap_id})
-            OPTIONAL MATCH (root)<-[:measure]-(evaluation:Evaluation)
             OPTIONAL MATCH path=(root)-[*1..10]-(m)
             WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
-            WITH root, collect(DISTINCT evaluation) AS evaluations, collect(DISTINCT m) AS related
-            FOREACH (evaluation IN evaluations | DETACH DELETE evaluation)
+            WITH root, collect(DISTINCT m) AS related
             FOREACH (n IN related | DETACH DELETE n)
             DETACH DELETE root
             """,
@@ -100,42 +126,16 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
                     _VECTOR_INDEX_NAME, dimensions)
 
     # ------------------------------------------------------------------
-    # Vector search
-    # ------------------------------------------------------------------
-
-    async def search(
-        self,
-        query_vector: List[float],
-        top_k: int = 10,
-        accessible_dataset_ids: Optional[List[str]] = None,
-    ) -> List[Tuple[AnalyticalPattern, float]]:
-        """Return APs ranked by cosine similarity to *query_vector*."""
-        await self._ensure_index(len(query_vector))
-        filter_clause, params = self._access_filter(accessible_dataset_ids)
-        query = f"""//cypher
-            CALL db.index.vector.queryNodes($index_name, $top_k, $query_vector)
-            YIELD node AS root, score
-            {filter_clause}
-            OPTIONAL MATCH path=(root)-[*1..4]-(m)
-            WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
-            RETURN root, score, m, relationships(path) AS rels
-        """
-        params.update(
-            index_name=_VECTOR_INDEX_NAME,
-            top_k=top_k,
-            query_vector=query_vector,
-            forbiddenEdges=self.FORBIDDEN_EDGES,
-        )
-        result = await self._session.run(query, **params)
-        records = [record async for record in result]
-        return self._group_ap_records(records, with_score=True)
-
-    # ------------------------------------------------------------------
     # Read (shallow)
     # ------------------------------------------------------------------
 
-    async def get(self, ap_id: str) -> Optional[AnalyticalPattern]:
-        """Shallow retrieval: root + connected subgraph (excluding forbidden edges)."""
+    async def get(self, ap_id: str, include_evaluations: bool = False) -> Optional[AnalyticalPattern]:
+        """Shallow retrieval: root + connected subgraph (excluding forbidden edges).
+
+        When *include_evaluations* is ``False`` (default) Evaluation nodes are
+        excluded from the traversal.  Pass ``True`` to include them.
+        """
+        forbidden = self._effective_forbidden_edges(include_evaluations)
         query = """//cypher
             MATCH (root:Analytical_Pattern {id: $ap_id})
             OPTIONAL MATCH path=(root)-[*1..4]-(m)
@@ -143,7 +143,7 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             RETURN root, m, relationships(path) AS rels
         """
         result = await self._session.run(
-            query, ap_id=str(ap_id), forbiddenEdges=self.FORBIDDEN_EDGES)
+            query, ap_id=str(ap_id), forbiddenEdges=forbidden)
         rows = [record async for record in result]
         if not rows:
             return None
@@ -154,7 +154,8 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
         root = rows[0]["root"]
         if root is None:
             return None
-        nodes[root["id"]] = self._deserialize_node(root)
+        nodes[root["id"]] = self._deserialize_node(
+            root, ignore_props=self._NODE_IGNORE_PROPS)
 
         for record in rows:
             m = record["m"]
@@ -162,7 +163,8 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             if m:
                 mid = m["id"]
                 if mid not in nodes:
-                    nodes[mid] = self._deserialize_node(m)
+                    nodes[mid] = self._deserialize_node(
+                        m, ignore_props=self._NODE_IGNORE_PROPS)
             for rel in rels:
                 key = (rel.start_node["id"], rel.end_node["id"], rel.type)
                 if key not in edges:
@@ -177,10 +179,6 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             nodes=list(nodes.values()),
             edges=valid_edges or None,
         )
-
-    # ------------------------------------------------------------------
-    # Private helpers
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _access_filter(accessible_dataset_ids: Optional[List[str]]) -> Tuple[str, dict]:
@@ -208,20 +206,92 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
         """
         return clause, {"accessible_ids": accessible_dataset_ids}
 
-    async def list(self, accessible_dataset_ids: Optional[List[str]] = None) -> List[AnalyticalPattern]:
-        """Shallow retrieval of all AnalyticalPattern subgraphs."""
-        filter_clause, params = self._access_filter(accessible_dataset_ids)
-        query = f"""//cypher
-            MATCH (root:Analytical_Pattern)
-            {filter_clause}
-            OPTIONAL MATCH path=(root)-[*1..4]-(m)
-            WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
-            RETURN root, m, relationships(path) AS rels
+    async def list(
+        self,
+        filter: AnalyticalPatternFilter,
+        accessible_dataset_ids: Optional[List[str]] = None,
+        query_vector: Optional[List[float]] = None,
+    ) -> dict:
+        """Paginated retrieval of AnalyticalPattern subgraphs.
+
+        When *query_vector* is provided a vector-similarity search is performed;
+        threshold and top_k are read from ``filter.search``.  Both paths share
+        the same access filter and DB-side SKIP/LIMIT pagination.
+
+        Returns ``{"aps": [AnalyticalPattern, ...], "total": int}``.
         """
-        params["forbiddenEdges"] = self.FORBIDDEN_EDGES
-        result = await self._session.run(query, **params)
-        records = [record async for record in result]
-        return self._group_ap_records(records, with_score=False)
+        skip = (filter.page - 1) * filter.pageSize
+        limit = filter.pageSize
+        access_clause, access_params = self._access_filter(
+            accessible_dataset_ids)
+
+        if query_vector is not None:
+            search = filter.search
+            top_k = search.top_k if search else 10
+            threshold = search.threshold if search else 0.0
+            await self._ensure_index(len(query_vector))
+
+            access_clause_clean = access_clause.strip().removeprefix("WHERE").strip()
+            access_and = f"AND ({access_clause_clean})" if access_clause_clean else ""
+
+            count_query = f"""//cypher
+                CALL db.index.vector.queryNodes($index_name, $top_k, $query_vector)
+                YIELD node AS root, score
+                WHERE score >= $threshold
+                {access_and}
+                RETURN count(DISTINCT root) AS total
+            """
+            id_query = f"""//cypher
+                CALL db.index.vector.queryNodes($index_name, $top_k, $query_vector)
+                YIELD node AS root, score
+                WHERE score >= $threshold
+                {access_and}
+                RETURN root.id AS id
+                ORDER BY score DESC
+                SKIP $skip
+                LIMIT $limit
+            """
+            params = {
+                "index_name": _VECTOR_INDEX_NAME,
+                "top_k": top_k,
+                "query_vector": query_vector,
+                "threshold": threshold,
+                **access_params,
+            }
+        else:
+            count_query = f"""//cypher
+                MATCH (root:Analytical_Pattern)
+                {access_clause}
+                RETURN count(DISTINCT root) AS total
+            """
+            id_query = f"""//cypher
+                MATCH (root:Analytical_Pattern)
+                {access_clause}
+                WITH root
+                ORDER BY root.id ASC
+                SKIP $skip
+                LIMIT $limit
+                RETURN root.id AS id
+            """
+            params = dict(access_params)
+
+        count_result = await self._session.run(count_query, **params)
+        count_record = await count_result.single()
+        total = count_record["total"] if count_record else 0
+
+        if total == 0:
+            return {"aps": [], "total": 0}
+
+        id_result = await self._session.run(id_query, **{**params, "skip": skip, "limit": limit})
+        page_ids = [record["id"] async for record in id_result]
+
+        aps = []
+        for ap_id in page_ids:
+            ap = await self.get(ap_id, include_evaluations=filter.include_evaluations)
+            if ap is not None:
+                aps.append(ap)
+
+        return {"aps": aps, "total": total}
 
     async def get_ids_by_task_id(self, task_id: str) -> List[str]:
         """Return AP IDs accomplished by the given Task."""
@@ -232,67 +302,3 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
         result = await self._session.run(query, task_id=str(task_id))
         records = await result.data()
         return [r["ap_id"] for r in records]
-
-    # ------------------------------------------------------------------
-    # Private helpers
-    # ------------------------------------------------------------------
-
-    def _group_ap_records(self, records: list, *, with_score: bool) -> list:
-        """Group flat (root, m, rels) rows into per-AP results.
-
-        When *with_score* is ``True`` each result is a ``(AnalyticalPattern, float)``
-        tuple; otherwise a plain ``AnalyticalPattern``.
-        """
-        ap_map: Dict[str, Dict[str, Any]] = {
-        }  # root_id -> {nodes, edges, score}
-
-        for record in records:
-            root = record["root"]
-            if root is None:
-                continue
-            root_id = root["id"]
-
-            if root_id not in ap_map:
-                ap_map[root_id] = {
-                    "nodes": {root_id: self._deserialize_node(root)},
-                    "edges": {},
-                }
-                if with_score:
-                    ap_map[root_id]["score"] = record["score"]
-
-            entry = ap_map[root_id]
-            m = record["m"]
-            rels = record["rels"] or []
-
-            if m:
-                mid = m["id"]
-                if mid not in entry["nodes"]:
-                    entry["nodes"][mid] = self._deserialize_node(m)
-
-            for rel in rels:
-                key = (rel.start_node["id"], rel.end_node["id"], rel.type)
-                if key not in entry["edges"]:
-                    entry["edges"][key] = self._deserialize_edge(rel)
-
-        results = []
-        for entry in ap_map.values():
-            nodes = entry["nodes"]
-            valid_edges = [
-                e for e in entry["edges"].values()
-                if e["from"] in nodes and e["to"] in nodes
-            ]
-            try:
-                ap = AnalyticalPattern(
-                    nodes=list(nodes.values()),
-                    edges=valid_edges or None,
-                )
-                if with_score:
-                    results.append((ap, entry["score"]))
-                else:
-                    results.append(ap)
-            except Exception:
-                root_id = next(iter(nodes), "unknown")
-                logger.exception(
-                    "Failed to deserialize AP with id=%s", root_id)
-
-        return results

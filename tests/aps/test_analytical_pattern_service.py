@@ -2,16 +2,27 @@
 Unit tests for AnalyticalPatternService (MagicMock — no Neo4j container).
 """
 
+import json
+from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
+from moma_management.domain.evaluation import (
+    Evaluation,
+    EvaluationDimension,
+)
+from pydantic import ValidationError as PydanticValidationError
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.exceptions import NotFoundError, ValidationError
+from moma_management.domain.filters import AnalyticalPatternFilter
 from moma_management.domain.generated.edges.edge_schema import Edge
 from moma_management.domain.generated.nodes.node_schema import Node
 from moma_management.services.analytical_pattern import AnalyticalPatternService
+
+_EVALUATIONS_DIR = Path(__file__).parent.parent.parent / \
+    "assets" / "aps" / "evaluations"
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -133,31 +144,33 @@ async def test_get_raises_not_found():
 
 @pytest.mark.asyncio
 async def test_list_no_filter_returns_all():
-    """list() with accessible_dataset_ids=None passes None to repo."""
+    """list_with_filter() with accessible_dataset_ids=None passes None to repo."""
     ap = _make_ap_no_input()
+    filter_ = AnalyticalPatternFilter()
 
     repo = AsyncMock()
-    repo.list.return_value = [ap]
+    repo.list.return_value = {"aps": [ap], "total": 1}
     svc = AnalyticalPatternService(repo, AsyncMock())
 
-    result = await svc.list(accessible_dataset_ids=None)
-    repo.list.assert_called_once_with(accessible_dataset_ids=None)
-    assert result == [ap]
+    result = await svc.list(filter_, accessible_dataset_ids=None)
+    repo.list.assert_called_once_with(filter_, accessible_dataset_ids=None)
+    assert [entry["ap"] for entry in result["aps"]] == [ap]
 
 
 @pytest.mark.asyncio
 async def test_list_passes_accessible_ids_to_repo():
-    """list() forwards accessible_dataset_ids to the repository."""
+    """list_with_filter() forwards accessible_dataset_ids to the repository."""
     ap = _make_ap_no_input()
     ds_ids = ["ds-1", "ds-2"]
+    filter_ = AnalyticalPatternFilter()
 
     repo = AsyncMock()
-    repo.list.return_value = [ap]
+    repo.list.return_value = {"aps": [ap], "total": 1}
     svc = AnalyticalPatternService(repo, AsyncMock())
 
-    result = await svc.list(accessible_dataset_ids=ds_ids)
-    repo.list.assert_called_once_with(accessible_dataset_ids=ds_ids)
-    assert result == [ap]
+    result = await svc.list(filter_, accessible_dataset_ids=ds_ids)
+    repo.list.assert_called_once_with(filter_, accessible_dataset_ids=ds_ids)
+    assert [entry["ap"] for entry in result["aps"]] == [ap]
 
 
 # ---------------------------------------------------------------------------
@@ -204,22 +217,26 @@ async def test_create_no_embedding_when_no_embedder():
 
 
 # ---------------------------------------------------------------------------
-# search()
+# list_with_filter() — search branch
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_search_raises_when_no_embedder():
-    """search() raises ValidationError when embedder is not configured."""
+async def test_list_with_filter_search_raises_when_no_embedder():
+    """list_with_filter() raises ValidationError when search is set but no embedder."""
+    from moma_management.domain.filters import APSearchParams
     repo = AsyncMock()
     svc = AnalyticalPatternService(repo, AsyncMock())
+    f = AnalyticalPatternFilter(search=APSearchParams(
+        q="weather", top_k=10, threshold=0.0))
 
     with pytest.raises(ValidationError, match="no embedder configured"):
-        await svc.search("weather")
+        await svc.list(f)
 
 
 @pytest.mark.asyncio
-async def test_search_returns_results():
-    """search() delegates to embedder.embed and repo.search."""
+async def test_list_with_filter_search_embeds_and_calls_repo_list():
+    """list_with_filter() embeds the query and forwards query_vector to repo.list."""
+    from moma_management.domain.filters import APSearchParams
     ap = _make_ap_no_input()
     embedding = [0.1, 0.2, 0.3]
 
@@ -227,21 +244,24 @@ async def test_search_returns_results():
     embedder.embed.return_value = embedding
 
     repo = AsyncMock()
-    repo.search.return_value = [(ap, 0.95)]
+    repo.list.return_value = {"aps": [ap], "total": 1}
 
     svc = AnalyticalPatternService(repo, MagicMock(), embedder=embedder)
-    results = await svc.search("some query")
+    f = AnalyticalPatternFilter(search=APSearchParams(
+        q="some query", top_k=10, threshold=0.0))
+    result = await svc.list(f)
 
     embedder.embed.assert_called_once_with("some query")
-    repo.search.assert_called_once_with(
-        embedding, 10, accessible_dataset_ids=None)
-    assert len(results) == 1
-    assert results[0] == (ap, 0.95)
+    repo.list.assert_called_once_with(
+        f, accessible_dataset_ids=None, query_vector=embedding)
+    assert result["total"] == 1
+    assert result["aps"] == [ap]
 
 
 @pytest.mark.asyncio
-async def test_search_passes_accessible_ids_to_repo():
-    """search() forwards accessible_dataset_ids to repo.search."""
+async def test_list_with_filter_search_passes_accessible_ids():
+    """list_with_filter() forwards accessible_dataset_ids to repo.list."""
+    from moma_management.domain.filters import APSearchParams
     ap = _make_ap_no_input()
     embedding = [0.1, 0.2, 0.3]
     ds_ids = ["ds-1"]
@@ -250,11 +270,136 @@ async def test_search_passes_accessible_ids_to_repo():
     embedder.embed.return_value = embedding
 
     repo = AsyncMock()
-    repo.search.return_value = [(ap, 0.9)]
+    repo.list.return_value = {"aps": [ap], "total": 1}
 
     svc = AnalyticalPatternService(repo, MagicMock(), embedder=embedder)
-    results = await svc.search("query", accessible_dataset_ids=ds_ids)
+    f = AnalyticalPatternFilter(search=APSearchParams(
+        q="query", top_k=10, threshold=0.0))
+    result = await svc.list(f, accessible_dataset_ids=ds_ids)
 
-    repo.search.assert_called_once_with(
-        embedding, 10, accessible_dataset_ids=ds_ids)
-    assert results == [(ap, 0.9)]
+    repo.list.assert_called_once_with(
+        f, accessible_dataset_ids=ds_ids, query_vector=embedding)
+    assert result["aps"] == [ap]
+
+
+# ---------------------------------------------------------------------------
+# add_evaluation() / delete_evaluation()
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_add_evaluation_persists_via_ap_repo():
+    ap_repo = AsyncMock()
+    ap_repo.get.return_value = MagicMock()  # AP exists
+    ap_repo.add_evaluation = AsyncMock()
+
+    svc = AnalyticalPatternService(ap_repo, AsyncMock())
+    body = Evaluation(
+        type=EvaluationDimension.system,
+        evaluation=json.dumps({"latency": 12}),
+        execution_id=uuid4(),
+    )
+    result = await svc.add_evaluation(ap_id="ap-123", eval=body)
+
+    ap_repo.get.assert_called_once_with("ap-123")
+    ap_repo.add_evaluation.assert_called_once_with(
+        ap_id="ap-123",
+        execution_id=str(body.execution_id),
+        evaluation=Evaluation({EvaluationDimension.system: {"latency": 12}}),
+    )
+    assert result["execution_id"] == str(body.execution_id)
+
+
+@pytest.mark.asyncio
+async def test_add_evaluation_uses_provided_execution_id():
+    ap_repo = AsyncMock()
+    ap_repo.get.return_value = MagicMock()
+    ap_repo.add_evaluation = AsyncMock()
+    from uuid import UUID
+    execution_id = uuid4()
+
+    svc = AnalyticalPatternService(ap_repo, AsyncMock())
+    body = Evaluation(
+        type=EvaluationDimension.data,
+        evaluation=json.dumps({"completeness": 0.9}),
+        execution_id=execution_id,
+    )
+    result = await svc.add_evaluation(ap_id="ap-123", eval=body)
+
+    assert result["execution_id"] == str(execution_id)
+    assert ap_repo.add_evaluation.call_args.kwargs["execution_id"] == str(
+        execution_id)
+
+
+@pytest.mark.asyncio
+async def test_add_evaluation_raises_not_found_when_ap_missing():
+    ap_repo = AsyncMock()
+    ap_repo.get.return_value = None
+
+    svc = AnalyticalPatternService(ap_repo, AsyncMock())
+    with pytest.raises(NotFoundError):
+        await svc.add_evaluation(
+            ap_id="missing-ap",
+            eval=Evaluation(
+                type=EvaluationDimension.system,
+                evaluation=json.dumps({"value": 1}),
+                execution_id=uuid4(),
+            ),
+        )
+
+
+def test_evaluation_create_fails_without_dimensions():
+    with pytest.raises(PydanticValidationError, match="(?i)at least one"):
+        Evaluation({})
+
+
+def test_evaluation_create_fails_with_unknown_dimension():
+    with pytest.raises(PydanticValidationError):
+        Evaluation({"unknown_dim": {"value": 1}})
+
+
+@pytest.mark.asyncio
+async def test_delete_evaluation_raises_not_found_when_repo_deletes_nothing():
+    ap_repo = AsyncMock()
+    ap_repo.delete_evaluation = AsyncMock(return_value=0)
+
+    svc = AnalyticalPatternService(ap_repo, AsyncMock())
+    with pytest.raises(NotFoundError):
+        await svc.delete_evaluation(ap_id="ap-123", execution_id="missing")
+
+
+@pytest.mark.asyncio
+async def test_delete_evaluation_calls_repo():
+    ap_repo = AsyncMock()
+    ap_repo.delete_evaluation = AsyncMock(return_value=1)
+
+    svc = AnalyticalPatternService(ap_repo, AsyncMock())
+    await svc.delete_evaluation(ap_id="ap-123", execution_id="exec-1")
+    ap_repo.delete_evaluation.assert_called_once_with(
+        ap_id="ap-123", execution_id="exec-1")
+
+
+@pytest.mark.parametrize("filename", ["MCQGen.json", "OfferRecom.json", "QuizComp.json"])
+@pytest.mark.asyncio
+async def test_add_evaluation_from_real_payload(filename: str):
+    payload = json.loads((_EVALUATIONS_DIR / filename).read_text())
+
+    ap_repo = AsyncMock()
+    ap_repo.get.return_value = MagicMock()
+    ap_repo.add_evaluation = AsyncMock()
+
+    svc = AnalyticalPatternService(ap_repo, AsyncMock())
+    # Submit one dimension at a time (as per EvaluationCreateRequest contract)
+    for dim_str, metrics in payload.items():
+        body = Evaluation(
+            type=EvaluationDimension(dim_str),
+            evaluation=json.dumps(metrics),
+            execution_id=uuid4(),
+        )
+        result = await svc.add_evaluation(ap_id="ap-test", eval=body)
+        assert result["execution_id"] == str(body.execution_id)
+        ap_repo.add_evaluation.assert_called_with(
+            ap_id="ap-test",
+            execution_id=str(body.execution_id),
+            evaluation=Evaluation({EvaluationDimension(dim_str): metrics}),
+        )
