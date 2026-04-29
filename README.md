@@ -28,7 +28,11 @@ The diagram below shows all MoMa node types and their relationships. Solid arrow
 | `ML_Model` | Registered machine-learning model |
 | `Task` | Scientific task that can be fulfilled by one or more APs |
 | `User` | User who triggers or configures an Operator |
-| `Evaluation` | Persistent evaluation record for an AP execution; stores system, data, human, and ecological assessment dimensions |
+| `Evaluation` | Base evaluation record for an AP execution |
+| `SystemEvaluation` | Evaluation of system-level metrics (e.g. latency, throughput) |
+| `DataEvaluation` | Evaluation of data-quality metrics |
+| `HumanEvaluation` | Evaluation produced by human annotators |
+| `EcologicalEvaluation` | Evaluation of ecological / environmental impact |
 
 ```mermaid
 graph LR
@@ -38,10 +42,10 @@ graph LR
   classDef dataChild fill:#42A5F5,stroke:#1E88E5,color:#fff
   classDef dataLeaf fill:#64B5F6,stroke:#42A5F5,color:#fff
   classDef record fill:#90CAF9,stroke:#42A5F5,color:#000
-  classDef ap fill:#E53935,stroke:#C62828,color:#fff
-  classDef operator fill:#EF5350,stroke:#E53935,color:#fff
+  classDef ap fill:#f55200,stroke:#E65100,color:#fff
+  classDef operator fill:#F57C00,stroke:#E65100,color:#fff
   classDef ml fill:#43A047,stroke:#2E7D32,color:#fff
-  classDef misc fill:#78909C,stroke:#546E7A,color:#fff
+  classDef misc fill:#F57C00,stroke:#E65100,color:#fff
   classDef evaluation fill:#F57C00,stroke:#E65100,color:#fff
 
   %% ── Dataset subgraph ────────────────────────────────────
@@ -118,17 +122,23 @@ graph LR
 
   %% ── Evaluation subgraph ────────────────────────────────
   Evaluation:::evaluation
+  SystemEvaluation:::evaluation
+  DataEvaluation:::evaluation
+  HumanEvaluation:::evaluation
+  EcologicalEvaluation:::evaluation
 
-  Evaluation -- measure --> AP
+  AP -- is_measured_by --> Evaluation
+  SystemEvaluation -. "is-a" .-> Evaluation
+  DataEvaluation -. "is-a" .-> Evaluation
+  HumanEvaluation -. "is-a" .-> Evaluation
+  EcologicalEvaluation -. "is-a" .-> Evaluation
 ```
 
 | Colour | Domain |
 |--------|--------|
-| 🟦 Blue shades | Dataset & Data nodes |
-| 🟥 Red shades | Analytical Pattern & Operators |
-| 🟩 Green | ML Model |
-| 🟠 Orange | Evaluation |
-| ⬜ Grey | Task & User |
+| 🟦 Blue | Dataset & Data nodes |
+| � Green | ML Model |
+| 🟠 Orange | Analytical Pattern, Operators, Evaluation, Task & User |
 
 ### Edges
 
@@ -149,7 +159,7 @@ graph LR
 | `uses` | `User` | `Operator` | User triggers or configures an operator |
 | `perform_inference` | `Operator` | `ML_Model` | Operator runs inference against an ML model |
 | `is_accomplished_by` | `Task` | `Analytical_Pattern` | Task is fulfilled by an AP |
-| `measure` | `Evaluation` | `Analytical_Pattern` | Evaluation captures the assessment of one AP execution |
+| `is_measured_by` | `Analytical_Pattern` | `Evaluation` | AP links to its evaluation record(s) |
 
 ## Quick Start
 
