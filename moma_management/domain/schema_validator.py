@@ -15,7 +15,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Iterator, List, Set, Tuple
 
-from jsonschema import Draft7Validator
+from jsonschema import Draft202012Validator
 from jsonschema import ValidationError as JsonSchemaValidationError
 from pydantic import BaseModel
 from referencing import Registry, Resource
@@ -198,7 +198,7 @@ class LocalSchemaValidator:
         schema = json.loads(file_path.read_text())
         registry = self._get_registry()
 
-        validator = Draft7Validator(schema, registry=registry)
+        validator = Draft202012Validator(schema, registry=registry)
         return [self._wrap_to_ajv(e) for e in validator.iter_errors(data)]
 
     @staticmethod
