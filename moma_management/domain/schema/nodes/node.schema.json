@@ -1,5 +1,5 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Node",
     "type": "object",
     "description": "A PG-JSON node in the MoMa graph. The 'labels' array identifies the MoMa type(s), and 'properties' holds all node attributes.",
