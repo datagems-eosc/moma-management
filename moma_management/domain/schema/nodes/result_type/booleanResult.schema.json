@@ -1,0 +1,44 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "booleanResult.schema.json",
+    "title": "Boolean Result",
+    "allOf": [
+        {
+            "$ref": "resultType.schema.json"
+        }
+    ],
+    "type": "object",
+    "description": "A non-persistent boolean value exchanged between Operators.",
+    "labels": {
+        "type": "array",
+        "items": {
+            "type": "string"
+        },
+        "default": [
+            "ResultType",
+            "boolean"
+        ],
+        "allOf": [
+            {
+                "contains": {
+                    "const": "ResultType"
+                }
+            },
+            {
+                "contains": {
+                    "const": "boolean"
+                }
+            }
+        ]
+    },
+    "properties": {
+        "type": {
+            "type": "string",
+            "enum": [
+                "boolean"
+            ],
+            "default": "boolean"
+        }
+    },
+    "required": ["name"]
+}

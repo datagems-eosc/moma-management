@@ -1,0 +1,57 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "arrayResult.schema.json",
+    "title": "Array Result",
+    "allOf": [
+        {
+            "$ref": "resultType.schema.json"
+        }
+    ],
+    "type": "object",
+    "description": "A non-persistent array value exchanged between Operators.",
+    "labels": {
+        "type": "array",
+        "items": {
+            "type": "string"
+        },
+        "default": [
+            "ResultType",
+            "array"
+        ],
+        "allOf": [
+            {
+                "contains": {
+                    "const": "ResultType"
+                }
+            },
+            {
+                "contains": {
+                    "const": "array"
+                }
+            }
+        ]
+    },
+    "properties": {
+        "type": {
+            "type": "string",
+            "enum": [
+                "array"
+            ],
+            "default": "array"
+        },
+        "schema": {
+            "type": "object",
+            "description": "JSON Schema fragment describing the array structure (e.g. items type)",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": ["array"]
+                },
+                "items": {
+                    "type": "object"
+                }
+            }
+        }
+    },
+    "required": ["name"]
+}

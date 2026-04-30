@@ -1,0 +1,62 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "objectResult.schema.json",
+    "title": "Object Result",
+    "allOf": [
+        {
+            "$ref": "resultType.schema.json"
+        }
+    ],
+    "type": "object",
+    "description": "A non-persistent structured object value exchanged between Operators.",
+    "labels": {
+        "type": "array",
+        "items": {
+            "type": "string"
+        },
+        "default": [
+            "ResultType",
+            "object"
+        ],
+        "allOf": [
+            {
+                "contains": {
+                    "const": "ResultType"
+                }
+            },
+            {
+                "contains": {
+                    "const": "object"
+                }
+            }
+        ]
+    },
+    "properties": {
+        "type": {
+            "type": "string",
+            "enum": [
+                "object"
+            ],
+            "default": "object"
+        },
+        "schema": {
+            "type": "object",
+            "description": "Inline JSON Schema fragment describing the object structure (properties, required, additionalProperties)",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": ["object"]
+                },
+                "properties": {
+                    "type": "object"
+                },
+                "required": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                },
+                "additionalProperties": {}
+            }
+        }
+    },
+    "required": ["name"]
+}

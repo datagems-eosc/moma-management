@@ -6,13 +6,16 @@ import json
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
+
 import pytest
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.exceptions import NotFoundError, ValidationError
 from moma_management.domain.filters import AnalyticalPatternFilter
 from moma_management.domain.generated.edges.edge_schema import Edge
-from moma_management.domain.generated.nodes.ap.evaluation_schema import Type as EvaluationType
+from moma_management.domain.generated.nodes.ap.evaluation_schema import (
+    Type as EvaluationType,
+)
 from moma_management.domain.generated.nodes.node_schema import Node
 from moma_management.services.analytical_pattern import AnalyticalPatternService
 
@@ -304,7 +307,7 @@ async def test_add_evaluation_persists_via_ap_repo():
     assert isinstance(result, str)
     eval_nodes = [n for n in ap.nodes if "Evaluation" in n.labels]
     assert len(eval_nodes) == 1
-    assert str(eval_nodes[0].properties["executionId"]) == str(execution_id)
+    assert str(eval_nodes[0].properties.execution_id) == str(execution_id)
 
 
 @pytest.mark.asyncio
@@ -325,7 +328,7 @@ async def test_add_evaluation_uses_provided_execution_id():
     assert isinstance(result, str)
     eval_nodes = [n for n in ap.nodes if "Evaluation" in n.labels]
     assert len(eval_nodes) == 1
-    assert str(eval_nodes[0].properties["executionId"]) == str(execution_id)
+    assert str(eval_nodes[0].properties.execution_id) == str(execution_id)
 
 
 @pytest.mark.asyncio

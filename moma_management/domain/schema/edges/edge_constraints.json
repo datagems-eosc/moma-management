@@ -150,6 +150,18 @@
         "description": "Operator performs inference using an ML model"
     },
     {
+        "fromLabel": "Operator",
+        "label": "input",
+        "toLabel": "ResultType",
+        "description": "Operator reads from an internal ResultType node"
+    },
+    {
+        "fromLabel": "Operator",
+        "label": "output",
+        "toLabel": "ResultType",
+        "description": "Operator writes to an internal ResultType node"
+    },
+    {
         "fromLabel": "Analytical_Pattern",
         "label": "is_measured_by",
         "toLabel": "Evaluation",

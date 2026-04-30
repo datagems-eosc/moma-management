@@ -39,6 +39,60 @@
         "startTime": {
             "type": "string",
             "description": "Optional operator-level start time"
+        },
+        "inputs": {
+            "type": "array",
+            "description": "Typed input parameters consumed by this operator",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Parameter name used inside the operator"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": ["string", "boolean", "number", "array", "object"],
+                        "description": "JSON Schema type of the parameter"
+                    },
+                    "required": {
+                        "type": "boolean",
+                        "description": "Whether the parameter must be provided",
+                        "default": true
+                    },
+                    "default": {
+                        "description": "Default value when the parameter is not provided"
+                    }
+                },
+                "required": ["name", "type"]
+            }
+        },
+        "outputs": {
+            "type": "array",
+            "description": "Typed output parameters produced by this operator",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Parameter name produced by the operator"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": ["string", "boolean", "number", "array", "object"],
+                        "description": "JSON Schema type of the output"
+                    },
+                    "required": {
+                        "type": "boolean",
+                        "description": "Whether the output is always produced",
+                        "default": true
+                    },
+                    "default": {
+                        "description": "Default value when the output is not produced"
+                    }
+                },
+                "required": ["name", "type"]
+            }
         }
     },
     "required": [

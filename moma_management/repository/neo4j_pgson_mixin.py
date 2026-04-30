@@ -146,7 +146,10 @@ class Neo4jPgJsonMixin:
         labels = ":".join(
             f"`{lbl.replace('/', '___')}`" for lbl in edge.labels
         )
-        props = self._sanitize_properties(edge.properties or {})
+        props = self._sanitize_properties(
+            edge.properties.model_dump(exclude_none=True)
+            if edge.properties is not None else {}
+        )
 
         query = f"""
         MATCH (a {{id: $from_id}})

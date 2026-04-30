@@ -1,0 +1,44 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "stringResult.schema.json",
+    "title": "String Result",
+    "allOf": [
+        {
+            "$ref": "resultType.schema.json"
+        }
+    ],
+    "type": "object",
+    "description": "A non-persistent string value exchanged between Operators.",
+    "labels": {
+        "type": "array",
+        "items": {
+            "type": "string"
+        },
+        "default": [
+            "ResultType",
+            "string"
+        ],
+        "allOf": [
+            {
+                "contains": {
+                    "const": "ResultType"
+                }
+            },
+            {
+                "contains": {
+                    "const": "string"
+                }
+            }
+        ]
+    },
+    "properties": {
+        "type": {
+            "type": "string",
+            "enum": [
+                "string"
+            ],
+            "default": "string"
+        }
+    },
+    "required": ["name"]
+}

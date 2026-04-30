@@ -1,0 +1,37 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "resultType.schema.json",
+    "title": "ResultType",
+    "allOf": [
+        {
+            "$ref": "../node.schema.json"
+        }
+    ],
+    "type": "object",
+    "description": "A typed value exchanged between Operators inside an AnalyticalPattern. Concrete subtypes are string, boolean, number, array, and object.",
+    "properties": {
+        "id": {
+            "type": "string",
+            "format": "uuid"
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "string",
+                "boolean",
+                "number",
+                "array",
+                "object",
+                "Data"
+            ]
+        },
+        "name": {
+            "type": "string",
+            "description": "Logical name of the value in the graph"
+        }
+    },
+    "required": [
+        "id",
+        "type"
+    ]
+}
