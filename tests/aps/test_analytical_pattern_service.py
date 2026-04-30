@@ -307,7 +307,7 @@ async def test_add_evaluation_persists_via_ap_repo():
     assert isinstance(result, str)
     eval_nodes = [n for n in ap.nodes if "Evaluation" in n.labels]
     assert len(eval_nodes) == 1
-    assert str(eval_nodes[0].properties.execution_id) == str(execution_id)
+    assert str(eval_nodes[0].properties["executionId"]) == str(execution_id)
 
 
 @pytest.mark.asyncio
@@ -328,7 +328,7 @@ async def test_add_evaluation_uses_provided_execution_id():
     assert isinstance(result, str)
     eval_nodes = [n for n in ap.nodes if "Evaluation" in n.labels]
     assert len(eval_nodes) == 1
-    assert str(eval_nodes[0].properties.execution_id) == str(execution_id)
+    assert str(eval_nodes[0].properties["executionId"]) == str(execution_id)
 
 
 @pytest.mark.asyncio
