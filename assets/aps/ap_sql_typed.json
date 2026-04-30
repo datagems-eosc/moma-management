@@ -1,4 +1,5 @@
 {
+    "$schema": "../../moma_management/domain/schema/moma.schema.json",
     "nodes": [
         {
             "id": "b1000000-0000-4000-a000-000000000001",
