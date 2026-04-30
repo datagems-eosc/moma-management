@@ -1,43 +1,12 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "humanEvaluation.schema.json",
+    "$id": "nodes/ap/humanEvaluation.schema.json",
     "title": "Human Evaluation",
-    "allOf": [
-        {
-            "$ref": "evaluation.schema.json"
-        }
-    ],
-    "type": "object",
     "description": "An immutable snapshot of quality metrics collected for one execution of an AnalyticalPattern",
-    "labels": {
-        "type": "array",
-        "items": {
-            "type": "string"
-        },
-        "default": [
-            "Evaluation",
-            "HumanEvaluation"
-        ],
-        "allOf": [
-            {
-                "contains": {
-                    "const": "Evaluation"
-                }
-            },
-            {
-                "contains": {
-                    "const": "HumanEvaluation"
-                }
-            }
-        ]
-    },
-    "properties": {
-        "type": {
-            "type": "string",
-            "enum": [
-                "HumanEvaluation"
-            ],
-            "default": "HumanEvaluation"
+    "$defs": {
+        "pgProperties": {
+            "$ref": "evaluation.schema.json#/$defs/pgProperties",
+            "unevaluatedProperties": false
         }
     }
 }

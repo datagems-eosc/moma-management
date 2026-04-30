@@ -1,43 +1,12 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "ecologicalEvaluation.schema.json",
+    "$id": "nodes/ap/ecologicalEvaluation.schema.json",
     "title": "Ecological Evaluation",
-    "allOf": [
-        {
-            "$ref": "evaluation.schema.json"
-        }
-    ],
-    "type": "object",
     "description": "An immutable snapshot of quality metrics collected for one execution of an AnalyticalPattern",
-    "labels": {
-        "type": "array",
-        "items": {
-            "type": "string"
-        },
-        "default": [
-            "Evaluation",
-            "EcologicalEvaluation"
-        ],
-        "allOf": [
-            {
-                "contains": {
-                    "const": "Evaluation"
-                }
-            },
-            {
-                "contains": {
-                    "const": "EcologicalEvaluation"
-                }
-            }
-        ]
-    },
-    "properties": {
-        "type": {
-            "type": "string",
-            "enum": [
-                "EcologicalEvaluation"
-            ],
-            "default": "EcologicalEvaluation"
+    "$defs": {
+        "pgProperties": {
+            "$ref": "evaluation.schema.json#/$defs/pgProperties",
+            "unevaluatedProperties": false
         }
     }
 }

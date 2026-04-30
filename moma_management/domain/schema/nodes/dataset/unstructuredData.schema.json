@@ -1,13 +1,10 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "UnstructuredData",
-    "allOf": [
-        {
-            "$ref": "./data.schema.json"
-        },
-        {
-            "type": "object",
-            "properties": {}
+    "$defs": {
+        "pgProperties": {
+            "$ref": "data.schema.json#/$defs/pgProperties"
         }
-    ]
+    },
+    "$id": "nodes/dataset/unstructuredData.schema.json"
 }

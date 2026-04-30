@@ -15,15 +15,20 @@
         },
         "labels": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+                "type": "string"
+            },
             "description": "Edge type labels (e.g. distribution, field, statistics)"
         },
         "properties": {
             "type": "object",
             "description": "Additional edge properties",
             "properties": {
-                    "mapping": {
-                    "type": ["object", "null"],
+                "mapping": {
+                    "type": [
+                        "object",
+                        "null"
+                    ],
                     "description": "Data-flow mapping; keys are target parameter names, values are JSONPath-from expressions (e.g. \"from['x']\")",
                     "additionalProperties": {
                         "type": "string"
@@ -31,9 +36,14 @@
                 }
             },
             "propertyNames": {
-              "pattern": "^[a-z@][a-zA-Z0-9_]*$"
+                "pattern": "^[a-z@][a-zA-Z0-9_]*$"
             }
         }
     },
-    "required": ["from", "to", "labels"]
+    "required": [
+        "from",
+        "to",
+        "labels"
+    ],
+    "$id": "edges/edge.schema.json"
 }

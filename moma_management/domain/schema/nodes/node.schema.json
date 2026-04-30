@@ -11,7 +11,9 @@
         },
         "labels": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+                "type": "string"
+            },
             "description": "Node type labels (e.g. Dataset, CSV, Column)"
         },
         "properties": {
@@ -19,9 +21,430 @@
             "description": "Node attributes as defined by the MoMa node type",
             "additionalProperties": true,
             "propertyNames": {
-              "pattern": "^[a-z@][a-zA-Z0-9_]*$"
+                "pattern": "^[a-z@][a-zA-Z0-9_]*$"
             }
         }
     },
-    "required": ["id", "labels", "properties"]
+    "required": [
+        "id",
+        "labels",
+        "properties"
+    ],
+    "allOf": [
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "sc:Dataset"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/dataset.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "Data"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/data.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "RelationalDatabase"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/relationalDatabase.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "CsvSet"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/csvSet.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "TextSet"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/textSet.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "PDFSet"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/pdfSet.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "VideoSet"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/videoSet.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "ImageSet"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/imageSet.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "Table"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/table.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "Column"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/column.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "ColumnCSV"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/columnCsv.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "ColumnTable"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/columnTable.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "Text"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/text.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "Video"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/video.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "Image"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/image.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "Analytical_Pattern"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "ap/analyticalPattern.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "Operator"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "ap/operator.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "SQL_Operator"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "ap/sqlOperator.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "Task"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "ap/task.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "User"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "ap/user.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "Evaluation"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "ap/evaluation.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "ResultType"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "result_type/resultType.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "ML_Model"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "ml_model/mlModel.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        }
+    ],
+    "$id": "nodes/node.schema.json"
 }

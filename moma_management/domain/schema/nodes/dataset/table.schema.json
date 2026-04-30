@@ -1,27 +1,34 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "table.schema.json",
+    "$id": "nodes/dataset/table.schema.json",
     "title": "Table",
-    "allOf": [
-        {
-            "$ref": "data.schema.json"
-        },
-        {
-            "type": "object",
-            "properties": {
-                "primaryKey": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
+    "$defs": {
+        "pgProperties": {
+            "allOf": [
+                {
+                    "$ref": "data.schema.json#/$defs/pgProperties"
                 },
-                "foreignKey": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
+                {
+                    "type": "object",
+                    "properties": {
+                        "primaryKey": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Primary key column name(s)"
+                        },
+                        "foreignKey": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Foreign key column name(s)"
+                        }
                     }
                 }
-            }
+            ],
+            "unevaluatedProperties": false
         }
-    ]
+    }
 }

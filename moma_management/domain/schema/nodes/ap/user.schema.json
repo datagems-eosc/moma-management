@@ -1,41 +1,27 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "user.schema.json",
+    "$id": "nodes/ap/user.schema.json",
     "title": "User",
-    "allOf": [
-        {
-            "$ref": "../node.schema.json"
-        }
-    ],
-    "type": "object",
     "description": "A User node embedded inside an AnalyticalPattern subgraph to record which user triggered or configured a specific Operator.",
-    "properties": {
-        "id": {
-            "type": "string",
-            "format": "uuid"
-        },
-        "type": {
-            "type": "string",
-            "enum": [
-                "User"
-            ]
-        },
-        "name": {
-            "type": "string",
-            "description": "Display name of the user"
-        },
-        "email": {
-            "type": "string",
-            "format": "email",
-            "description": "User email address"
-        },
-        "role": {
-            "type": "string",
-            "description": "Role of the user within the system"
+    "$defs": {
+        "pgProperties": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Display name of the user"
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "User email address"
+                },
+                "role": {
+                    "type": "string",
+                    "description": "Role of the user within the system"
+                }
+            },
+            "unevaluatedProperties": false
         }
-    },
-    "required": [
-        "id",
-        "type"
-    ]
+    }
 }

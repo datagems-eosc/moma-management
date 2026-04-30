@@ -1,18 +1,23 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "StructuredData",
-    "allOf": [
-        {
-            "$ref": "./data.schema.json"
-        },
-        {
-            "type": "object",
-            "properties": {
-                "schema": {
-                    "type": "string",
-                    "description": "Reference to the schema describing the structure"
+    "$defs": {
+        "pgProperties": {
+            "allOf": [
+                {
+                    "$ref": "data.schema.json#/$defs/pgProperties"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "schema": {
+                            "type": "string",
+                            "description": "Reference to the schema describing the structure"
+                        }
+                    }
                 }
-            }
+            ]
         }
-    ]
+    },
+    "$id": "nodes/dataset/structuredData.schema.json"
 }

@@ -1,103 +1,92 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "operator.schema.json",
+    "$id": "nodes/ap/operator.schema.json",
     "title": "Operator",
-    "allOf": [
-        {
-            "$ref": "../node.schema.json"
-        }
-    ],
-    "type": "object",
     "description": "An Operator node represents a single processing step within an AnalyticalPattern. Specialisations (e.g. SQL_Operator) add further properties.",
-    "properties": {
-        "id": {
-            "type": "string",
-            "format": "uuid"
-        },
-        "type": {
-            "type": "string",
-            "enum": [
-                "Operator"
+    "$defs": {
+        "parameterItem": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Parameter name"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "string",
+                        "boolean",
+                        "number",
+                        "array",
+                        "object"
+                    ],
+                    "description": "JSON Schema type"
+                },
+                "required": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "default": {}
+            },
+            "required": [
+                "name",
+                "type"
             ]
         },
-        "name": {
-            "type": "string",
-            "description": "Human-readable name of the operator"
-        },
-        "description": {
-            "type": "string",
-            "description": "What this operator does"
-        },
-        "command": {
-            "type": "string",
-            "description": "Executable command or function name"
-        },
-        "step": {
-            "type": "integer",
-            "description": "Ordinal position in a sequence of operators"
-        },
-        "startTime": {
-            "type": "string",
-            "description": "Optional operator-level start time"
-        },
-        "inputs": {
-            "type": "array",
-            "description": "Typed input parameters consumed by this operator",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "Parameter name used inside the operator"
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": ["string", "boolean", "number", "array", "object"],
-                        "description": "JSON Schema type of the parameter"
-                    },
-                    "required": {
-                        "type": "boolean",
-                        "description": "Whether the parameter must be provided",
-                        "default": true
-                    },
-                    "default": {
-                        "description": "Default value when the parameter is not provided"
-                    }
+        "pgProperties": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "The Croissant/domain @type value for this operator"
                 },
-                "required": ["name", "type"]
-            }
-        },
-        "outputs": {
-            "type": "array",
-            "description": "Typed output parameters produced by this operator",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "Parameter name produced by the operator"
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": ["string", "boolean", "number", "array", "object"],
-                        "description": "JSON Schema type of the output"
-                    },
-                    "required": {
-                        "type": "boolean",
-                        "description": "Whether the output is always produced",
-                        "default": true
-                    },
-                    "default": {
-                        "description": "Default value when the output is not produced"
-                    }
+                "publishedDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Date the operator was published (ISO 8601: YYYY-MM-DD)"
                 },
-                "required": ["name", "type"]
-            }
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable name of the operator"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "What this operator does"
+                },
+                "version": {
+                    "type": "string",
+                    "description": "Operator version string"
+                },
+                "command": {
+                    "type": "string",
+                    "description": "Executable command or function name"
+                },
+                "step": {
+                    "type": "integer",
+                    "description": "Ordinal position in the operator sequence"
+                },
+                "startTime": {
+                    "type": "string",
+                    "description": "Optional operator-level start time"
+                },
+                "inputs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/parameterItem"
+                    },
+                    "description": "Typed input parameters"
+                },
+                "outputs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/parameterItem"
+                    },
+                    "description": "Typed output parameters"
+                }
+            },
+            "required": [
+                "name"
+            ]
         }
-    },
-    "required": [
-        "id",
-        "type",
-        "name"
-    ]
+    }
 }

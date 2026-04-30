@@ -1,13 +1,11 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "JSONSet",
-    "allOf": [
-        {
-            "$ref": "./structuredData.schema.json"
-        },
-        {
-            "type": "object",
-            "properties": {}
+    "$defs": {
+        "pgProperties": {
+            "$ref": "structuredData.schema.json#/$defs/pgProperties",
+            "unevaluatedProperties": false
         }
-    ]
+    },
+    "$id": "nodes/dataset/jsonSet.schema.json"
 }

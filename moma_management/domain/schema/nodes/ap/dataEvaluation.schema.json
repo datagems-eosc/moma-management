@@ -1,43 +1,12 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "dataEvaluation.schema.json",
+    "$id": "nodes/ap/dataEvaluation.schema.json",
     "title": "Data Evaluation",
-    "allOf": [
-        {
-            "$ref": "evaluation.schema.json"
-        }
-    ],
-    "type": "object",
     "description": "An immutable snapshot of quality metrics collected for one execution of an AnalyticalPattern",
-    "labels": {
-        "type": "array",
-        "items": {
-            "type": "string"
-        },
-        "default": [
-            "Evaluation",
-            "DataEvaluation"
-        ],
-        "allOf": [
-            {
-                "contains": {
-                    "const": "Evaluation"
-                }
-            },
-            {
-                "contains": {
-                    "const": "DataEvaluation"
-                }
-            }
-        ]
-    },
-    "properties": {
-        "type": {
-            "type": "string",
-            "enum": [
-                "DataEvaluation"
-            ],
-            "default": "DataEvaluation"
+    "$defs": {
+        "pgProperties": {
+            "$ref": "evaluation.schema.json#/$defs/pgProperties",
+            "unevaluatedProperties": false
         }
     }
 }

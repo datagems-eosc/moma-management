@@ -1,35 +1,26 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "evaluation.schema.json",
+    "$id": "nodes/ap/evaluation.schema.json",
     "title": "Evaluation",
-    "allOf": [
-        {
-            "$ref": "../node.schema.json"
-        }
-    ],
-    "type": "object",
     "description": "An immutable snapshot of quality metrics collected for one execution of an AnalyticalPattern",
-    "properties": {
-        "id": {
-            "type": "string",
-            "format": "uuid"
-        },
-        "type": {
-            "type": "string",
-            "enum": [
-                "EcologicalEvaluation",
-                "HumanEvaluation",
-                "SystemEvaluation",
-                "DataEvaluation"
-            ]
-        },
-        "properties": {
+    "$defs": {
+        "pgProperties": {
             "type": "object",
             "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "SystemEvaluation",
+                        "DataEvaluation",
+                        "HumanEvaluation",
+                        "EcologicalEvaluation"
+                    ],
+                    "description": "Evaluation dimension that determines the sub-label (e.g. SystemEvaluation)"
+                },
                 "executionId": {
                     "type": "string",
                     "format": "uuid",
-                    "description": "Unique identifier for this evaluation run. Can be shared across multiple nodes if the evaluation is recorded in parts (e.g. separate nodes for system vs human metrics)."
+                    "description": "Unique identifier for this evaluation run"
                 },
                 "evaluation": {
                     "type": "string",
@@ -39,12 +30,8 @@
             "required": [
                 "executionId",
                 "evaluation"
-            ]
+            ],
+            "unevaluatedProperties": false
         }
-    },
-    "required": [
-        "id",
-        "type",
-        "properties"
-    ]
+    }
 }

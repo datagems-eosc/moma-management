@@ -1,37 +1,32 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "resultType.schema.json",
+    "$id": "nodes/result_type/resultType.schema.json",
     "title": "ResultType",
-    "allOf": [
-        {
-            "$ref": "../node.schema.json"
-        }
-    ],
-    "type": "object",
     "description": "A typed value exchanged between Operators inside an AnalyticalPattern. Concrete subtypes are string, boolean, number, array, and object.",
-    "properties": {
-        "id": {
-            "type": "string",
-            "format": "uuid"
-        },
-        "type": {
-            "type": "string",
-            "enum": [
-                "string",
-                "boolean",
-                "number",
-                "array",
-                "object",
-                "Data"
-            ]
-        },
-        "name": {
-            "type": "string",
-            "description": "Logical name of the value in the graph"
+    "$defs": {
+        "pgProperties": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Logical name of the value in the graph"
+                },
+                "schema": {
+                    "type": "string",
+                    "enum": [
+                        "string",
+                        "boolean",
+                        "number",
+                        "array",
+                        "object"
+                    ],
+                    "description": "JSON Schema type of the value"
+                }
+            },
+            "required": [
+                "name"
+            ],
+            "unevaluatedProperties": false
         }
-    },
-    "required": [
-        "id",
-        "type"
-    ]
+    }
 }

@@ -1,21 +1,28 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "RelationalDatabase",
-    "allOf": [
-        {
-            "$ref": "./structuredData.schema.json"
-        },
-        {
-            "type": "object",
-            "properties": {
-                "connectionString": {
-                    "type": "string"
+    "$defs": {
+        "pgProperties": {
+            "allOf": [
+                {
+                    "$ref": "structuredData.schema.json#/$defs/pgProperties"
                 },
-                "engine": {
-                    "type": "string",
-                    "description": "Database engine (PostgreSQL, MySQL, etc)"
+                {
+                    "type": "object",
+                    "properties": {
+                        "connectionString": {
+                            "type": "string",
+                            "description": "Database connection string"
+                        },
+                        "engine": {
+                            "type": "string",
+                            "description": "Database engine (PostgreSQL, MySQL, etc)"
+                        }
+                    }
                 }
-            }
+            ],
+            "unevaluatedProperties": false
         }
-    ]
+    },
+    "$id": "nodes/dataset/relationalDatabase.schema.json"
 }

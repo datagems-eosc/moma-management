@@ -1,44 +1,12 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "booleanResult.schema.json",
+    "$id": "nodes/result_type/booleanResult.schema.json",
     "title": "Boolean Result",
-    "allOf": [
-        {
-            "$ref": "resultType.schema.json"
-        }
-    ],
-    "type": "object",
     "description": "A non-persistent boolean value exchanged between Operators.",
-    "labels": {
-        "type": "array",
-        "items": {
-            "type": "string"
-        },
-        "default": [
-            "ResultType",
-            "boolean"
-        ],
-        "allOf": [
-            {
-                "contains": {
-                    "const": "ResultType"
-                }
-            },
-            {
-                "contains": {
-                    "const": "boolean"
-                }
-            }
-        ]
-    },
-    "properties": {
-        "type": {
-            "type": "string",
-            "enum": [
-                "boolean"
-            ],
-            "default": "boolean"
+    "$defs": {
+        "pgProperties": {
+            "$ref": "resultType.schema.json#/$defs/pgProperties",
+            "unevaluatedProperties": false
         }
-    },
-    "required": ["name"]
+    }
 }

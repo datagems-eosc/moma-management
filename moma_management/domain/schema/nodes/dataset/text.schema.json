@@ -1,53 +1,59 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Text",
-    "allOf": [
-        {
-            "$ref": "./data.schema.json"
-        },
-        {
-            "type": "object",
-            "properties": {
-                "summary": {
-                    "type": "string",
-                    "description": "A summary of the text file"
+    "$defs": {
+        "pgProperties": {
+            "allOf": [
+                {
+                    "$ref": "data.schema.json#/$defs/pgProperties"
                 },
-                "keywords": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "description": "A list of key terms or phrases extracted from the text"
-                },
-                "language": {
-                    "type": "string",
-                    "description": "The detected primary language of the text"
-                },
-                "numLines": {
-                    "type": "integer",
-                    "description": "The total number of lines in the text"
-                },
-                "numWords": {
-                    "type": "integer",
-                    "description": "The total number of words in the text"
-                },
-                "numCharacters": {
-                    "type": "integer",
-                    "description": "The total number of characters in the text"
-                },
-                "avgSentenceLength": {
-                    "type": "number",
-                    "description": "The average number of words per sentence"
-                },
-                "numParagraphs": {
-                    "type": "integer",
-                    "description": "The total number of paragraphs in the text"
-                },
-                "fleschKincaidGrade": {
-                    "type": "number",
-                    "description": "The Flesch-Kincaid readability grade level score of the text"
+                {
+                    "type": "object",
+                    "properties": {
+                        "summary": {
+                            "type": "string",
+                            "description": "A summary of the text file"
+                        },
+                        "keywords": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Key terms or phrases extracted from the text"
+                        },
+                        "language": {
+                            "type": "string",
+                            "description": "The detected primary language"
+                        },
+                        "numLines": {
+                            "type": "integer",
+                            "description": "Total number of lines"
+                        },
+                        "numWords": {
+                            "type": "integer",
+                            "description": "Total number of words"
+                        },
+                        "numCharacters": {
+                            "type": "integer",
+                            "description": "Total number of characters"
+                        },
+                        "avgSentenceLength": {
+                            "type": "number",
+                            "description": "Average number of words per sentence"
+                        },
+                        "numParagraphs": {
+                            "type": "integer",
+                            "description": "Total number of paragraphs"
+                        },
+                        "fleschKincaidGrade": {
+                            "type": "number",
+                            "description": "Flesch-Kincaid readability grade level"
+                        }
+                    }
                 }
-            }
+            ],
+            "unevaluatedProperties": false
         }
-    ]
+    },
+    "$id": "nodes/dataset/text.schema.json"
 }

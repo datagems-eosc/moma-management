@@ -1,44 +1,12 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "numberResult.schema.json",
+    "$id": "nodes/result_type/numberResult.schema.json",
     "title": "Number Result",
-    "allOf": [
-        {
-            "$ref": "resultType.schema.json"
-        }
-    ],
-    "type": "object",
     "description": "A non-persistent numeric value exchanged between Operators.",
-    "labels": {
-        "type": "array",
-        "items": {
-            "type": "string"
-        },
-        "default": [
-            "ResultType",
-            "number"
-        ],
-        "allOf": [
-            {
-                "contains": {
-                    "const": "ResultType"
-                }
-            },
-            {
-                "contains": {
-                    "const": "number"
-                }
-            }
-        ]
-    },
-    "properties": {
-        "type": {
-            "type": "string",
-            "enum": [
-                "number"
-            ],
-            "default": "number"
+    "$defs": {
+        "pgProperties": {
+            "$ref": "resultType.schema.json#/$defs/pgProperties",
+            "unevaluatedProperties": false
         }
-    },
-    "required": ["name"]
+    }
 }

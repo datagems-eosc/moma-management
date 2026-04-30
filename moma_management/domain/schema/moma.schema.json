@@ -16,5 +16,8 @@
             }
         }
     },
-    "required": ["nodes"]
+    "required": [
+        "nodes"
+    ],
+    "$id": "moma.schema.json"
 }

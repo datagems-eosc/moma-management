@@ -1,42 +1,41 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Data",
-    "allOf": [
-        { "$ref": "../result_type/resultType.schema.json" }
-    ],
-    "type": "object",
-    "properties": {
-        "id": {
-            "type": "string"
-        },
-        "type": {
-            "type": "string",
-            "enum": [
-                "Data"
-            ]
-        },
-        "name": {
-            "type": "string"
-        },
-        "description": {
-            "type": "string"
-        },
-        "contentSize": {
-            "type": "string"
-        },
-        "contentUrl": {
-            "type": "string",
-            "format": "uri"
-        },
-        "encodingFormat": {
-            "type": "string"
-        },
-        "sha256": {
-            "type": "string"
+    "$defs": {
+        "pgProperties": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "The Croissant @type value (e.g. cr:FileObject, cr:FileSet)"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable name of the data node"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of the data content"
+                },
+                "contentUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL where the data can be accessed"
+                },
+                "contentSize": {
+                    "type": "string",
+                    "description": "Size of the content (e.g. '154411 B')"
+                },
+                "encodingFormat": {
+                    "type": "string",
+                    "description": "MIME type of the content (e.g. 'text/csv')"
+                },
+                "sha256": {
+                    "type": "string",
+                    "description": "SHA-256 checksum of the content"
+                }
+            }
         }
     },
-    "required": [
-        "id",
-        "type"
-    ]
+    "$id": "nodes/dataset/data.schema.json"
 }

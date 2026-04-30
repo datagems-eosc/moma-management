@@ -1,17 +1,24 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "VideoSet",
-    "allOf": [
-        {
-            "$ref": "./unstructuredData.schema.json"
-        },
-        {
-            "type": "object",
-            "properties": {
-                "duration": {
-                    "type": "string"
+    "$defs": {
+        "pgProperties": {
+            "allOf": [
+                {
+                    "$ref": "unstructuredData.schema.json#/$defs/pgProperties"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "duration": {
+                            "type": "string",
+                            "description": "Duration of the video content"
+                        }
+                    }
                 }
-            }
+            ],
+            "unevaluatedProperties": false
         }
-    ]
+    },
+    "$id": "nodes/dataset/videoSet.schema.json"
 }

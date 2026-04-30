@@ -1,18 +1,24 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "CsvSet",
-    "allOf": [
-        {
-            "$ref": "./structuredData.schema.json"
-        },
-        {
-            "type": "object",
-            "properties": {
-                "delimiter": {
-                    "type": "string",
-                    "description": "CSV delimiter"
+    "$defs": {
+        "pgProperties": {
+            "allOf": [
+                {
+                    "$ref": "structuredData.schema.json#/$defs/pgProperties"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "delimiter": {
+                            "type": "string",
+                            "description": "CSV column delimiter character"
+                        }
+                    }
                 }
-            }
+            ],
+            "unevaluatedProperties": false
         }
-    ]
+    },
+    "$id": "nodes/dataset/csvSet.schema.json"
 }

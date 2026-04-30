@@ -1,44 +1,12 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "stringResult.schema.json",
+    "$id": "nodes/result_type/stringResult.schema.json",
     "title": "String Result",
-    "allOf": [
-        {
-            "$ref": "resultType.schema.json"
-        }
-    ],
-    "type": "object",
     "description": "A non-persistent string value exchanged between Operators.",
-    "labels": {
-        "type": "array",
-        "items": {
-            "type": "string"
-        },
-        "default": [
-            "ResultType",
-            "string"
-        ],
-        "allOf": [
-            {
-                "contains": {
-                    "const": "ResultType"
-                }
-            },
-            {
-                "contains": {
-                    "const": "string"
-                }
-            }
-        ]
-    },
-    "properties": {
-        "type": {
-            "type": "string",
-            "enum": [
-                "string"
-            ],
-            "default": "string"
+    "$defs": {
+        "pgProperties": {
+            "$ref": "resultType.schema.json#/$defs/pgProperties",
+            "unevaluatedProperties": false
         }
-    },
-    "required": ["name"]
+    }
 }

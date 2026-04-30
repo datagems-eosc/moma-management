@@ -1,62 +1,12 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "objectResult.schema.json",
+    "$id": "nodes/result_type/objectResult.schema.json",
     "title": "Object Result",
-    "allOf": [
-        {
-            "$ref": "resultType.schema.json"
-        }
-    ],
-    "type": "object",
     "description": "A non-persistent structured object value exchanged between Operators.",
-    "labels": {
-        "type": "array",
-        "items": {
-            "type": "string"
-        },
-        "default": [
-            "ResultType",
-            "object"
-        ],
-        "allOf": [
-            {
-                "contains": {
-                    "const": "ResultType"
-                }
-            },
-            {
-                "contains": {
-                    "const": "object"
-                }
-            }
-        ]
-    },
-    "properties": {
-        "type": {
-            "type": "string",
-            "enum": [
-                "object"
-            ],
-            "default": "object"
-        },
-        "schema": {
-            "type": "object",
-            "description": "Inline JSON Schema fragment describing the object structure (properties, required, additionalProperties)",
-            "properties": {
-                "type": {
-                    "type": "string",
-                    "enum": ["object"]
-                },
-                "properties": {
-                    "type": "object"
-                },
-                "required": {
-                    "type": "array",
-                    "items": { "type": "string" }
-                },
-                "additionalProperties": {}
-            }
+    "$defs": {
+        "pgProperties": {
+            "$ref": "resultType.schema.json#/$defs/pgProperties",
+            "unevaluatedProperties": false
         }
-    },
-    "required": ["name"]
+    }
 }

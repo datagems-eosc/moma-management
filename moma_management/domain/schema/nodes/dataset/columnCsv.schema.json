@@ -1,26 +1,11 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "ColumnCSV",
-    "allOf": [
-        {
-            "$ref": "./data.schema.json"
-        },
-        {
-            "type": "object",
-            "properties": {
-                "dataType": {
-                    "type": "string"
-                },
-                "column": {
-                    "type": "string"
-                },
-                "sample": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
+    "$defs": {
+        "pgProperties": {
+            "$ref": "column.schema.json#/$defs/pgProperties",
+            "unevaluatedProperties": false
         }
-    ]
+    },
+    "$id": "nodes/dataset/columnCsv.schema.json"
 }

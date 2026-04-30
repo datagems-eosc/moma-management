@@ -1,31 +1,26 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "mlModel.schema.json",
+    "$id": "nodes/ml_model/mlModel.schema.json",
     "title": "ML_Model",
-    "allOf": [
-        {
-            "$ref": "../node.schema.json"
-        }
-    ],
-    "type": "object",
     "description": "An ML_Model node represents a machine-learning model that can be used by Operators for inference.",
-    "properties": {
-        "id": {
-            "type": "string",
-            "format": "uuid"
-        },
-        "name": {
-            "type": "string",
-            "description": "Human-readable name of the ML model"
-        },
-        "type": {
-            "type": "string",
-            "description": "Type or family of the ML model (e.g. classification, regression, LLM)"
+    "$defs": {
+        "pgProperties": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Human-readable name of the ML model"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Type or family of the ML model (e.g. classification, LLM)"
+                }
+            },
+            "required": [
+                "name",
+                "type"
+            ],
+            "unevaluatedProperties": false
         }
-    },
-    "required": [
-        "id",
-        "name",
-        "type"
-    ]
+    }
 }

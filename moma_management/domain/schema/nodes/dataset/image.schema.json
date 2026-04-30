@@ -1,17 +1,24 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Image",
-    "allOf": [
-        {
-            "$ref": "./data.schema.json"
-        },
-        {
-            "type": "object",
-            "properties": {
-                "resolution": {
-                    "type": "string"
+    "$defs": {
+        "pgProperties": {
+            "allOf": [
+                {
+                    "$ref": "data.schema.json#/$defs/pgProperties"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "resolution": {
+                            "type": "string",
+                            "description": "Resolution of the image"
+                        }
+                    }
                 }
-            }
+            ],
+            "unevaluatedProperties": false
         }
-    ]
+    },
+    "$id": "nodes/dataset/image.schema.json"
 }
