@@ -36,18 +36,31 @@ class AnalyticalPatternService:
 
     async def create(self, ap: AnalyticalPattern) -> str:
         """
-        Validate that every ``input`` edge in the AP references a Data node
-        that belongs to an existing dataset, then persist the AP.
+        Validate that every ``input`` edge in the AP that targets a non-ResultType
+        node references a Data node belonging to an existing dataset, then persist
+        the AP.
+
+        ResultType nodes are internal to the AP (they carry transient values
+        between Operators) and are excluded from the dataset-existence check.
 
         Returns the AP root node ID.
 
         Raises:
             ValidationError: if any input target does not belong to a known dataset.
         """
+        # Build a set of node IDs that are internal ResultType nodes (transient
+        # values between Operators).  Data nodes are also ResultType subtypes but
+        # they are persistent and DO need dataset-existence validation.
+        result_type_ids: set[str] = {
+            str(n.id)
+            for n in ap.nodes
+            if "ResultType" in (n.labels or []) and "Data" not in (n.labels or [])
+        }
+
         input_node_ids = [
             str(e.to)
             for e in (ap.edges or [])
-            if "input" in e.labels
+            if "input" in e.labels and str(e.to) not in result_type_ids
         ]
 
         if input_node_ids:
