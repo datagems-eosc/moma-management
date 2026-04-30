@@ -25,6 +25,12 @@ The diagram below shows all MoMa node types and their relationships. Solid arrow
 | `cr:RecordSet` | Croissant record-set node |
 | `Analytical_Pattern` | Root node of an Analytical Pattern subgraph |
 | `Operator` | Single processing step within an AP |
+| `ResultType` | Base typed value exchanged between Operators (transient or persistent) |
+| `StringResult` | String-typed `ResultType` |
+| `BooleanResult` | Boolean-typed `ResultType` |
+| `NumberResult` | Number-typed `ResultType` |
+| `ArrayResult` | Array-typed `ResultType` (optional JSON schema fragment) |
+| `ObjectResult` | Object-typed `ResultType` (optional JSON schema fragment) |
 | `ML_Model` | Registered machine-learning model |
 | `Task` | Scientific task that can be fulfilled by one or more APs |
 | `User` | User who triggers or configures an Operator |
@@ -47,6 +53,8 @@ graph LR
   classDef ml fill:#43A047,stroke:#2E7D32,color:#fff
   classDef misc fill:#F57C00,stroke:#E65100,color:#fff
   classDef evaluation fill:#F57C00,stroke:#E65100,color:#fff
+  classDef resulttype fill:#7B1FA2,stroke:#4A148C,color:#fff
+  classDef rtLeaf fill:#AB47BC,stroke:#7B1FA2,color:#fff
 
   %% ── Dataset subgraph ────────────────────────────────────
   Dataset["sc:Dataset"]:::dataset
@@ -102,6 +110,21 @@ graph LR
   Column -- "source/fileObject" --> Data
   Column -- statistics --> Statistics
 
+  %% ── ResultType subgraph ─────────────────────────────────
+  ResultType:::resulttype
+  StringResult["String Result"]:::rtLeaf
+  BooleanResult["Boolean Result"]:::rtLeaf
+  NumberResult["Number Result"]:::rtLeaf
+  ArrayResult["Array Result"]:::rtLeaf
+  ObjectResult["Object Result"]:::rtLeaf
+
+  Data -. "is-a" .-> ResultType
+  StringResult -. "is-a" .-> ResultType
+  BooleanResult -. "is-a" .-> ResultType
+  NumberResult -. "is-a" .-> ResultType
+  ArrayResult -. "is-a" .-> ResultType
+  ObjectResult -. "is-a" .-> ResultType
+
   %% ── Analytical-Pattern subgraph ─────────────────────────
   AP["Analytical Pattern"]:::ap
   Operator:::operator
@@ -109,8 +132,8 @@ graph LR
   User:::misc
 
   AP -- consist_of --> Operator
-  Operator -- input --> Data
-  Operator -- output --> Data
+  Operator -- input --> ResultType
+  Operator -- output --> ResultType
   Operator -- follows --> Operator
   User -- uses --> Operator
   Task -- is_accomplished_by --> AP
@@ -137,8 +160,9 @@ graph LR
 | Colour | Domain |
 |--------|--------|
 | 🟦 Blue | Dataset & Data nodes |
-| � Green | ML Model |
+| 🟢 Green | ML Model |
 | 🟠 Orange | Analytical Pattern, Operators, Evaluation, Task & User |
+| 🟣 Purple | ResultType and its subtypes |
 
 ### Edges
 
@@ -153,8 +177,8 @@ graph LR
 | `source/fileSet` | `PDF` | `Data` | PDF field is sourced from a file set |
 | `statistics` | `Column` | `Statistics` | Column links to its computed statistics |
 | `consist_of` | `Analytical_Pattern` | `Operator` | AP is composed of operator steps |
-| `input` | `Operator` | `Data` | Operator reads from a data node |
-| `output` | `Operator` | `Data` | Operator writes to a data node |
+| `input` | `Operator` | `ResultType` | Operator reads a typed value; `Data` (persistent) and transient subtypes (`StringResult`, etc.) are both valid targets |
+| `output` | `Operator` | `ResultType` | Operator writes a typed value; same targets as `input` |
 | `follows` | `Operator` | `Operator` | Operator executes after another operator |
 | `uses` | `User` | `Operator` | User triggers or configures an operator |
 | `perform_inference` | `Operator` | `ML_Model` | Operator runs inference against an ML model |
