@@ -8,6 +8,9 @@ from moma_management.domain.generated.nodes.dataset.dataset_schema import (
     Dataset,
     Status,
 )
+from moma_management.domain.generated.nodes.dataset.dataset_schema import (
+    PgProperties as DatasetPgProperties,
+)
 
 
 class MimeType(str, Enum):
@@ -71,17 +74,18 @@ class NodeLabel(str, Enum):
     COLUMN = "Column"
 
 
-# DatasetProperty is built from Dataset.model_fields so it always stays in sync
-# with the schema. Aliases are used as values (e.g. "dg:headline") so they map
-# directly to Neo4j property keys. The two special traversal entries trigger
-# connected-node expansion rather than returning a scalar property.
+# DatasetProperty is built from DatasetPgProperties.model_fields so it always
+# stays in sync with the schema. Aliases are used as values (e.g. "datePublished")
+# so they map directly to Neo4j property keys. ID covers the PG-JSON envelope
+# field. The two special traversal entries trigger connected-node expansion.
 _SCALAR_PROPS = {
     python_name.upper(): (field_info.alias or python_name)
-    for python_name, field_info in Dataset.model_fields.items()
+    for python_name, field_info in DatasetPgProperties.model_fields.items()
 }
 DatasetProperty = Enum(
     "DatasetProperty",
-    {**_SCALAR_PROPS, "DISTRIBUTION": "distribution", "RECORD_SET": "recordSet"},
+    {"ID": "id", **_SCALAR_PROPS, "DISTRIBUTION": "distribution",
+        "RECORD_SET": "recordSet"},
     type=str,
 )
 DatasetProperty.__doc__ = (

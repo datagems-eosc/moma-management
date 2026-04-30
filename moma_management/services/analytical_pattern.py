@@ -7,7 +7,6 @@ from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.exceptions import NotFoundError, ValidationError
 from moma_management.domain.filters import AnalyticalPatternFilter, DatasetFilter
 from moma_management.domain.generated.edges.edge_schema import Edge
-from moma_management.domain.generated.nodes.ap.evaluation_schema import Evaluation
 from moma_management.domain.generated.nodes.ap.evaluation_schema import (
     Type as EvaluationType,
 )
@@ -157,26 +156,34 @@ class AnalyticalPatternService:
         Raises:
             NotFoundError: if the AP does not exist.
         """
-        eval_node: Evaluation = Evaluation.model_validate({
-            "id": uuidv4(),
-            "labels": ["Evaluation", type.value],
+        from moma_management.domain.generated.nodes.ap.evaluation_schema import (
+            PgProperties as EvaluationProperties,
+        )
+        from moma_management.domain.generated.nodes.node_schema import Node as GraphNode
+
+        eval_id = uuidv4()
+        # Validate properties against the Evaluation schema before building the node.
+        props = EvaluationProperties.model_validate({
+            "executionId": str(execution_id or uuidv4()),
+            "evaluation": eval,
             "type": type.value,
-            "properties": {
-                "executionId": str(execution_id or uuidv4()),
-                "evaluation": eval,
-            },
+        })
+        eval_node = GraphNode.model_validate({
+            "id": eval_id,
+            "labels": ["Evaluation", type.value],
+            "properties": props.model_dump(by_alias=True, exclude_none=True),
         })
         ap = await self.get(ap_id)  # raises NotFoundError if AP is missing
         ap.nodes.append(eval_node)
         ap.edges.append(Edge.model_validate({
             "from": ap.root.id,
-            "to": eval_node.id,
+            "to": eval_id,
             "labels": ["is_measured_by"],
         }))
         AnalyticalPattern.model_validate(ap)
 
         await self._repo.create(ap)
-        return str(eval_node.id)
+        return str(eval_id)
 
     def validate(self, candidate: dict) -> list[SchemaError]:
         """Validate a raw PG-JSON dict as an AnalyticalPattern.
