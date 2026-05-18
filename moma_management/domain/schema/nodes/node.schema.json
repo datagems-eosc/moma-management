@@ -540,6 +540,24 @@
                     }
                 }
             }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "IntervalColumnStatistics"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/intervalColumnStatistics.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
         }
     ],
     "$id": "nodes/node.schema.json"

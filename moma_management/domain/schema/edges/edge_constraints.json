@@ -108,6 +108,12 @@
         "description": "Column → its column statistics"
     },
     {
+        "fromLabel": "Column",
+        "label": "intervalStatistics",
+        "toLabel": "IntervalColumnStatistics",
+        "description": "Column → statistics computed over a specific time interval"
+    },
+    {
         "fromLabel": "Analytical_Pattern",
         "label": "consist_of",
         "toLabel": "Operator",

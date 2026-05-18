@@ -271,3 +271,65 @@ def test_ap_valid_operator_output_data_node():
         ],
     )
     assert ap is not None
+
+
+# ---------------------------------------------------------------------------
+# Dataset — Column → intervalStatistics → IntervalColumnStatistics edges
+# ---------------------------------------------------------------------------
+
+def _make_dataset_with_interval_stats(
+    edge_label: str,
+    from_labels: list[str],
+    to_labels: list[str],
+    stats_properties: dict | None = None,
+) -> Dataset:
+    """Build a connected Dataset:
+      sc:Dataset -distribution-> Data <-source/fileObject- Column -(edge_label)-> to_labels
+    All four nodes are reachable from the root via undirected DFS.
+    """
+    root_id = str(uuid4())
+    data_id = str(uuid4())
+    col_id = str(uuid4())
+    stats_id = str(uuid4())
+    return Dataset(
+        nodes=[
+            Node(id=root_id, labels=["sc:Dataset"], properties={}),
+            Node(id=data_id, labels=["Data"], properties={}),
+            Node(id=col_id, labels=from_labels, properties={}),
+            Node(id=stats_id, labels=to_labels,
+                 properties=stats_properties or {}),
+        ],
+        edges=[
+            Edge(**{"from": root_id, "to": data_id,
+                 "labels": ["distribution"]}),
+            Edge(**{"from": col_id, "to": data_id,
+                 "labels": ["source/fileObject"]}),
+            Edge(**{"from": col_id, "to": stats_id, "labels": [edge_label]}),
+        ],
+    )
+
+
+def test_dataset_valid_column_interval_statistics_edge():
+    """Column --intervalStatistics--> IntervalColumnStatistics is a permitted edge."""
+    ds = _make_dataset_with_interval_stats(
+        "intervalStatistics",
+        ["Column"],
+        ["IntervalColumnStatistics"],
+        {"windowStart": "2024-01-01T00:00:00Z",
+            "windowEnd": "2024-01-01T01:00:00Z", "scopeType": "global"},
+    )
+    assert ds is not None
+
+
+def test_dataset_rejects_interval_statistics_wrong_source():
+    """sc:Dataset --intervalStatistics--> IntervalColumnStatistics must be rejected."""
+    with pytest.raises(ValidationError, match="Edges violate graph constraints"):
+        _make_dataset("intervalStatistics", ["sc:Dataset"], [
+                      "IntervalColumnStatistics"])
+
+
+def test_dataset_rejects_interval_statistics_wrong_target():
+    """Column --intervalStatistics--> Operator must be rejected."""
+    with pytest.raises(ValidationError, match="Edges violate graph constraints"):
+        _make_dataset_with_interval_stats(
+            "intervalStatistics", ["Column"], ["Operator"])

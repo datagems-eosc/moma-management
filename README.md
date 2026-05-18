@@ -22,6 +22,7 @@ The diagram below shows all MoMa node types and their relationships. Solid arrow
 | `Table`, `CSV`, `JSON`, `XML`, `Text`, `PDF`, `Video`, `Image` | Leaf-level data items |
 | `ColumnTable`, `ColumnCSV`, `Column` | Column-level descriptors within relational or CSV data |
 | `Statistics` | Column statistics node |
+| `IntervalColumnStatistics` | Column statistics computed over a specific time window (streaming datasets) |
 | `cr:RecordSet` | Croissant record-set node |
 | `Analytical_Pattern` | Root node of an Analytical Pattern subgraph |
 | `Operator` | Single processing step within an AP |
@@ -81,6 +82,7 @@ graph LR
   ColumnCSV["Column CSV"]:::dataLeaf
   Column:::dataLeaf
   Statistics:::dataLeaf
+  IntervalColumnStatistics["Interval Column Statistics"]:::dataLeaf
   RecordSet["cr:RecordSet"]:::record
 
   Dataset -- distribution --> Data
@@ -109,6 +111,7 @@ graph LR
   RecordSet -- field --> Column
   Column -- "source/fileObject" --> Data
   Column -- statistics --> Statistics
+  Column -- intervalStatistics --> IntervalColumnStatistics
 
   %% ── ResultType subgraph ─────────────────────────────────
   ResultType:::resulttype
@@ -176,6 +179,7 @@ graph LR
 | `source/fileObject` | `Column` | `Data` | Column is sourced from a file object |
 | `source/fileSet` | `PDF` | `Data` | PDF field is sourced from a file set |
 | `statistics` | `Column` | `Statistics` | Column links to its computed statistics |
+| `intervalStatistics` | `Column` | `IntervalColumnStatistics` | Column links to statistics computed over a specific time window (streaming datasets) |
 | `consist_of` | `Analytical_Pattern` | `Operator` | AP is composed of operator steps |
 | `input` | `Operator` | `ResultType` | Operator reads a typed value; `Data` (persistent) and transient subtypes (`StringResult`, etc.) are both valid targets |
 | `output` | `Operator` | `ResultType` | Operator writes a typed value; same targets as `input` |
