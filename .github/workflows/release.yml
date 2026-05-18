@@ -30,7 +30,14 @@ jobs:
             RANGE="${PREV_TAG}..HEAD"
           fi
 
-          echo "## What's Changed" > changelog.md
+          if [ -f CHANGELOG.md ]; then
+            cp CHANGELOG.md changelog.md
+            echo "" >> changelog.md
+            echo "---" >> changelog.md
+            echo "" >> changelog.md
+          fi
+
+          echo "## What's Changed" >> changelog.md
           echo "" >> changelog.md
 
           FEATURES=$(git log $RANGE --pretty=format:"- %s" | grep -i "^- feat" || true)
