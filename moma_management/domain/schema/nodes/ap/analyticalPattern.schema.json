@@ -32,7 +32,7 @@
             "required": [
                 "name"
             ],
-            "unevaluatedProperties": false
+            "unevaluatedProperties": true
         }
     }
 }

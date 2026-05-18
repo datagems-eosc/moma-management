@@ -52,7 +52,7 @@
                     }
                 }
             ],
-            "unevaluatedProperties": false
+            "unevaluatedProperties": true
         }
     },
     "$id": "nodes/dataset/text.schema.json"

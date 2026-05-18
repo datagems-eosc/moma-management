@@ -14,7 +14,7 @@
                     "description": "JSON Schema fragment describing the array structure (e.g. {\"type\": \"array\", \"items\": {\"type\": \"string\"}})."
                 }
             },
-            "unevaluatedProperties": false
+            "unevaluatedProperties": true
         }
     }
 }

@@ -14,7 +14,7 @@
                     "description": "JSON Schema fragment describing the object structure (e.g. {\"type\": \"object\", \"properties\": {...}})."
                 }
             },
-            "unevaluatedProperties": false
+            "unevaluatedProperties": true
         }
     }
 }

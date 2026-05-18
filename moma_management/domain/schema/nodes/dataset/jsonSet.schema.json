@@ -4,7 +4,7 @@
     "$defs": {
         "pgProperties": {
             "$ref": "structuredData.schema.json#/$defs/pgProperties",
-            "unevaluatedProperties": false
+            "unevaluatedProperties": true
         }
     },
     "$id": "nodes/dataset/jsonSet.schema.json"

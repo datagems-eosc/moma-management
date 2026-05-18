@@ -28,7 +28,7 @@
                 "name",
                 "description"
             ],
-            "unevaluatedProperties": false
+            "unevaluatedProperties": true
         }
     }
 }

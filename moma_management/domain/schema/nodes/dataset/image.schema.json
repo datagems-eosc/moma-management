@@ -17,7 +17,7 @@
                     }
                 }
             ],
-            "unevaluatedProperties": false
+            "unevaluatedProperties": true
         }
     },
     "$id": "nodes/dataset/image.schema.json"

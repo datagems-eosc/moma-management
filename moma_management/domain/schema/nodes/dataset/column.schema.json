@@ -34,7 +34,7 @@
                     "description": "Vocabulary type annotation for the column (e.g. cr:Field)"
                 }
             },
-            "unevaluatedProperties": false
+            "unevaluatedProperties": true
         }
     }
 }

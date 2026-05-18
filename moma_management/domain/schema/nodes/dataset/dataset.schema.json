@@ -99,7 +99,7 @@
                     "description": "Storage location of the archived dataset (e.g. S3 URI)"
                 }
             },
-            "unevaluatedProperties": false
+            "unevaluatedProperties": true
         }
     },
     "$id": "nodes/dataset/dataset.schema.json"

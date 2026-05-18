@@ -106,7 +106,7 @@
                     "scopeId"
                 ]
             },
-            "unevaluatedProperties": false
+            "unevaluatedProperties": true
         }
     }
 }

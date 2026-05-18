@@ -23,7 +23,7 @@
                     }
                 }
             ],
-            "unevaluatedProperties": false
+            "unevaluatedProperties": true
         }
     }
 }

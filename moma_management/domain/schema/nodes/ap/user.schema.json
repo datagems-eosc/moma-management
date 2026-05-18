@@ -21,7 +21,7 @@
                     "description": "Role of the user within the system"
                 }
             },
-            "unevaluatedProperties": false
+            "unevaluatedProperties": true
         }
     }
 }

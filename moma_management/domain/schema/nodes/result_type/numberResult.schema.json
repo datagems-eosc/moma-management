@@ -6,7 +6,7 @@
     "$defs": {
         "pgProperties": {
             "$ref": "resultType.schema.json#/$defs/pgProperties",
-            "unevaluatedProperties": false
+            "unevaluatedProperties": true
         }
     }
 }

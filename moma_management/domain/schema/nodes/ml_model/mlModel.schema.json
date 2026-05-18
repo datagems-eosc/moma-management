@@ -20,7 +20,7 @@
                 "name",
                 "type"
             ],
-            "unevaluatedProperties": false
+            "unevaluatedProperties": true
         }
     }
 }
