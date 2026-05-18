@@ -4,7 +4,7 @@ from fastapi import Depends, Response
 from pydantic import BaseModel
 
 from moma_management.di import get_ap_service
-from moma_management.domain.schema_validator import SchemaError
+from moma_management.domain.validation.schema_error import SchemaError
 from moma_management.services.analytical_pattern import AnalyticalPatternService
 
 

@@ -1,28 +1,40 @@
 {
-    "$id": "column.schema.json",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "nodes/dataset/column.schema.json",
     "title": "Column",
-    "type": "object",
-    "properties": {
-        "type": {
-            "type": "string"
-        },
-        "name": {
-            "type": "string"
-        },
-        "description": {
-            "type": "string"
-        },
-        "dataType": {
-            "type": "string"
-        },
-        "column": {
-            "type": "string"
-        },
-        "sample": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
+    "$defs": {
+        "pgProperties": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Column name"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description of the column content"
+                },
+                "dataType": {
+                    "type": "string",
+                    "description": "Data type of the column"
+                },
+                "column": {
+                    "type": "string",
+                    "description": "Column identifier within the source file"
+                },
+                "sample": {
+                    "type": "array",
+                    "items": {
+                        "type": ["string", "number", "boolean", "null"]
+                    },
+                    "description": "Sample values from the column"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Vocabulary type annotation for the column (e.g. cr:Field)"
+                }
+            },
+            "unevaluatedProperties": false
         }
     }
 }

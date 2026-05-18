@@ -1,93 +1,49 @@
 from collections import defaultdict
-from pathlib import Path
-from typing import ClassVar, Iterator, List, Optional, Self, Set, Tuple, cast
+from typing import TYPE_CHECKING, ClassVar, Iterator, Optional, Self, Set, Tuple, cast
 
 from deepdiff import DeepDiff
 from pydantic import model_validator
 
 from moma_management.domain.generated.moma_schema import MoMaGraphModel
 
+if TYPE_CHECKING:
+    from .validation import ValidationStep
 
-class PgJsonGraph(MoMaGraphModel):
+
+class MomaEntity(MoMaGraphModel):
     """
-    Base class for validated PG-JSON graph models (``Dataset``,
-    ``AnalyticalPattern``).
-
-    Provides shared graph utilities:
-    - undirected DFS traversal
-    - canonical normalization for equality checks
-    - value equality via deep-diff
-    - optional edge-constraint enforcement (opt-in per subclass via
-      ``_edge_constraints_path``)
+    Any PG-JSON graph that can be validated and normalized according to a schema and edge constraints.
     """
 
-    # Subclasses set this to a Path pointing at their edge-constraints JSON
-    # file.  When set, ``check_edge_constraints`` is automatically run.
-    _edge_constraints_path: ClassVar[Optional[Path]] = None
-    # Cache loaded per subclass (populated lazily)
-    _edge_constraints_cache: ClassVar[Optional[List[dict]]] = None
+    # Label that identifies the root node of the graph; used to find the root for traversal and validation.
+    # NOTE: Must be overridden by subclasses to enable root-based validation and traversal utilities.
+    _root_label: ClassVar[Optional[str]] = None
 
-    @classmethod
-    def _get_constraints(cls) -> List[dict]:
-        if cls._edge_constraints_path is None:
-            return []
-        if cls._edge_constraints_cache is None:
-            import json
-            cls._edge_constraints_cache = json.loads(
-                cls._edge_constraints_path.read_text()
-            )
-        return cls._edge_constraints_cache
+    # Chain of validation steps to run on this graph; must be set by subclasses.
+    validation_chain: ClassVar[ValidationStep] = None
 
     @model_validator(mode="after")
-    def check_edge_constraints(self: Self) -> Self:
-        """
-        Validate that every edge in the graph satisfies the declared
-        constraints for this graph type.
-
-        Skipped entirely when ``_edge_constraints_path`` is ``None``.
-        """
-        constraints = self.__class__._get_constraints()
-        if not constraints:
-            return self
-
-        node_labels: dict[str, list[str]] = {
-            str(n.id): n.labels for n in self.nodes
-        }
-        violations: list[str] = []
-
-        for edge in self.edges or []:
-            from_labels = node_labels.get(str(edge.from_), [])
-            to_labels = node_labels.get(str(edge.to), [])
-            edge_label = edge.labels[0] if edge.labels else ""
-
-            allowed = any(
-                c["label"] == edge_label
-                and c["fromLabel"] in from_labels
-                and c["toLabel"] in to_labels
-                for c in constraints
-            )
-
-            if not allowed:
-                violations.append(
-                    f"({edge.from_}){from_labels} -[{edge_label}]-> "
-                    f"({edge.to}){to_labels}"
-                )
-
-        if violations:
+    def validate(self: Self) -> Self:
+        errors = self.validation_chain.handle(self)
+        if errors:
             raise ValueError(
-                "Edges violate graph constraints:\n"
-                + "\n".join(f"  {v}" for v in violations)
-            )
-
+                f"Dataset validation failed with errors: {errors}")
         return self
 
-    def _dfs_iter_undirected(self, start_id: str) -> Iterator[str]:
+    def __iter__(self) -> Iterator[str]:
         """
-        Iterative DFS for undirected graphs starting from *start_id*.
-        Yields all node IDs reachable from start.
+        Iterative DFS for undirected graphs starting from the root node.
+        Yields all node IDs reachable from root.
         """
+        root = next(
+            (str(n.id) for n in self.nodes
+             if self.__class__._root_label in (n.labels or [])),
+            None,
+        )
+        if root is None:
+            return
         visited: Set[str] = set()
-        stack: list[Tuple[str, str | None]] = [(start_id, None)]
+        stack: list[Tuple[str, str | None]] = [(root, None)]
 
         adj: dict[str, list[str]] = defaultdict(list)
         for edge in self.edges or []:

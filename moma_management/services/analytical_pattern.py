@@ -3,15 +3,16 @@ from typing import List, Optional
 from uuid import UUID
 from uuid import uuid4 as uuidv4
 
+from pydantic import ValidationError as PydanticValidationError
+
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.exceptions import NotFoundError, ValidationError
 from moma_management.domain.filters import AnalyticalPatternFilter, DatasetFilter
 from moma_management.domain.generated.edges.edge_schema import Edge
-from moma_management.domain.generated.nodes.ap.evaluation_schema import Evaluation
 from moma_management.domain.generated.nodes.ap.evaluation_schema import (
     Type as EvaluationType,
 )
-from moma_management.domain.schema_validator import LocalSchemaValidator, SchemaError
+from moma_management.domain.validation.schema_error import SchemaError
 from moma_management.repository.analytical_pattern.analytical_pattern_repository import (
     AnalyticalPatternRepository,
 )
@@ -36,18 +37,31 @@ class AnalyticalPatternService:
 
     async def create(self, ap: AnalyticalPattern) -> str:
         """
-        Validate that every ``input`` edge in the AP references a Data node
-        that belongs to an existing dataset, then persist the AP.
+        Validate that every ``input`` edge in the AP that targets a non-ResultType
+        node references a Data node belonging to an existing dataset, then persist
+        the AP.
+
+        ResultType nodes are internal to the AP (they carry transient values
+        between Operators) and are excluded from the dataset-existence check.
 
         Returns the AP root node ID.
 
         Raises:
             ValidationError: if any input target does not belong to a known dataset.
         """
+        # Build a set of node IDs that are internal ResultType nodes (transient
+        # values between Operators).  Data nodes are also ResultType subtypes but
+        # they are persistent and DO need dataset-existence validation.
+        result_type_ids: set[str] = {
+            str(n.id)
+            for n in ap.nodes
+            if "ResultType" in (n.labels or []) and "Data" not in (n.labels or [])
+        }
+
         input_node_ids = [
             str(e.to)
             for e in (ap.edges or [])
-            if "input" in e.labels
+            if "input" in e.labels and str(e.to) not in result_type_ids
         ]
 
         if input_node_ids:
@@ -144,26 +158,34 @@ class AnalyticalPatternService:
         Raises:
             NotFoundError: if the AP does not exist.
         """
-        eval_node: Evaluation = Evaluation.model_validate({
-            "id": uuidv4(),
-            "labels": ["Evaluation", type.value],
+        from moma_management.domain.generated.nodes.ap.evaluation_schema import (
+            PgProperties as EvaluationProperties,
+        )
+        from moma_management.domain.generated.nodes.node_schema import Node as GraphNode
+
+        eval_id = uuidv4()
+        # Validate properties against the Evaluation schema before building the node.
+        props = EvaluationProperties.model_validate({
+            "executionId": str(execution_id or uuidv4()),
+            "evaluation": eval,
             "type": type.value,
-            "properties": {
-                "executionId": str(execution_id or uuidv4()),
-                "evaluation": eval,
-            },
+        })
+        eval_node = GraphNode.model_validate({
+            "id": eval_id,
+            "labels": ["Evaluation", type.value],
+            "properties": props.model_dump(by_alias=True, exclude_none=True),
         })
         ap = await self.get(ap_id)  # raises NotFoundError if AP is missing
         ap.nodes.append(eval_node)
         ap.edges.append(Edge.model_validate({
             "from": ap.root.id,
-            "to": eval_node.id,
+            "to": eval_id,
             "labels": ["is_measured_by"],
         }))
         AnalyticalPattern.model_validate(ap)
 
         await self._repo.create(ap)
-        return str(eval_node.id)
+        return str(eval_id)
 
     def validate(self, candidate: dict) -> list[SchemaError]:
         """Validate a raw PG-JSON dict as an AnalyticalPattern.
@@ -171,5 +193,18 @@ class AnalyticalPatternService:
         Returns a list of AJV-style :class:`SchemaError` objects (empty when
         the candidate is valid).
         """
-        validator = LocalSchemaValidator()
-        return validator.validate_graph(candidate, graph_type="ap")
+        try:
+            AnalyticalPattern.model_validate(candidate)
+            return []
+        except PydanticValidationError as e:
+            return [
+                SchemaError(
+                    keyword=err["type"],
+                    instancePath="/" + "/".join(str(x)
+                                                for x in (err.get("loc") or [])),
+                    schemaPath="#",
+                    params={},
+                    message=err["msg"],
+                )
+                for err in e.errors()
+            ]

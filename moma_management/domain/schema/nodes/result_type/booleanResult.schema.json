@@ -1,0 +1,12 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "nodes/result_type/booleanResult.schema.json",
+    "title": "Boolean Result",
+    "description": "A non-persistent boolean value exchanged between Operators.",
+    "$defs": {
+        "pgProperties": {
+            "$ref": "resultType.schema.json#/$defs/pgProperties",
+            "unevaluatedProperties": false
+        }
+    }
+}

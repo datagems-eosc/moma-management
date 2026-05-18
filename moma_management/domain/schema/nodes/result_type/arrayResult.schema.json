@@ -1,0 +1,20 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "nodes/result_type/arrayResult.schema.json",
+    "title": "Array Result",
+    "description": "A non-persistent array value exchanged between Operators.",
+    "$defs": {
+        "pgProperties": {
+            "allOf": [
+                { "$ref": "resultType.schema.json#/$defs/pgProperties" }
+            ],
+            "properties": {
+                "schema": {
+                    "type": "object",
+                    "description": "JSON Schema fragment describing the array structure (e.g. {\"type\": \"array\", \"items\": {\"type\": \"string\"}})."
+                }
+            },
+            "unevaluatedProperties": false
+        }
+    }
+}

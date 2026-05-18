@@ -8,12 +8,13 @@ schemas and structural rules.
 from uuid import uuid4
 
 import pytest
+from pydantic import ValidationError as PydanticValidationError
 
-from moma_management.domain.schema_validator import (
-    LocalSchemaValidator,
-    SchemaError,
-    _validate_structure,
-)
+from moma_management.domain.analytical_pattern import AnalyticalPattern
+from moma_management.domain.dataset import Dataset
+from moma_management.domain.validation.schema_error import SchemaError
+from moma_management.domain.validation.steps.mapping_step import _validate_mappings
+from moma_management.domain.validation.steps.schema_step import SchemaStep
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -67,53 +68,29 @@ def _make_valid_dataset() -> dict:
 
 
 # ===================================================================
-# JSON-Schema validation (moma.schema.json)
+# Model-based schema validation
 # ===================================================================
 
 
-class TestJsonSchemaValidation:
-    """Tests for ``LocalSchemaValidator.validate()``."""
+class TestSchemaValidation:
+    """Model parsing validates graph structure; Pydantic enforces field rules."""
 
-    def test_valid_graph_returns_no_errors(self):
-        v = LocalSchemaValidator()
-        errors = v.validate(_make_valid_ap())
-        assert errors == []
+    def test_valid_graph_parses_without_error(self):
+        AnalyticalPattern.model_validate(_make_valid_ap())  # must not raise
 
-    def test_missing_nodes_key(self):
-        v = LocalSchemaValidator()
-        errors = v.validate({"edges": []})
-        assert len(errors) >= 1
-        keywords = {e.keyword for e in errors}
-        assert "required" in keywords
+    def test_missing_nodes_key_raises(self):
+        with pytest.raises(PydanticValidationError):
+            AnalyticalPattern.model_validate({"edges": []})
 
-    def test_node_missing_required_field(self):
-        """A node without 'labels' should trigger a validation error."""
-        v = LocalSchemaValidator()
+    def test_node_missing_required_field_raises(self):
+        """A node without 'labels' should fail Pydantic validation."""
         data = {
             "nodes": [
                 {"id": str(uuid4()), "properties": {"name": "x"}},
             ],
         }
-        errors = v.validate(data)
-        assert len(errors) >= 1
-        assert any("labels" in e.message for e in errors)
-
-    def test_node_bad_property_name(self):
-        """Property names must match ^[a-z@][a-zA-Z0-9_]*$."""
-        v = LocalSchemaValidator()
-        data = {
-            "nodes": [
-                {
-                    "id": str(uuid4()),
-                    "labels": ["Analytical_Pattern"],
-                    "properties": {"Invalid-Key!": "val"},
-                },
-            ],
-        }
-        errors = v.validate(data)
-        assert len(errors) >= 1
-        assert any("propertyNames" ==
-                   e.keyword or "pattern" in e.keyword for e in errors)
+        with pytest.raises(PydanticValidationError):
+            AnalyticalPattern.model_validate(data)
 
 
 # ===================================================================
@@ -122,11 +99,10 @@ class TestJsonSchemaValidation:
 
 
 class TestEdgeConstraintValidation:
-    """Tests for ``validate_edge_constraints``."""
+    """Tests for ``SchemaStep.validate_edge_constraints``."""
 
     def test_valid_edges_no_errors(self):
-        v = LocalSchemaValidator()
-        errors = v.validate_edge_constraints(_make_valid_ap())
+        errors = SchemaStep.validate_edge_constraints(_make_valid_ap())
         assert errors == []
 
     def test_invalid_edge_label(self):
@@ -144,8 +120,7 @@ class TestEdgeConstraintValidation:
                 {"from": root_id, "to": op_id, "labels": ["bad_edge"]},
             ],
         }
-        v = LocalSchemaValidator()
-        errors = v.validate_edge_constraints(data)
+        errors = SchemaStep.validate_edge_constraints(data)
         assert len(errors) == 1
         assert errors[0].keyword == "edgeRelationship"
         assert "bad_edge" in errors[0].message
@@ -163,14 +138,12 @@ class TestEdgeConstraintValidation:
                 {"from": root_id, "to": phantom_id, "labels": ["consist_of"]},
             ],
         }
-        v = LocalSchemaValidator()
-        errors = v.validate_edge_constraints(data)
+        errors = SchemaStep.validate_edge_constraints(data)
         assert len(errors) >= 1
         assert any("does not exist" in e.message for e in errors)
 
     def test_valid_dataset_edges(self):
-        v = LocalSchemaValidator()
-        errors = v.validate_edge_constraints(_make_valid_dataset())
+        errors = SchemaStep.validate_edge_constraints(_make_valid_dataset())
         assert errors == []
 
 
@@ -183,9 +156,7 @@ class TestApStructureValidation:
     """Tests for AP structural rules (root, connectivity)."""
 
     def test_valid_ap_structure(self):
-        errors = _validate_structure(
-            _make_valid_ap(), "Analytical_Pattern", "ap")
-        assert errors == []
+        AnalyticalPattern.model_validate(_make_valid_ap())  # must not raise
 
     def test_no_root_node(self):
         data = {
@@ -195,10 +166,9 @@ class TestApStructureValidation:
             ],
             "edges": [],
         }
-        errors = _validate_structure(data, "Analytical_Pattern", "ap")
-        assert len(errors) == 1
-        assert errors[0].keyword == "apStructure"
-        assert "No node with label" in errors[0].message
+        with pytest.raises(PydanticValidationError) as exc_info:
+            AnalyticalPattern.model_validate(data)
+        assert "No node with label" in str(exc_info.value)
 
     def test_multiple_root_nodes(self):
         data = {
@@ -210,9 +180,9 @@ class TestApStructureValidation:
             ],
             "edges": [],
         }
-        errors = _validate_structure(data, "Analytical_Pattern", "ap")
-        assert len(errors) == 1
-        assert "Multiple nodes" in errors[0].message
+        with pytest.raises(PydanticValidationError) as exc_info:
+            AnalyticalPattern.model_validate(data)
+        assert "Multiple nodes" in str(exc_info.value)
 
     def test_incoming_edge_to_root(self):
         root_id = str(uuid4())
@@ -229,8 +199,9 @@ class TestApStructureValidation:
                 {"from": op_id, "to": root_id, "labels": ["follows"]},
             ],
         }
-        errors = _validate_structure(data, "Analytical_Pattern", "ap")
-        assert any("must not have incoming edges" in e.message for e in errors)
+        with pytest.raises(PydanticValidationError) as exc_info:
+            AnalyticalPattern.model_validate(data)
+        assert "must not have incoming edges" in str(exc_info.value)
 
     def test_disconnected_graph(self):
         root_id = str(uuid4())
@@ -249,17 +220,16 @@ class TestApStructureValidation:
                 {"from": root_id, "to": op_id, "labels": ["consist_of"]},
             ],
         }
-        errors = _validate_structure(data, "Analytical_Pattern", "ap")
-        assert any("not fully connected" in e.message for e in errors)
+        with pytest.raises(PydanticValidationError) as exc_info:
+            AnalyticalPattern.model_validate(data)
+        assert "not fully connected" in str(exc_info.value)
 
 
 class TestDatasetStructureValidation:
     """Tests for Dataset structural rules."""
 
     def test_valid_dataset_structure(self):
-        errors = _validate_structure(
-            _make_valid_dataset(), "sc:Dataset", "dataset")
-        assert errors == []
+        Dataset.model_validate(_make_valid_dataset())  # must not raise
 
     def test_no_dataset_root(self):
         data = {
@@ -269,57 +239,41 @@ class TestDatasetStructureValidation:
             ],
             "edges": [],
         }
-        errors = _validate_structure(data, "sc:Dataset", "dataset")
-        assert len(errors) == 1
-        assert errors[0].keyword == "datasetStructure"
+        with pytest.raises(PydanticValidationError) as exc_info:
+            Dataset.model_validate(data)
+        assert "No node with label" in str(exc_info.value)
 
 
 # ===================================================================
-# Full orchestration: validate_graph
+# Full orchestration via model parsing
 # ===================================================================
 
 
 class TestValidateGraph:
-    """Tests for the orchestrator ``validate_graph``."""
+    """Tests for end-to-end validation via model parsing."""
 
-    def test_valid_ap_returns_empty(self):
-        v = LocalSchemaValidator()
-        errors = v.validate_graph(_make_valid_ap(), graph_type="ap")
-        assert errors == []
+    def test_valid_ap_parses_without_error(self):
+        AnalyticalPattern.model_validate(_make_valid_ap())  # must not raise
 
-    def test_valid_dataset_returns_empty(self):
-        v = LocalSchemaValidator()
-        errors = v.validate_graph(_make_valid_dataset(), graph_type="dataset")
-        assert errors == []
-
-    def test_invalid_ap_collects_all_error_types(self):
-        """A payload with schema, edge, and structural errors should report all."""
-        data = {
-            # missing 'nodes' entirely -> schema error
-            # also: no edges key
-        }
-        v = LocalSchemaValidator()
-        errors = v.validate_graph(data, graph_type="ap")
-        keywords = {e.keyword for e in errors}
-        # At minimum: schema "required" error + apStructure error
-        assert "required" in keywords
-        assert "apStructure" in keywords
+    def test_valid_dataset_parses_without_error(self):
+        Dataset.model_validate(_make_valid_dataset())  # must not raise
 
     def test_empty_nodes_produces_structural_error(self):
-        v = LocalSchemaValidator()
-        errors = v.validate_graph({"nodes": []}, graph_type="ap")
-        assert any(e.keyword == "apStructure" for e in errors)
+        with pytest.raises(PydanticValidationError) as exc_info:
+            AnalyticalPattern.model_validate({"nodes": []})
+        assert "AnalyticalPatternStructure" in str(exc_info.value)
 
-    def test_error_shape_matches_ajv(self):
-        """Every error must have the five AJV fields."""
-        v = LocalSchemaValidator()
-        errors = v.validate_graph({}, graph_type="ap")
-        for e in errors:
-            assert isinstance(e.keyword, str)
-            assert isinstance(e.instancePath, str)
-            assert isinstance(e.schemaPath, str)
-            assert isinstance(e.params, dict)
-            assert isinstance(e.message, str)
+    def test_missing_nodes_key_raises(self):
+        with pytest.raises(PydanticValidationError):
+            AnalyticalPattern.model_validate({})
+
+    def test_error_message_contains_schema_error_fields(self):
+        """Validation errors include SchemaError keyword and message."""
+        with pytest.raises(PydanticValidationError) as exc_info:
+            AnalyticalPattern.model_validate({"nodes": []})
+        err_str = str(exc_info.value)
+        assert "AnalyticalPatternStructure" in err_str
+        assert "No node with label" in err_str
 
 
 # ===================================================================
@@ -347,6 +301,304 @@ class TestApServiceValidate:
         svc = AnalyticalPatternService(MagicMock(), MagicMock())
         errors = svc.validate({"nodes": []})
         assert len(errors) >= 1
+
+
+# ===================================================================
+# Mapping validation
+# ===================================================================
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+_AP_ROOT_ID = "c1000000-0000-4000-a000-000000000001"
+_OP_ID = "c1000000-0000-4000-a000-000000000002"
+_RT_ID = "c1000000-0000-4000-a000-000000000003"
+_DATA_ID = "c1000000-0000-4000-a000-000000000004"
+
+
+def _make_op(inputs=None, outputs=None) -> dict:
+    return {
+        "id": _OP_ID,
+        "labels": ["Operator"],
+        "properties": {
+            "name": "op",
+            "inputs": inputs or [],
+            "outputs": outputs or [],
+        },
+    }
+
+
+def _make_rt(name: str, subtype: str) -> dict:
+    return {
+        "id": _RT_ID,
+        "labels": ["ResultType", subtype],
+        "properties": {"name": name},
+    }
+
+
+def _make_data(extra_props: dict | None = None) -> dict:
+    props = {"name": "my_db", "description": "a db"}
+    if extra_props:
+        props.update(extra_props)
+    return {
+        "id": _DATA_ID,
+        "labels": ["RelationalDatabase", "Data"],
+        "properties": props,
+    }
+
+
+def _make_ap_with_edges(*edges) -> dict:
+    """Minimal AP dict with op + rt/data nodes and the given edges."""
+    nodes = [
+        {
+            "id": _AP_ROOT_ID,
+            "labels": ["Analytical_Pattern"],
+            "properties": {"name": "test-ap"},
+        },
+        _make_op(
+            inputs=[{"name": "sql", "type": "string", "required": True}],
+            outputs=[{"name": "result", "type": "string", "required": True}],
+        ),
+    ]
+    # Collect extra node IDs needed from edges
+    return {
+        "nodes": nodes,
+        "edges": [
+            {"from": _AP_ROOT_ID, "to": _OP_ID, "labels": ["consist_of"]},
+            *edges,
+        ],
+    }
+
+
+def _ap_with_rt(
+    subtype: str,
+    rt_name: str,
+    edge_label: str,
+    mapping: dict,
+    param_type: str = "string",
+) -> dict:
+    """AP with one Operator, one ResultType, and one mapping edge."""
+    op = _make_op(
+        inputs=[{"name": "sql", "type": param_type, "required": True}],
+        outputs=[{"name": "result", "type": param_type, "required": True}],
+    )
+    rt = _make_rt(rt_name, subtype)
+    return {
+        "nodes": [
+            {"id": _AP_ROOT_ID, "labels": [
+                "Analytical_Pattern"], "properties": {"name": "ap"}},
+            op,
+            rt,
+        ],
+        "edges": [
+            {"from": _AP_ROOT_ID, "to": _OP_ID, "labels": ["consist_of"]},
+            {
+                "from": _OP_ID,
+                "to": _RT_ID,
+                "labels": [edge_label],
+                "properties": {"mapping": mapping},
+            },
+        ],
+    }
+
+
+def _ap_with_data(edge_label: str, mapping: dict) -> dict:
+    """AP with one Operator, one Data node, and one mapping edge."""
+    op = _make_op(
+        inputs=[{"name": "db_name", "type": "RelationalDatabase", "required": True}],
+        outputs=[
+            {"name": "db_name", "type": "RelationalDatabase", "required": True}],
+    )
+    data = _make_data()
+    return {
+        "nodes": [
+            {"id": _AP_ROOT_ID, "labels": [
+                "Analytical_Pattern"], "properties": {"name": "ap"}},
+            op,
+            data,
+        ],
+        "edges": [
+            {"from": _AP_ROOT_ID, "to": _OP_ID, "labels": ["consist_of"]},
+            {
+                "from": _OP_ID,
+                "to": _DATA_ID,
+                "labels": [edge_label],
+                "properties": {"mapping": mapping},
+            },
+        ],
+    }
+
+
+class TestMappingValidation:
+
+    # ── Happy-path ────────────────────────────────────────────────────────
+
+    def test_no_mappings_passes(self):
+        """Edges without mapping dicts are skipped without error."""
+        data = _make_ap_with_edges(
+            {"from": _OP_ID, "to": _RT_ID, "labels": ["input"]}
+        )
+        # RT node not in graph here — but _validate_mappings only runs when
+        # mapping is present, so no errors expected.
+        assert _validate_mappings(data) == []
+
+    def test_valid_input_edge_result_type(self):
+        """input edge: correct param + matching RT name → no errors."""
+        data = _ap_with_rt(
+            subtype="string",
+            rt_name="sql_query",
+            edge_label="input",
+            mapping={"from['inputs']['sql']": "to['sql_query']"},
+        )
+        assert _validate_mappings(data) == []
+
+    def test_valid_output_edge_result_type(self):
+        """output edge: correct output param + matching RT name → no errors."""
+        data = _ap_with_rt(
+            subtype="string",
+            rt_name="result",
+            edge_label="output",
+            mapping={"to['result']": "from['outputs']['result']"},
+        )
+        assert _validate_mappings(data) == []
+
+    def test_valid_input_edge_data_node(self):
+        """input edge to Data node: property exists on node → no errors."""
+        data = _ap_with_data(
+            edge_label="input",
+            mapping={"from['inputs']['db_name']": "to['name']"},
+        )
+        assert _validate_mappings(data) == []
+
+    def test_valid_output_edge_data_node(self):
+        """output edge to Data node: property exists → no errors."""
+        data = _ap_with_data(
+            edge_label="output",
+            mapping={"to['name']": "from['outputs']['db_name']"},
+        )
+        assert _validate_mappings(data) == []
+
+    # ── Step 8: Parameter name cross-reference failures ───────────────────
+
+    def test_input_unknown_operator_param(self):
+        """input edge key references a param not in Operator inputs → error."""
+        data = _ap_with_rt(
+            subtype="string",
+            rt_name="sql_query",
+            edge_label="input",
+            mapping={"from['inputs']['nonexistent']": "to['sql_query']"},
+        )
+        errors = _validate_mappings(data)
+        assert any(e.keyword == "mappingParameter" for e in errors)
+        assert any("nonexistent" in e.message for e in errors)
+
+    def test_output_unknown_operator_param(self):
+        """output edge value references a param not in Operator outputs → error."""
+        data = _ap_with_rt(
+            subtype="string",
+            rt_name="result",
+            edge_label="output",
+            mapping={"to['result']": "from['outputs']['ghost']"},
+        )
+        errors = _validate_mappings(data)
+        assert any(e.keyword == "mappingParameter" for e in errors)
+        assert any("ghost" in e.message for e in errors)
+
+    # ── Step 7: Property existence failures ───────────────────────────────
+
+    def test_input_rt_name_mismatch(self):
+        """input edge value references a key that doesn't match RT name → error."""
+        data = _ap_with_rt(
+            subtype="string",
+            rt_name="sql_query",
+            edge_label="input",
+            mapping={"from['inputs']['sql']": "to['wrong_name']"},
+        )
+        errors = _validate_mappings(data)
+        assert any(e.keyword == "mappingProperty" for e in errors)
+        assert any("wrong_name" in e.message for e in errors)
+
+    def test_output_rt_name_mismatch(self):
+        """output edge key references a key that doesn't match RT name → error."""
+        data = _ap_with_rt(
+            subtype="string",
+            rt_name="result",
+            edge_label="output",
+            mapping={"to['bad_key']": "from['outputs']['result']"},
+        )
+        errors = _validate_mappings(data)
+        assert any(e.keyword == "mappingProperty" for e in errors)
+        assert any("bad_key" in e.message for e in errors)
+
+    def test_input_data_property_missing(self):
+        """input edge to Data node references non-existent property → error."""
+        data = _ap_with_data(
+            edge_label="input",
+            mapping={"from['inputs']['db_name']": "to['no_such_prop']"},
+        )
+        errors = _validate_mappings(data)
+        assert any(e.keyword == "mappingProperty" for e in errors)
+        assert any("no_such_prop" in e.message for e in errors)
+
+    def test_output_data_property_missing(self):
+        """output edge to Data node references non-existent property → error."""
+        data = _ap_with_data(
+            edge_label="output",
+            mapping={"to['no_such_prop']": "from['outputs']['db_name']"},
+        )
+        errors = _validate_mappings(data)
+        assert any(e.keyword == "mappingProperty" for e in errors)
+
+    # ── Step 9: Type-compatibility failures ───────────────────────────────
+
+    def test_input_type_mismatch(self):
+        """input edge: operator param type 'boolean' vs RT 'string' → error."""
+        data = _ap_with_rt(
+            subtype="string",
+            rt_name="sql_query",
+            edge_label="input",
+            mapping={"from['inputs']['sql']": "to['sql_query']"},
+            param_type="boolean",
+        )
+        errors = _validate_mappings(data)
+        assert any(e.keyword == "mappingTypeCompatibility" for e in errors)
+        assert any(
+            "boolean" in e.message and "string" in e.message for e in errors)
+
+    def test_output_type_mismatch(self):
+        """output edge: operator param type 'array' vs RT 'string' → error."""
+        data = _ap_with_rt(
+            subtype="string",
+            rt_name="result",
+            edge_label="output",
+            mapping={"to['result']": "from['outputs']['result']"},
+            param_type="array",
+        )
+        errors = _validate_mappings(data)
+        assert any(e.keyword == "mappingTypeCompatibility" for e in errors)
+
+    def test_data_node_no_type_check(self):
+        """Data nodes are exempt from type-compatibility checks → no error."""
+        data = _ap_with_data(
+            edge_label="input",
+            mapping={"from['inputs']['db_name']": "to['name']"},
+        )
+        errors = _validate_mappings(data)
+        assert not any(e.keyword == "mappingTypeCompatibility" for e in errors)
+
+    # ── Regression ────────────────────────────────────────────────────────
+
+    def test_ap_sql_typed_fixture(self):
+        """The ap_sql_typed.json fixture must pass end-to-end."""
+        import json
+        from pathlib import Path
+
+        fixture = Path(__file__).parents[2] / \
+            "assets" / "aps" / "ap_sql_typed.json"
+        data = json.loads(fixture.read_text())
+        errors = _validate_mappings(data)
+        assert errors == [], [e.message for e in errors]
 
 
 class TestDatasetServiceValidate:

@@ -1,0 +1,20 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "nodes/result_type/resultType.schema.json",
+    "title": "ResultType",
+    "description": "A typed value exchanged between Operators inside an AnalyticalPattern. Concrete subtypes are string, boolean, number, array, and object.",
+    "$defs": {
+        "pgProperties": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Logical name of the value in the graph"
+                }
+            },
+            "required": [
+                "name"
+            ]
+        }
+    }
+}

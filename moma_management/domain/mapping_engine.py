@@ -103,18 +103,20 @@ def get_model_fields(model: type[BaseModel]) -> set:
 
 def build_schema_registry() -> SchemaRegistry:
     """Build a type-name → field-set mapping from the generated Pydantic classes."""
-    from moma_management.domain.generated.nodes.dataset.column_schema import Column
-    from moma_management.domain.generated.nodes.dataset.data_schema import Data
-    from moma_management.domain.generated.nodes.dataset.dataset_schema import Dataset
-    from moma_management.domain.generated.nodes.dataset.pdfSet_schema import PdfSet
-    from moma_management.domain.generated.nodes.dataset.text_schema import Text
+    from moma_management.domain.generated.nodes.dataset.column_schema import (
+        PgProperties as ColumnProps,
+    )
+    from moma_management.domain.generated.nodes.dataset.data_schema import (
+        PgProperties as DataProps,
+    )
+    from moma_management.domain.generated.nodes.dataset.dataset_schema import (
+        PgProperties as DatasetProps,
+    )
 
     return {
-        "Dataset": get_model_fields(Dataset),
-        "Distribution": get_model_fields(Data),
-        "Column": get_model_fields(Column),
-        "PdfSet": get_model_fields(PdfSet),
-        "Text": get_model_fields(Text),
+        "Dataset": get_model_fields(DatasetProps),
+        "Distribution": get_model_fields(DataProps),
+        "Column": get_model_fields(ColumnProps),
     }
 
 

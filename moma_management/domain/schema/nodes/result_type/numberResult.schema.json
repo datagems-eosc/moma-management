@@ -1,0 +1,12 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "nodes/result_type/numberResult.schema.json",
+    "title": "Number Result",
+    "description": "A non-persistent numeric value exchanged between Operators.",
+    "$defs": {
+        "pgProperties": {
+            "$ref": "resultType.schema.json#/$defs/pgProperties",
+            "unevaluatedProperties": false
+        }
+    }
+}

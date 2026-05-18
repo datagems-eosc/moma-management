@@ -91,7 +91,12 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             )
 
     async def delete(self, ap_id: str) -> None:
-        """Delete the AP and its connected subgraph; leaves data nodes intact."""
+        """Delete the AP and its connected subgraph; leaves data nodes intact.
+
+        ResultType nodes are internal to the AP subgraph (connected via
+        input/output edges which are in FORBIDDEN_EDGES).  A second query
+        explicitly deletes them so no orphaned ResultType nodes remain.
+        """
         await self._session.run(
             """//cypher
             MATCH (root:Analytical_Pattern {id: $ap_id})
@@ -103,6 +108,17 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             """,
             ap_id=str(ap_id),
             forbiddenEdges=self.FORBIDDEN_EDGES,
+        )
+        # Remove internal ResultType nodes attached to Operators in this AP.
+        # Data nodes (which are also ResultType) are persistent and must NOT be deleted.
+        await self._session.run(
+            """//cypher
+            MATCH (root:Analytical_Pattern {id: $ap_id})
+            OPTIONAL MATCH (root)-[:consist_of]->(:Operator)-[:input|output]-(rt:ResultType)
+            WHERE NOT rt:Data
+            DETACH DELETE rt
+            """,
+            ap_id=str(ap_id),
         )
 
     # ------------------------------------------------------------------
@@ -134,6 +150,10 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
 
         When *include_evaluations* is ``False`` (default) Evaluation nodes are
         excluded from the traversal.  Pass ``True`` to include them.
+
+        ResultType nodes are internal to the AP but connected via input/output
+        edges (which are in FORBIDDEN_EDGES).  A second query fetches them
+        explicitly and merges them into the subgraph.
         """
         forbidden = self._effective_forbidden_edges(include_evaluations)
         query = """//cypher
@@ -170,6 +190,28 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
                 if key not in edges:
                     edges[key] = self._deserialize_edge(rel)
 
+        # Second pass: collect internal ResultType nodes connected to Operators.
+        # Data nodes (which are also ResultType) are excluded — they are external
+        # persistent nodes not owned by the AP subgraph.
+        rt_query = """//cypher
+            MATCH (root:Analytical_Pattern {id: $ap_id})-[:consist_of]->(op:Operator)
+            OPTIONAL MATCH (op)-[r:input|output]-(rt:ResultType)
+            WHERE NOT rt:Data
+            RETURN rt, r
+        """
+        rt_result = await self._session.run(rt_query, ap_id=str(ap_id))
+        async for record in rt_result:
+            rt = record["rt"]
+            r = record["r"]
+            if rt is not None:
+                rt_id = rt["id"]
+                if rt_id not in nodes:
+                    nodes[rt_id] = self._deserialize_node(rt)
+            if r is not None:
+                key = (r.start_node["id"], r.end_node["id"], r.type)
+                if key not in edges:
+                    edges[key] = self._deserialize_edge(r)
+
         valid_edges = [
             e for e in edges.values()
             if e["from"] in nodes and e["to"] in nodes
@@ -199,7 +241,8 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
                 NOT EXISTS { MATCH (root)-[:consist_of]->(:Operator)-[:input]->() }
                 OR NOT EXISTS {
                     MATCH (root)-[:consist_of]->(:Operator)-[:input]->(d)
-                          -[*0..4]-(ds:`sc:Dataset`)
+                    WHERE NOT (d:ResultType AND NOT d:Data)
+                    MATCH (d)-[*0..4]-(ds:`sc:Dataset`)
                     WHERE NOT ds.id IN $accessible_ids
                 }
             )

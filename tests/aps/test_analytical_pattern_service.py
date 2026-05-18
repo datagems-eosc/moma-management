@@ -6,13 +6,16 @@ import json
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
+
 import pytest
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.exceptions import NotFoundError, ValidationError
 from moma_management.domain.filters import AnalyticalPatternFilter
 from moma_management.domain.generated.edges.edge_schema import Edge
-from moma_management.domain.generated.nodes.ap.evaluation_schema import Type as EvaluationType
+from moma_management.domain.generated.nodes.ap.evaluation_schema import (
+    Type as EvaluationType,
+)
 from moma_management.domain.generated.nodes.node_schema import Node
 from moma_management.services.analytical_pattern import AnalyticalPatternService
 

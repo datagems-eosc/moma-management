@@ -14,7 +14,7 @@ from moma_management.domain.exceptions import (
 )
 from moma_management.domain.filters import DatasetFilter
 from moma_management.domain.mapping_engine import croissant_to_pgjson
-from moma_management.domain.schema_validator import LocalSchemaValidator, SchemaError
+from moma_management.domain.validation.schema_error import SchemaError
 from moma_management.repository.dataset.dataset_repository import DatasetRepository
 
 logger = logging.getLogger(__name__)
@@ -77,8 +77,21 @@ class DatasetService:
         Returns a list of AJV-style :class:`SchemaError` objects (empty when
         the candidate is valid).
         """
-        validator = LocalSchemaValidator()
-        return validator.validate_graph(candidate, graph_type="dataset")
+        try:
+            Dataset.model_validate(candidate)
+            return []
+        except PydanticValidationError as e:
+            return [
+                SchemaError(
+                    keyword=err["type"],
+                    instancePath="/" + "/".join(str(x)
+                                                for x in (err.get("loc") or [])),
+                    schemaPath="#",
+                    params={},
+                    message=err["msg"],
+                )
+                for err in e.errors()
+            ]
 
     async def ingest(self, candidate: Dict[str, Any]) -> Dataset:
         """
@@ -120,11 +133,12 @@ class DatasetService:
             NotFoundError: if no dataset with *id* exists.
             ConflictError: if at least one AnalyticalPattern references this dataset.
         """
-        if await self._repo.get(id) is None:
-            raise NotFoundError(f"Dataset '{id}' not found.")
         if await self._repo.has_referencing_aps(id):
             raise ConflictError(
                 f"Dataset '{id}' cannot be deleted: it is referenced by at "
                 f"least one AnalyticalPattern."
             )
-        return await self._repo.delete(id)
+        rows = await self._repo.delete(id)
+        if rows == 0:
+            raise NotFoundError(f"Dataset '{id}' not found.")
+        return rows

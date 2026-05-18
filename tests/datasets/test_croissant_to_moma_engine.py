@@ -70,7 +70,7 @@ def test_generation_cycle(light_profile: Path, mapping_file: Path):
     new_model = croissant_to_pgjson(profile, mapping)
     graph = MoMaGraphModel.model_validate(new_model)
     assert normalize(new_model) == normalize(
-        graph.model_dump(mode='json', by_alias=True))
+        graph.model_dump(mode='json', by_alias=True, exclude_none=True))
 
 
 def test_column_statistics_type_property(mapping_file: Path):
