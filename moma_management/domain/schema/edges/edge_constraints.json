@@ -168,6 +168,18 @@
         "description": "Operator writes to an internal ResultType node"
     },
     {
+        "fromLabel": "Operator",
+        "label": "input",
+        "toLabel": "sc:Dataset",
+        "description": "Operator reads a Dataset node (whole-dataset semantics, mapping is Any)"
+    },
+    {
+        "fromLabel": "Operator",
+        "label": "output",
+        "toLabel": "sc:Dataset",
+        "description": "Operator produces a Dataset node (whole-dataset semantics, mapping is Any)"
+    },
+    {
         "fromLabel": "Analytical_Pattern",
         "label": "is_measured_by",
         "toLabel": "Evaluation",

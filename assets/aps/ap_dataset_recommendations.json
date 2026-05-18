@@ -28,12 +28,12 @@
       "labels": ["DatasetRecommender_Operator", "Operator"],
       "properties": {
         "name": "GetRecommendations Operator",
-        "description": "Dataset-to-Dataset recommender operator.",
+        "description": "Dataset-to-Dataset recommender operator. Accepts a seed dataset as input and returns a ranked list of recommended datasets as output.",
         "command": "get_recommendations",
         "inputs": [
           {
             "name": "seed",
-            "type": "string",
+            "type": "sc:Dataset",
             "required": true
           },
           {
@@ -46,7 +46,7 @@
         "outputs": [
           {
             "name": "recommendations",
-            "type": "array",
+            "type": "sc:Dataset",
             "required": true
           }
         ]
@@ -54,22 +54,18 @@
     },
     {
       "id": "9b25bc46-8bd3-4f7f-94b4-52dbc38c130f",
-      "labels": ["ResultType", "string"],
+      "labels": ["sc:Dataset"],
       "properties": {
-        "name": "seed_dataset_id",
-        "description": "The UUID of the seed dataset used as the basis for recommendations."
+        "name": "Seed Dataset",
+        "description": "The dataset used as the basis for the recommendation query."
       }
     },
     {
       "id": "e7f8a9b0-c1d2-4e3f-8a5b-6c7d8e9f0a1b",
-      "labels": ["ResultType", "array"],
+      "labels": ["sc:Dataset"],
       "properties": {
-        "name": "recommendations",
-        "schema": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "UUIDs of the recommended datasets."
-        }
+        "name": "Recommended Dataset",
+        "description": "A dataset recommended by the recommender operator."
       }
     }
   ],
@@ -92,22 +88,12 @@
     {
       "from": "4b3a8f2e-5d7a-4a0b-9fb1-3c4c0f3a8f10",
       "to": "9b25bc46-8bd3-4f7f-94b4-52dbc38c130f",
-      "labels": ["input"],
-      "properties": {
-        "mappings": {
-          "from['inputs']['seed']": "to['seed_dataset_id']"
-        }
-      }
+      "labels": ["input"]
     },
     {
       "from": "4b3a8f2e-5d7a-4a0b-9fb1-3c4c0f3a8f10",
       "to": "e7f8a9b0-c1d2-4e3f-8a5b-6c7d8e9f0a1b",
-      "labels": ["output"],
-      "properties": {
-        "mappings": {
-          "to['recommendations']": "from['outputs']['recommendations']"
-        }
-      }
+      "labels": ["output"]
     }
   ]
 }

@@ -600,6 +600,113 @@ class TestMappingValidation:
         errors = _validate_mappings(data)
         assert errors == [], [e.message for e in errors]
 
+    def test_ap_dataset_recommendations_fixture(self):
+        """The updated ap_dataset_recommendations.json fixture must pass end-to-end."""
+        import json
+        from pathlib import Path
+
+        fixture = Path(__file__).parents[2] / \
+            "assets" / "aps" / "ap_dataset_recommendations.json"
+        data = json.loads(fixture.read_text())
+        errors = _validate_mappings(data)
+        assert errors == [], [e.message for e in errors]
+
+
+# ===================================================================
+# Dataset node as Operator input / output
+# ===================================================================
+
+_DS_ID = "d1000000-0000-4000-a000-000000000005"
+
+
+def _make_dataset_node(ds_id: str = _DS_ID) -> dict:
+    return {
+        "id": ds_id,
+        "labels": ["sc:Dataset"],
+        "properties": {"name": "My Dataset"},
+    }
+
+
+def _ap_with_dataset(edge_label: str, mapping: dict | None = None) -> dict:
+    """Minimal AP with one Operator and one sc:Dataset node."""
+    op = _make_op(
+        inputs=[{"name": "seed", "type": "sc:Dataset", "required": True}],
+        outputs=[{"name": "result", "type": "sc:Dataset", "required": True}],
+    )
+    ds = _make_dataset_node()
+    edge: dict = {"from": _OP_ID, "to": _DS_ID, "labels": [edge_label]}
+    if mapping is not None:
+        edge["properties"] = {"mapping": mapping}
+    return {
+        "nodes": [
+            {"id": _AP_ROOT_ID, "labels": [
+                "Analytical_Pattern"], "properties": {"name": "ap"}},
+            op,
+            ds,
+        ],
+        "edges": [
+            {"from": _AP_ROOT_ID, "to": _OP_ID, "labels": ["consist_of"]},
+            edge,
+        ],
+    }
+
+
+class TestDatasetNodeIO:
+    """Tests for sc:Dataset nodes as Operator inputs / outputs."""
+
+    # ── Edge-constraint acceptance ────────────────────────────────────────
+
+    def test_operator_input_from_dataset_node_passes_edge_constraint(self):
+        """Operator -[input]-> sc:Dataset must be an allowed edge."""
+        data = _ap_with_dataset(edge_label="input")
+        errors = SchemaStep.validate_edge_constraints(data)
+        assert errors == [], [e.message for e in errors]
+
+    def test_operator_output_to_dataset_node_passes_edge_constraint(self):
+        """Operator -[output]-> sc:Dataset must be an allowed edge."""
+        data = _ap_with_dataset(edge_label="output")
+        errors = SchemaStep.validate_edge_constraints(data)
+        assert errors == [], [e.message for e in errors]
+
+    # ── Full AP parse (all validation steps) ─────────────────────────────
+
+    def test_dataset_input_edge_without_mapping_passes(self):
+        """AP with sc:Dataset input edge and no mapping must validate."""
+        AnalyticalPattern.model_validate(_ap_with_dataset(edge_label="input"))
+
+    def test_dataset_output_edge_without_mapping_passes(self):
+        """AP with sc:Dataset output edge and no mapping must validate."""
+        AnalyticalPattern.model_validate(_ap_with_dataset(edge_label="output"))
+
+    # ── Mapping is "Any" — silently ignored for sc:Dataset ───────────────
+
+    def test_dataset_input_edge_with_mapping_is_any_no_errors(self):
+        """A mapping on a sc:Dataset input edge is accepted without validation (Any semantics)."""
+        data = _ap_with_dataset(
+            edge_label="input",
+            mapping={"from['inputs']['seed']": "to['whatever_prop']"},
+        )
+        errors = _validate_mappings(data)
+        assert errors == [], [e.message for e in errors]
+
+    def test_dataset_output_edge_with_mapping_is_any_no_errors(self):
+        """A mapping on a sc:Dataset output edge is accepted without validation (Any semantics)."""
+        data = _ap_with_dataset(
+            edge_label="output",
+            mapping={"to['anything']": "from['outputs']['result']"},
+        )
+        errors = _validate_mappings(data)
+        assert errors == [], [e.message for e in errors]
+
+    def test_dataset_node_no_type_compatibility_check(self):
+        """sc:Dataset edges are exempt from type-compatibility checks."""
+        data = _ap_with_dataset(
+            edge_label="input",
+            mapping={"from['inputs']['seed']": "to['name']"},
+        )
+        errors = _validate_mappings(data)
+        assert not any(e.keyword == "mappingTypeCompatibility" for e in errors)
+
 
 class TestDatasetServiceValidate:
     """Tests for DatasetService.validate (uses MagicMock repo)."""

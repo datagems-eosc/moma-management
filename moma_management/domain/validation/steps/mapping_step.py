@@ -66,6 +66,7 @@ def _validate_mappings(data: dict) -> list[SchemaError]:
         to_props: dict = to_node.get("properties") or {}
         to_labels: list[str] = to_node.get("labels") or []
         is_result_type = "ResultType" in to_labels
+        is_dataset = "sc:Dataset" in to_labels
 
         def _check_node_prop(prop: str, node_props: dict, node_labels: list[str], path: str) -> None:
             if "ResultType" in node_labels:
@@ -116,12 +117,12 @@ def _validate_mappings(data: dict) -> list[SchemaError]:
 
                 # value: to['<prop>'] — target node property
                 prop_name = _extract_bracket_value(value, "to")
-                if prop_name is not None:
+                if prop_name is not None and not is_dataset:
                     _check_node_prop(prop_name, to_props,
                                      to_labels, f"{path_prefix}/{key}")
 
                 # Type-compatibility check (ResultType only)
-                if param_name is not None and prop_name is not None and is_result_type:
+                if param_name is not None and prop_name is not None and is_result_type and not is_dataset:
                     declared = from_props.get("inputs") or []
                     param = next(
                         (p for p in declared if isinstance(p, dict)
@@ -147,7 +148,7 @@ def _validate_mappings(data: dict) -> list[SchemaError]:
             elif edge_label == "output":
                 # key: to['<prop>'] — target node property
                 prop_name = _extract_bracket_value(key, "to")
-                if prop_name is not None:
+                if prop_name is not None and not is_dataset:
                     _check_node_prop(prop_name, to_props,
                                      to_labels, f"{path_prefix}/{key}")
 
@@ -171,7 +172,7 @@ def _validate_mappings(data: dict) -> list[SchemaError]:
                         ))
 
                 # Type-compatibility check (ResultType only)
-                if prop_name is not None and param_name is not None and is_result_type:
+                if prop_name is not None and param_name is not None and is_result_type and not is_dataset:
                     declared = from_props.get("outputs") or []
                     param = next(
                         (p for p in declared if isinstance(p, dict)
