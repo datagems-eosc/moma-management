@@ -193,44 +193,44 @@ def test_ap_valid_operator_output_object_result_type():
     assert ap is not None
 
 
-def test_ap_rejects_operator_input_sc_dataset():
-    """Operator --input--> sc:Dataset is NOT permitted; Data nodes (not sc:Dataset) are the correct target."""
+def test_ap_valid_operator_input_sc_dataset():
+    """Operator --input--> sc:Dataset is permitted (whole-dataset reference, mapping is Any)."""
     root_id = str(uuid4())
     op_id = str(uuid4())
     ds_id = str(uuid4())
-    with pytest.raises(ValidationError, match="Edges violate graph constraints"):
-        AnalyticalPattern(
-            nodes=[
-                Node(id=root_id, labels=["Analytical_Pattern"], properties={}),
-                Node(id=op_id, labels=["Operator"], properties={}),
-                Node(id=ds_id, labels=["sc:Dataset"], properties={}),
-            ],
-            edges=[
-                Edge(**{"from": root_id, "to": op_id,
-                     "labels": ["consist_of"]}),
-                Edge(**{"from": op_id, "to": ds_id, "labels": ["input"]}),
-            ],
-        )
+    ap = AnalyticalPattern(
+        nodes=[
+            Node(id=root_id, labels=[
+                 "Analytical_Pattern"], properties={"name": "ap"}),
+            Node(id=op_id, labels=["Operator"], properties={"name": "op"}),
+            Node(id=ds_id, labels=["sc:Dataset"], properties={}),
+        ],
+        edges=[
+            Edge(**{"from": root_id, "to": op_id, "labels": ["consist_of"]}),
+            Edge(**{"from": op_id, "to": ds_id, "labels": ["input"]}),
+        ],
+    )
+    assert ap is not None
 
 
-def test_ap_rejects_operator_output_sc_dataset():
-    """Operator --output--> sc:Dataset is NOT permitted; use Data nodes instead."""
+def test_ap_valid_operator_output_sc_dataset():
+    """Operator --output--> sc:Dataset is permitted (whole-dataset reference, mapping is Any)."""
     root_id = str(uuid4())
     op_id = str(uuid4())
     ds_id = str(uuid4())
-    with pytest.raises(ValidationError, match="Edges violate graph constraints"):
-        AnalyticalPattern(
-            nodes=[
-                Node(id=root_id, labels=["Analytical_Pattern"], properties={}),
-                Node(id=op_id, labels=["Operator"], properties={}),
-                Node(id=ds_id, labels=["sc:Dataset"], properties={}),
-            ],
-            edges=[
-                Edge(**{"from": root_id, "to": op_id,
-                     "labels": ["consist_of"]}),
-                Edge(**{"from": op_id, "to": ds_id, "labels": ["output"]}),
-            ],
-        )
+    ap = AnalyticalPattern(
+        nodes=[
+            Node(id=root_id, labels=[
+                 "Analytical_Pattern"], properties={"name": "ap"}),
+            Node(id=op_id, labels=["Operator"], properties={"name": "op"}),
+            Node(id=ds_id, labels=["sc:Dataset"], properties={}),
+        ],
+        edges=[
+            Edge(**{"from": root_id, "to": op_id, "labels": ["consist_of"]}),
+            Edge(**{"from": op_id, "to": ds_id, "labels": ["output"]}),
+        ],
+    )
+    assert ap is not None
 
 
 def test_ap_valid_operator_input_data_node():
