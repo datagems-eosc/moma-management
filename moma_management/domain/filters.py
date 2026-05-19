@@ -17,6 +17,7 @@ class MimeType(str, Enum):
     """Supported MIME types for dataset file objects."""
     EXCEL = "application/vnd.ms-excel"
     JUPYTER = "application/x-ipynb+json"
+    JSON = "application/json"
     DOCX = "application/docx"
     PPTX = "application/pptx"
     PDF = "application/pdf"
@@ -24,6 +25,13 @@ class MimeType(str, Enum):
     PNG = "image/png"
     CSV = "text/csv"
     SQL = "text/sql"
+    XML = "application/xml"
+    TXT = "text/plain"
+    GIF = "image/gif"
+    WEBP = "image/webp"
+    BMP = "image/bmp"
+    TIFF = "image/tiff"
+    # TODO: add video MIME types when VideoSet ingestion is supported (VideoSet schema exists)
     SHEET = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     DOCUMENT = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
@@ -37,7 +45,14 @@ MIME_TYPE_TO_NODE_LABEL: dict["MimeType", str] = {
     MimeType.JPEG:     "JPEGSet",
     MimeType.PNG:      "PNGSet",
     MimeType.CSV:      "CSV",
+    MimeType.JSON:     "JSON",
     MimeType.SQL:      "Table",
+    MimeType.XML:      "XML",
+    MimeType.TXT:      "Text",
+    MimeType.GIF:      "Image",
+    MimeType.WEBP:     "Image",
+    MimeType.BMP:      "Image",
+    MimeType.TIFF:     "Image",
     MimeType.SHEET:    "Sheet",
     MimeType.DOCUMENT: "DocumentSet",
 }
@@ -71,6 +86,13 @@ class NodeLabel(str, Enum):
     TABLE = "Table"
     RELATIONAL_DB = "RelationalDatabase"
     PDF = "PDFSet"
+    JSON_SET = "JSONSet"
+    JSON = "JSON"
+    XML_SET = "XMLSet"
+    XML = "XML"
+    TEXT = "Text"
+    IMAGE = "Image"
+    VIDEO_SET = "VideoSet"
     COLUMN = "Column"
 
 
