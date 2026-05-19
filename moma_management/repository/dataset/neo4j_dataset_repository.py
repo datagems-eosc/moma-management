@@ -3,8 +3,10 @@ from logging import getLogger
 from typing import List, Optional
 
 from neo4j import AsyncManagedTransaction, AsyncSession
+from pydantic import ValidationError as PydanticValidationError
 
 from moma_management.domain.dataset import Dataset
+from moma_management.domain.exceptions import RepositoryError
 from moma_management.domain.filters import DatasetFilter, DatasetSortField
 from moma_management.domain.generated.moma_schema import MoMaGraphModel
 from moma_management.repository.neo4j_pgson_mixin import Neo4jPgJsonMixin
@@ -198,6 +200,11 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                 record["edge_maps"],
             )
             return Dataset(nodes=graph.nodes, edges=graph.edges)
+        except PydanticValidationError as e:
+            logger.error("Neo4j get failed: %s", e)
+            raise RepositoryError(
+                f"Stored dataset '{id}' failed schema validation: {e}"
+            ) from e
         except Exception as e:
             logger.error("Neo4j get failed: %s", e)
             return None

@@ -16,6 +16,7 @@ from moma_management.domain.exceptions import (
     ConversionError,
     MomaError,
     NotFoundError,
+    RepositoryError,
     ValidationError,
 )
 
@@ -80,6 +81,12 @@ async def conversion_error_handler(request: Request, exc: ConversionError) -> JS
 @app.exception_handler(ValidationError)
 async def validation_error_handler(request: Request, exc: ValidationError) -> JSONResponse:
     return JSONResponse(status_code=422, content={"detail": exc.message})
+
+
+@app.exception_handler(RepositoryError)
+async def repository_error_handler(request: Request, exc: RepositoryError) -> JSONResponse:
+    logger.exception("Repository data integrity error")
+    return JSONResponse(status_code=500, content={"detail": "Internal data error: the stored resource is invalid."})
 
 
 @app.exception_handler(MomaError)
