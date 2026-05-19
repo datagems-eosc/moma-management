@@ -75,10 +75,9 @@
                 "status": {
                     "type": "string",
                     "enum": [
-                        "draft",
-                        "published",
+                        "ready",
                         "loaded",
-                        "archived"
+                        "staged"
                     ],
                     "description": "Lifecycle status of the dataset"
                 },
