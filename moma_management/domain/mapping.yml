@@ -174,14 +174,16 @@ Statistics:
 
   map:
     type: "@type"
-    rowCount: "dg:rowCount"
-    mean: "dg:mean"
-    median: "dg:median"
-    stddev: "dg:stddev"
-    min: "dg:min"
-    max: "dg:max"
-    nullCount: "dg:nullCount"
-    distinctCount: "dg:distinctCount"
+    rowCount: rowCount
+    mean: mean
+    median: median
+    standardDeviation: standardDeviation
+    min: min
+    max: max
+    missingCount: missingCount
+    missingPercentage: missingPercentage
+    histogram: histogram
+    uniqueCount: uniqueCount
 
   edges:
     - from: parent

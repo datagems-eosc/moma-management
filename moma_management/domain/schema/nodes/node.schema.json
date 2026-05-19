@@ -558,6 +558,24 @@
                     }
                 }
             }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "Statistics"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/columnStatistics.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
         }
     ],
     "$id": "nodes/node.schema.json"

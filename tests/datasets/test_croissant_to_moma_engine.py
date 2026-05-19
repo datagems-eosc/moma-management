@@ -101,8 +101,8 @@ def test_column_statistics_type_property(mapping_file: Path):
                         "statistics": {
                             "@id": "stats-1",
                             "@type": "dg:ColumnStatistics",
-                            "dg:rowCount": 100,
-                            "dg:mean": 3.5,
+                            "rowCount": 100,
+                            "mean": 3.5,
                         },
                     },
                     {
@@ -113,8 +113,8 @@ def test_column_statistics_type_property(mapping_file: Path):
                         "statistics": {
                             "@id": "stats-2",
                             "@type": "dg:ColumnStatistics",
-                            "dg:rowCount": None,
-                            "dg:mean": None,
+                            "rowCount": None,
+                            "mean": None,
                         },
                     },
                 ],

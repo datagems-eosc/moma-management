@@ -1,0 +1,58 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "nodes/dataset/columnStatistics.schema.json",
+    "title": "ColumnStatistics",
+    "description": "Descriptive statistics for a single column in a dataset.",
+    "$defs": {
+        "pgProperties": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Vocabulary type annotation (e.g. dg:ColumnStatistics)"
+                },
+                "rowCount": {
+                    "type": ["integer", "null"],
+                    "description": "Total number of rows in the column"
+                },
+                "mean": {
+                    "type": ["number", "null"],
+                    "description": "Arithmetic mean of the column values (null for non-numeric columns)"
+                },
+                "median": {
+                    "type": ["number", "null"],
+                    "description": "Median value of the column (null for non-numeric columns)"
+                },
+                "standardDeviation": {
+                    "type": ["number", "null"],
+                    "description": "Standard deviation of the column values (null for non-numeric columns)"
+                },
+                "min": {
+                    "type": ["number", "null"],
+                    "description": "Minimum value in the column (null for non-numeric columns)"
+                },
+                "max": {
+                    "type": ["number", "null"],
+                    "description": "Maximum value in the column (null for non-numeric columns)"
+                },
+                "missingCount": {
+                    "type": ["integer", "null"],
+                    "description": "Number of missing (null/NaN) values in the column"
+                },
+                "missingPercentage": {
+                    "type": ["number", "null"],
+                    "description": "Percentage of missing values in the column"
+                },
+                "histogram": {
+                    "type": ["string", "null"],
+                    "description": "JSON-encoded histogram of value distribution"
+                },
+                "uniqueCount": {
+                    "type": ["integer", "null"],
+                    "description": "Number of distinct values in the column"
+                }
+            },
+            "unevaluatedProperties": true
+        }
+    }
+}

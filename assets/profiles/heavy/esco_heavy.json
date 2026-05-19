@@ -272,16 +272,16 @@
                     "statistics": {
                         "@id": "43b47f34-5d49-45ed-a9cd-3125c48d5025",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 5818,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 3759
+                        "rowCount": 5818,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 3759
                     }
                 },
                 {
@@ -313,16 +313,16 @@
                     "statistics": {
                         "@id": "e1ad37c0-bc0d-47ca-9f04-1b4a7aeb4b79",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 5818,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 5818,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -354,16 +354,16 @@
                     "statistics": {
                         "@id": "294fd6b0-3b6b-42a8-b336-0248fb7fe942",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 5818,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 5818,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -395,16 +395,16 @@
                     "statistics": {
                         "@id": "ba3ce6e0-c499-4080-9745-aefb31ecfab7",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 5818,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 5818,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -436,16 +436,16 @@
                     "statistics": {
                         "@id": "8d90184a-aca0-4ff0-819e-5cccbd5b9064",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 5818,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1953
+                        "rowCount": 5818,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1953
                     }
                 }
             ],
@@ -485,16 +485,16 @@
                     "statistics": {
                         "@id": "23e9f140-a08e-4630-a70f-85c96da2b9b6",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 619,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 619,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -526,16 +526,16 @@
                     "statistics": {
                         "@id": "77ef3d1a-e406-4e38-a948-1c333d0b93f2",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 619,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 619
+                        "rowCount": 619,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 619
                     }
                 },
                 {
@@ -567,16 +567,16 @@
                     "statistics": {
                         "@id": "ce4fa95b-ad04-49c1-b79e-cd839fe164bf",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 619,
-                        "dg:mean": 3493.928917609047,
-                        "dg:median": 3111.0,
-                        "dg:standardDeviation": 2954.134840377685,
-                        "dg:min": 0.0,
-                        "dg:max": 9629.0,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": "[{\"binRange\": [-9.629, 962.9], \"count\": 186}, {\"binRange\": [962.9, 1925.8], \"count\": 31}, {\"binRange\": [1925.8, 2888.7], \"count\": 92}, {\"binRange\": [2888.7, 3851.6], \"count\": 84}, {\"binRange\": [3851.6, 4814.5], \"count\": 29}, {\"binRange\": [4814.5, 5777.4], \"count\": 40}, {\"binRange\": [5777.4, 6740.3], \"count\": 18}, {\"binRange\": [6740.3, 7703.2], \"count\": 66}, {\"binRange\": [7703.2, 8666.1], \"count\": 40}, {\"binRange\": [8666.1, 9629.0], \"count\": 33}]",
-                        "dg:uniqueCount": 613
+                        "rowCount": 619,
+                        "mean": 3493.928917609047,
+                        "median": 3111.0,
+                        "standardDeviation": 2954.134840377685,
+                        "min": 0.0,
+                        "max": 9629.0,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": "[{\"binRange\": [-9.629, 962.9], \"count\": 186}, {\"binRange\": [962.9, 1925.8], \"count\": 31}, {\"binRange\": [1925.8, 2888.7], \"count\": 92}, {\"binRange\": [2888.7, 3851.6], \"count\": 84}, {\"binRange\": [3851.6, 4814.5], \"count\": 29}, {\"binRange\": [4814.5, 5777.4], \"count\": 40}, {\"binRange\": [5777.4, 6740.3], \"count\": 18}, {\"binRange\": [6740.3, 7703.2], \"count\": 66}, {\"binRange\": [7703.2, 8666.1], \"count\": 40}, {\"binRange\": [8666.1, 9629.0], \"count\": 33}]",
+                        "uniqueCount": 613
                     }
                 },
                 {
@@ -608,16 +608,16 @@
                     "statistics": {
                         "@id": "1205968d-3f81-47bd-a978-ff4aa013de21",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 619,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 582
+                        "rowCount": 619,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 582
                     }
                 },
                 {
@@ -649,16 +649,16 @@
                     "statistics": {
                         "@id": "cdf9b671-3208-4e5f-8e35-bdb817dba167",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 619,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 619,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -690,16 +690,16 @@
                     "statistics": {
                         "@id": "33b83598-1e7d-4265-b346-244a4ed383ba",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 0,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 619,
-                        "dg:missingPercentage": 100.0,
-                        "dg:histogram": "[]",
-                        "dg:uniqueCount": 0
+                        "rowCount": 0,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 619,
+                        "missingPercentage": 100.0,
+                        "histogram": "[]",
+                        "uniqueCount": 0
                     }
                 },
                 {
@@ -731,16 +731,16 @@
                     "statistics": {
                         "@id": "6655a632-f307-4771-84cd-e3355a9e58ae",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 619,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 619,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -772,16 +772,16 @@
                     "statistics": {
                         "@id": "ab64712a-cd6b-412b-aec5-75a038cbea5d",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 619,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 619
+                        "rowCount": 619,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 619
                     }
                 }
             ],
@@ -821,16 +821,16 @@
                     "statistics": {
                         "@id": "c2625674-6f50-48f8-be4c-287b73ece67c",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 129004,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 3039
+                        "rowCount": 129004,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 3039
                     }
                 },
                 {
@@ -862,16 +862,16 @@
                     "statistics": {
                         "@id": "4ee28015-f11b-4804-9ea3-407808b07840",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 129004,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 129004,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -903,16 +903,16 @@
                     "statistics": {
                         "@id": "946a1b88-7129-4e63-8316-1f5b9247feb5",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 128945,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 59,
-                        "dg:missingPercentage": 0.0457350159684971,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 128945,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 59,
+                        "missingPercentage": 0.0457350159684971,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -944,16 +944,16 @@
                     "statistics": {
                         "@id": "fa13b7ca-3c53-4829-804f-8c905963918f",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 129004,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 13492
+                        "rowCount": 129004,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 13492
                     }
                 }
             ],
@@ -993,16 +993,16 @@
                     "statistics": {
                         "@id": "77d2724f-7473-42a6-9f30-87aa5bf660e0",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 25,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 25,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -1034,16 +1034,16 @@
                     "statistics": {
                         "@id": "f4f082e5-a14f-473c-9f3f-160e79a83552",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 25,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 25
+                        "rowCount": 25,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 25
                     }
                 },
                 {
@@ -1075,16 +1075,16 @@
                     "statistics": {
                         "@id": "297bdf22-6937-4ba9-a4f9-f9174f49363c",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 25,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 25
+                        "rowCount": 25,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 25
                     }
                 },
                 {
@@ -1116,16 +1116,16 @@
                     "statistics": {
                         "@id": "ba2d069e-20d0-4990-b3a3-b0eacc9500d3",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 25,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 25,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -1157,16 +1157,16 @@
                     "statistics": {
                         "@id": "143140e2-e605-4042-9c85-9d40c6218f98",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 20,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 5,
-                        "dg:missingPercentage": 20.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 20,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 5,
+                        "missingPercentage": 20.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -1198,16 +1198,16 @@
                     "statistics": {
                         "@id": "c1b9dee1-6880-4bb2-a96d-590ac0b6a07c",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 20,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 5,
-                        "dg:missingPercentage": 20.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 20,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 5,
+                        "missingPercentage": 20.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -1239,16 +1239,16 @@
                     "statistics": {
                         "@id": "5f91532c-ba40-4223-b7d2-d7d4ef350b59",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 19,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 6,
-                        "dg:missingPercentage": 24.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 19
+                        "rowCount": 19,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 6,
+                        "missingPercentage": 24.0,
+                        "histogram": null,
+                        "uniqueCount": 19
                     }
                 },
                 {
@@ -1280,16 +1280,16 @@
                     "statistics": {
                         "@id": "7b0563e5-eaf7-48f8-8cf6-7e6845fe4d02",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 25,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 25
+                        "rowCount": 25,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 25
                     }
                 },
                 {
@@ -1321,16 +1321,16 @@
                     "statistics": {
                         "@id": "7150820b-abdb-4b02-9cde-ae02fbe2316c",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 25,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 20
+                        "rowCount": 25,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 20
                     }
                 },
                 {
@@ -1362,16 +1362,16 @@
                     "statistics": {
                         "@id": "83df52ac-dc98-429c-b72a-b1649914f9c3",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 25,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 20
+                        "rowCount": 25,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 20
                     }
                 }
             ],
@@ -1411,16 +1411,16 @@
                     "statistics": {
                         "@id": "0543b766-48b0-4954-a2bf-691d2be61acc",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 3652,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 3652,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -1452,16 +1452,16 @@
                     "statistics": {
                         "@id": "a06b1917-1559-4e81-b507-0d1981319eff",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 3652,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 3648
+                        "rowCount": 3652,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 3648
                     }
                 },
                 {
@@ -1493,16 +1493,16 @@
                     "statistics": {
                         "@id": "e64249e6-7cd8-4e1a-92d4-7a40b225fb2e",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 3652,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 3652,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -1534,16 +1534,16 @@
                     "statistics": {
                         "@id": "69ec9c0a-8678-483e-bd7d-0080b3b4b525",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 3652,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 882
+                        "rowCount": 3652,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 882
                     }
                 }
             ],
@@ -1583,16 +1583,16 @@
                     "statistics": {
                         "@id": "40e5fc28-0ea4-46a0-9bbb-41cdc5fd0f9d",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 640,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 4
+                        "rowCount": 640,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 4
                     }
                 },
                 {
@@ -1624,16 +1624,16 @@
                     "statistics": {
                         "@id": "30e2e422-d140-4ae1-badf-bd1861886233",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 640,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 4
+                        "rowCount": 640,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 4
                     }
                 },
                 {
@@ -1665,16 +1665,16 @@
                     "statistics": {
                         "@id": "51827082-ca30-48aa-b83c-1b05d95ebf4c",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 636,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 4,
-                        "dg:missingPercentage": 0.625,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 28
+                        "rowCount": 636,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 4,
+                        "missingPercentage": 0.625,
+                        "histogram": null,
+                        "uniqueCount": 28
                     }
                 },
                 {
@@ -1706,16 +1706,16 @@
                     "statistics": {
                         "@id": "a30ccf65-cdb4-4662-9363-e17e88ac14d4",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 636,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 4,
-                        "dg:missingPercentage": 0.625,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 28
+                        "rowCount": 636,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 4,
+                        "missingPercentage": 0.625,
+                        "histogram": null,
+                        "uniqueCount": 28
                     }
                 },
                 {
@@ -1747,16 +1747,16 @@
                     "statistics": {
                         "@id": "442d6b89-e51d-4c21-b2bc-16f225b72ddf",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 608,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 32,
-                        "dg:missingPercentage": 5.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 156
+                        "rowCount": 608,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 32,
+                        "missingPercentage": 5.0,
+                        "histogram": null,
+                        "uniqueCount": 156
                     }
                 },
                 {
@@ -1788,16 +1788,16 @@
                     "statistics": {
                         "@id": "f669cb9b-4024-4978-b35d-d2a30692dab1",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 608,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 32,
-                        "dg:missingPercentage": 5.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 156
+                        "rowCount": 608,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 32,
+                        "missingPercentage": 5.0,
+                        "histogram": null,
+                        "uniqueCount": 156
                     }
                 },
                 {
@@ -1829,16 +1829,16 @@
                     "statistics": {
                         "@id": "f5fc505e-9ca6-44ff-bf3f-5459d053bc18",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 452,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 188,
-                        "dg:missingPercentage": 29.375,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 452
+                        "rowCount": 452,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 188,
+                        "missingPercentage": 29.375,
+                        "histogram": null,
+                        "uniqueCount": 452
                     }
                 },
                 {
@@ -1870,16 +1870,16 @@
                     "statistics": {
                         "@id": "7978c6c5-d787-41a5-af68-cc86aa9be8ae",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 452,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 188,
-                        "dg:missingPercentage": 29.375,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 452
+                        "rowCount": 452,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 188,
+                        "missingPercentage": 29.375,
+                        "histogram": null,
+                        "uniqueCount": 452
                     }
                 },
                 {
@@ -1911,16 +1911,16 @@
                     "statistics": {
                         "@id": "100d920c-ac43-4c37-b57d-f49ffe715dc0",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 507,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 133,
-                        "dg:missingPercentage": 20.78125,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 425
+                        "rowCount": 507,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 133,
+                        "missingPercentage": 20.78125,
+                        "histogram": null,
+                        "uniqueCount": 425
                     }
                 },
                 {
@@ -1952,16 +1952,16 @@
                     "statistics": {
                         "@id": "bed289f8-0429-4548-8122-9fee18daedaa",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 324,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 316,
-                        "dg:missingPercentage": 49.375,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 281
+                        "rowCount": 324,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 316,
+                        "missingPercentage": 49.375,
+                        "histogram": null,
+                        "uniqueCount": 281
                     }
                 },
                 {
@@ -1993,16 +1993,16 @@
                     "statistics": {
                         "@id": "3e28f7f7-899c-4efa-a8e2-4da7630547f6",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 640,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 4
+                        "rowCount": 640,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 4
                     }
                 },
                 {
@@ -2034,16 +2034,16 @@
                     "statistics": {
                         "@id": "6e9499b9-d256-4ec2-be6e-d530cb63f0af",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 636,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 4,
-                        "dg:missingPercentage": 0.625,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 28
+                        "rowCount": 636,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 4,
+                        "missingPercentage": 0.625,
+                        "histogram": null,
+                        "uniqueCount": 28
                     }
                 },
                 {
@@ -2075,16 +2075,16 @@
                     "statistics": {
                         "@id": "b79c3e31-d048-49ab-ab0c-a09f730fd168",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 608,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 32,
-                        "dg:missingPercentage": 5.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 156
+                        "rowCount": 608,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 32,
+                        "missingPercentage": 5.0,
+                        "histogram": null,
+                        "uniqueCount": 156
                     }
                 },
                 {
@@ -2116,16 +2116,16 @@
                     "statistics": {
                         "@id": "f5213268-f0bb-4f21-aebf-8f57a5f0bc6a",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 452,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 188,
-                        "dg:missingPercentage": 29.375,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 452
+                        "rowCount": 452,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 188,
+                        "missingPercentage": 29.375,
+                        "histogram": null,
+                        "uniqueCount": 452
                     }
                 }
             ],
@@ -2165,16 +2165,16 @@
                     "statistics": {
                         "@id": "1af7f91f-0f73-47b7-9bde-a9470a74de8f",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 20822,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 20822,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -2206,16 +2206,16 @@
                     "statistics": {
                         "@id": "a49345d1-f047-4d88-b676-65563ca7cb62",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 20822,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 14575
+                        "rowCount": 20822,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 14575
                     }
                 },
                 {
@@ -2247,16 +2247,16 @@
                     "statistics": {
                         "@id": "c0ee90a9-4b5e-4136-ad57-fc85dd55a444",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 20822,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 20822,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -2288,16 +2288,16 @@
                     "statistics": {
                         "@id": "5cc483ec-d342-4eed-9be6-c28567a24eaa",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 20822,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2857
+                        "rowCount": 20822,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2857
                     }
                 }
             ],
@@ -2337,16 +2337,16 @@
                     "statistics": {
                         "@id": "cd627b26-00c0-4569-bf06-731b40028e3d",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 640,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 640,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -2378,16 +2378,16 @@
                     "statistics": {
                         "@id": "27a16b68-7291-45f9-b5d5-80330f304eb8",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 640,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 640
+                        "rowCount": 640,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 640
                     }
                 },
                 {
@@ -2419,16 +2419,16 @@
                     "statistics": {
                         "@id": "c842cd01-5aab-41c8-a7b8-c2cea67e4bcf",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 640,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 518
+                        "rowCount": 640,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 518
                     }
                 },
                 {
@@ -2460,16 +2460,16 @@
                     "statistics": {
                         "@id": "840de553-5d2e-44c5-9d9f-007bd0e387a5",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 112,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 528,
-                        "dg:missingPercentage": 82.5,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 70
+                        "rowCount": 112,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 528,
+                        "missingPercentage": 82.5,
+                        "histogram": null,
+                        "uniqueCount": 70
                     }
                 },
                 {
@@ -2501,16 +2501,16 @@
                     "statistics": {
                         "@id": "a4c6a65f-c68f-4842-be91-8ad7b285cc81",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 17,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 623,
-                        "dg:missingPercentage": 97.34375,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 17
+                        "rowCount": 17,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 623,
+                        "missingPercentage": 97.34375,
+                        "histogram": null,
+                        "uniqueCount": 17
                     }
                 },
                 {
@@ -2542,16 +2542,16 @@
                     "statistics": {
                         "@id": "ab72c183-6ae1-46b6-9351-70ade0669056",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 640,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 640,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -2583,16 +2583,16 @@
                     "statistics": {
                         "@id": "eac57ab3-eaa9-49fb-93bb-9de9be7d469c",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 341,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 299,
-                        "dg:missingPercentage": 46.71875,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 321
+                        "rowCount": 341,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 299,
+                        "missingPercentage": 46.71875,
+                        "histogram": null,
+                        "uniqueCount": 321
                     }
                 },
                 {
@@ -2624,16 +2624,16 @@
                     "statistics": {
                         "@id": "559bc267-66b2-4dd5-8e26-9d49108a60bf",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 324,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 316,
-                        "dg:missingPercentage": 49.375,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 281
+                        "rowCount": 324,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 316,
+                        "missingPercentage": 49.375,
+                        "histogram": null,
+                        "uniqueCount": 281
                     }
                 },
                 {
@@ -2665,16 +2665,16 @@
                     "statistics": {
                         "@id": "ac960e3d-1698-4a49-87f3-58a23d4db5d7",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 640,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 14
+                        "rowCount": 640,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 14
                     }
                 },
                 {
@@ -2706,16 +2706,16 @@
                     "statistics": {
                         "@id": "2a6b798b-60c8-4594-8a66-a58de64699ef",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 507,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 133,
-                        "dg:missingPercentage": 20.78125,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 425
+                        "rowCount": 507,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 133,
+                        "missingPercentage": 20.78125,
+                        "histogram": null,
+                        "uniqueCount": 425
                     }
                 },
                 {
@@ -2747,16 +2747,16 @@
                     "statistics": {
                         "@id": "72e05df2-de69-4cda-9304-6475264a44a7",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 640,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 640
+                        "rowCount": 640,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 640
                     }
                 }
             ],
@@ -2796,16 +2796,16 @@
                     "statistics": {
                         "@id": "25af49df-9339-488f-a128-5d4306635eaf",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 122,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 122,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -2837,16 +2837,16 @@
                     "statistics": {
                         "@id": "0b5910bb-ea39-4b7b-8161-2957a4efdb31",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 122,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 122
+                        "rowCount": 122,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 122
                     }
                 },
                 {
@@ -2878,16 +2878,16 @@
                     "statistics": {
                         "@id": "67169c05-82ef-43a4-af63-74eb0fa46c4d",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 122,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 122
+                        "rowCount": 122,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 122
                     }
                 },
                 {
@@ -2919,16 +2919,16 @@
                     "statistics": {
                         "@id": "b87d5187-8021-4a7d-963c-09caa3c3cdbc",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 122,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 122,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -2960,16 +2960,16 @@
                     "statistics": {
                         "@id": "70b6e153-4841-428c-92e4-7c79e0d7c4ec",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 121,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 1,
-                        "dg:missingPercentage": 0.819672131147541,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 121
+                        "rowCount": 121,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 1,
+                        "missingPercentage": 0.819672131147541,
+                        "histogram": null,
+                        "uniqueCount": 121
                     }
                 },
                 {
@@ -3001,16 +3001,16 @@
                     "statistics": {
                         "@id": "24acd716-f426-42ea-8b9e-34fdae18b6fb",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 122,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 122
+                        "rowCount": 122,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 122
                     }
                 },
                 {
@@ -3042,16 +3042,16 @@
                     "statistics": {
                         "@id": "c29a9822-ae57-4618-84f6-0f0384bb8fee",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 122,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 43
+                        "rowCount": 122,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 43
                     }
                 },
                 {
@@ -3083,16 +3083,16 @@
                     "statistics": {
                         "@id": "d453726a-4abe-405c-9f5b-0578456fe4a1",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 122,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 43
+                        "rowCount": 122,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 43
                     }
                 }
             ],
@@ -3132,16 +3132,16 @@
                     "statistics": {
                         "@id": "3e64cb9e-85a3-47e3-add3-4ce562fbc45c",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 359,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 359,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -3173,16 +3173,16 @@
                     "statistics": {
                         "@id": "40984791-d4be-480a-9769-2f06f13621eb",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 359,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 359
+                        "rowCount": 359,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 359
                     }
                 },
                 {
@@ -3214,16 +3214,16 @@
                     "statistics": {
                         "@id": "2edc2bca-a7b6-47d2-990a-b20d02dd7cf6",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 359,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 359,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -3255,16 +3255,16 @@
                     "statistics": {
                         "@id": "7c966420-e675-45ef-8644-eddfc882fe13",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 359,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 359,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -3296,16 +3296,16 @@
                     "statistics": {
                         "@id": "cb405404-9ee4-40ec-bd3a-7177ffcad246",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 359,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 359
+                        "rowCount": 359,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 359
                     }
                 },
                 {
@@ -3337,16 +3337,16 @@
                     "statistics": {
                         "@id": "6ead7576-d4f0-45a2-bf55-2cca89103c21",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 359,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 359,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -3378,16 +3378,16 @@
                     "statistics": {
                         "@id": "1c7d77c4-f4c6-4a73-9b59-9c8d1fb0d0e6",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 358,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 1,
-                        "dg:missingPercentage": 0.2785515320334262,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 358
+                        "rowCount": 358,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 1,
+                        "missingPercentage": 0.2785515320334262,
+                        "histogram": null,
+                        "uniqueCount": 358
                     }
                 },
                 {
@@ -3419,16 +3419,16 @@
                     "statistics": {
                         "@id": "0e574e64-9162-4224-b646-99362258af76",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 359,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 359
+                        "rowCount": 359,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 359
                     }
                 },
                 {
@@ -3460,16 +3460,16 @@
                     "statistics": {
                         "@id": "0c9eff2d-6852-42f6-9f2b-30f3baca0cc2",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 359,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 76
+                        "rowCount": 359,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 76
                     }
                 },
                 {
@@ -3501,16 +3501,16 @@
                     "statistics": {
                         "@id": "7bf10828-8e0f-4182-8281-0ef35bd2e5b9",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 359,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 76
+                        "rowCount": 359,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 76
                     }
                 }
             ],
@@ -3550,16 +3550,16 @@
                     "statistics": {
                         "@id": "dba6efcd-8d73-4222-8499-3968f63e7cac",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 1284,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 1284,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -3591,16 +3591,16 @@
                     "statistics": {
                         "@id": "51eb4d55-e894-4b63-b280-1160473840dd",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 1284,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1284
+                        "rowCount": 1284,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1284
                     }
                 },
                 {
@@ -3632,16 +3632,16 @@
                     "statistics": {
                         "@id": "daf950ca-47d9-4e95-bdb7-7cf109681c11",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 1284,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1284
+                        "rowCount": 1284,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1284
                     }
                 },
                 {
@@ -3673,16 +3673,16 @@
                     "statistics": {
                         "@id": "5d834b44-e08d-4dee-b15d-24e9fe2aff6f",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 1284,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 1284,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -3714,16 +3714,16 @@
                     "statistics": {
                         "@id": "1dd22918-8e86-4cfe-95a9-8386ea979d5f",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 1284,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 1284,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -3755,16 +3755,16 @@
                     "statistics": {
                         "@id": "cf02c554-bebf-4131-b848-7d239682eafd",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 1284,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 4
+                        "rowCount": 1284,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 4
                     }
                 },
                 {
@@ -3796,16 +3796,16 @@
                     "statistics": {
                         "@id": "7a663583-67fa-4b5f-9aab-2ee38f835649",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 1047,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 237,
-                        "dg:missingPercentage": 18.457943925233643,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1047
+                        "rowCount": 1047,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 237,
+                        "missingPercentage": 18.457943925233643,
+                        "histogram": null,
+                        "uniqueCount": 1047
                     }
                 },
                 {
@@ -3837,16 +3837,16 @@
                     "statistics": {
                         "@id": "42b38175-231a-4687-b64c-20962ad9eb65",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 1284,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1284
+                        "rowCount": 1284,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1284
                     }
                 },
                 {
@@ -3878,16 +3878,16 @@
                     "statistics": {
                         "@id": "ccca29b4-be7b-48ee-ad96-0c33b7fa59c9",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 1284,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 509
+                        "rowCount": 1284,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 509
                     }
                 },
                 {
@@ -3919,16 +3919,16 @@
                     "statistics": {
                         "@id": "bba2ea39-5285-414a-9fa0-18696814490e",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 1284,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 509
+                        "rowCount": 1284,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 509
                     }
                 }
             ],
@@ -3968,16 +3968,16 @@
                     "statistics": {
                         "@id": "afa885cb-3dae-43f4-b1ea-58663bf73956",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 3039,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 3039,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -4009,16 +4009,16 @@
                     "statistics": {
                         "@id": "4ef1ab3c-cef1-4964-93b3-a12ab1bfe6b3",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 3039,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 3039
+                        "rowCount": 3039,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 3039
                     }
                 },
                 {
@@ -4050,16 +4050,16 @@
                     "statistics": {
                         "@id": "bc9dbba3-b95c-415f-86ec-15c1a0981011",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 3039,
-                        "dg:mean": 4204.497203027312,
-                        "dg:median": 3240.0,
-                        "dg:standardDeviation": 2473.7487553210303,
-                        "dg:min": 110.0,
-                        "dg:max": 9629.0,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": "[{\"binRange\": [100.481, 1061.9], \"count\": 21}, {\"binRange\": [1061.9, 2013.8], \"count\": 350}, {\"binRange\": [2013.8, 2965.7], \"count\": 868}, {\"binRange\": [2965.7, 3917.6], \"count\": 646}, {\"binRange\": [3917.6, 4869.5], \"count\": 89}, {\"binRange\": [4869.5, 5821.4], \"count\": 204}, {\"binRange\": [5821.4, 6773.3], \"count\": 44}, {\"binRange\": [6773.3, 7725.2], \"count\": 394}, {\"binRange\": [7725.2, 8677.1], \"count\": 347}, {\"binRange\": [8677.1, 9629.0], \"count\": 76}]",
-                        "dg:uniqueCount": 426
+                        "rowCount": 3039,
+                        "mean": 4204.497203027312,
+                        "median": 3240.0,
+                        "standardDeviation": 2473.7487553210303,
+                        "min": 110.0,
+                        "max": 9629.0,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": "[{\"binRange\": [100.481, 1061.9], \"count\": 21}, {\"binRange\": [1061.9, 2013.8], \"count\": 350}, {\"binRange\": [2013.8, 2965.7], \"count\": 868}, {\"binRange\": [2965.7, 3917.6], \"count\": 646}, {\"binRange\": [3917.6, 4869.5], \"count\": 89}, {\"binRange\": [4869.5, 5821.4], \"count\": 204}, {\"binRange\": [5821.4, 6773.3], \"count\": 44}, {\"binRange\": [6773.3, 7725.2], \"count\": 394}, {\"binRange\": [7725.2, 8677.1], \"count\": 347}, {\"binRange\": [8677.1, 9629.0], \"count\": 76}]",
+                        "uniqueCount": 426
                     }
                 },
                 {
@@ -4091,16 +4091,16 @@
                     "statistics": {
                         "@id": "6727352d-752f-4ec9-9f31-0d8ac8361ae9",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 3039,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 3039
+                        "rowCount": 3039,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 3039
                     }
                 },
                 {
@@ -4132,16 +4132,16 @@
                     "statistics": {
                         "@id": "7978328c-97c3-4e2e-a9d4-67e348a1e6ec",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 3011,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 28,
-                        "dg:missingPercentage": 0.9213557091148403,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 3011
+                        "rowCount": 3011,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 28,
+                        "missingPercentage": 0.9213557091148403,
+                        "histogram": null,
+                        "uniqueCount": 3011
                     }
                 },
                 {
@@ -4173,16 +4173,16 @@
                     "statistics": {
                         "@id": "725f638a-a6ad-4416-891b-555ee8cb51f4",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 8,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 3031,
-                        "dg:missingPercentage": 99.73675551168148,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 8
+                        "rowCount": 8,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 3031,
+                        "missingPercentage": 99.73675551168148,
+                        "histogram": null,
+                        "uniqueCount": 8
                     }
                 },
                 {
@@ -4214,16 +4214,16 @@
                     "statistics": {
                         "@id": "9370ae41-183c-4fd7-9c26-69ebe9c2abb3",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 3039,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 3039,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -4255,16 +4255,16 @@
                     "statistics": {
                         "@id": "72eca2aa-b1c1-4a72-b4da-52874b216392",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 3039,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2971
+                        "rowCount": 3039,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2971
                     }
                 },
                 {
@@ -4296,16 +4296,16 @@
                     "statistics": {
                         "@id": "710bd042-75f9-45f5-b24c-2ae353065559",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 3039,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 3039,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -4337,16 +4337,16 @@
                     "statistics": {
                         "@id": "c769baf0-15ca-4a99-91e7-5fa2c523f024",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 307,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 2732,
-                        "dg:missingPercentage": 89.89799276077657,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 275
+                        "rowCount": 307,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 2732,
+                        "missingPercentage": 89.89799276077657,
+                        "histogram": null,
+                        "uniqueCount": 275
                     }
                 },
                 {
@@ -4378,16 +4378,16 @@
                     "statistics": {
                         "@id": "f4dd2f62-9468-4890-94d9-6956aacf17cc",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 8,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 3031,
-                        "dg:missingPercentage": 99.73675551168148,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 8
+                        "rowCount": 8,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 3031,
+                        "missingPercentage": 99.73675551168148,
+                        "histogram": null,
+                        "uniqueCount": 8
                     }
                 },
                 {
@@ -4419,16 +4419,16 @@
                     "statistics": {
                         "@id": "1560746c-e3ba-4e6e-9ff0-33b4c4f693e7",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 3039,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 8
+                        "rowCount": 3039,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 8
                     }
                 },
                 {
@@ -4460,16 +4460,16 @@
                     "statistics": {
                         "@id": "6c62971b-8777-4bf9-8c9d-587725865ee0",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 3039,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 3039
+                        "rowCount": 3039,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 3039
                     }
                 },
                 {
@@ -4501,16 +4501,16 @@
                     "statistics": {
                         "@id": "9332b8d3-6de1-48c7-b0fe-6cd65d261744",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 3039,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 3039
+                        "rowCount": 3039,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 3039
                     }
                 }
             ],
@@ -4550,16 +4550,16 @@
                     "statistics": {
                         "@id": "0d1d3a35-d20f-4fc4-8ed1-ee6d7c6a81c2",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 13939,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 13939,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -4591,16 +4591,16 @@
                     "statistics": {
                         "@id": "4fdf9d25-ca47-44de-9f2e-93bd098a461c",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 13939,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 13939
+                        "rowCount": 13939,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 13939
                     }
                 },
                 {
@@ -4632,16 +4632,16 @@
                     "statistics": {
                         "@id": "aad3130b-b447-4194-adf1-ca018b3f028a",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 13934,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 5,
-                        "dg:missingPercentage": 0.035870578951144275,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 13934,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 5,
+                        "missingPercentage": 0.035870578951144275,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -4673,16 +4673,16 @@
                     "statistics": {
                         "@id": "cfb16550-8e08-41b1-b44e-2f821ddd69d2",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 13934,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 5,
-                        "dg:missingPercentage": 0.035870578951144275,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 4
+                        "rowCount": 13934,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 5,
+                        "missingPercentage": 0.035870578951144275,
+                        "histogram": null,
+                        "uniqueCount": 4
                     }
                 },
                 {
@@ -4714,16 +4714,16 @@
                     "statistics": {
                         "@id": "af368c06-4486-47cd-a334-b207677b40cf",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 13939,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 13939
+                        "rowCount": 13939,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 13939
                     }
                 },
                 {
@@ -4755,16 +4755,16 @@
                     "statistics": {
                         "@id": "96cf75f8-1122-4f1c-962b-74884a3f5a42",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 13591,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 348,
-                        "dg:missingPercentage": 2.4965922949996413,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 13591
+                        "rowCount": 13591,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 348,
+                        "missingPercentage": 2.4965922949996413,
+                        "histogram": null,
+                        "uniqueCount": 13591
                     }
                 },
                 {
@@ -4796,16 +4796,16 @@
                     "statistics": {
                         "@id": "c4f8747d-a8cf-44c2-b712-e67e7202ff56",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 153,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 13786,
-                        "dg:missingPercentage": 98.90236028409498,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 153
+                        "rowCount": 153,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 13786,
+                        "missingPercentage": 98.90236028409498,
+                        "histogram": null,
+                        "uniqueCount": 153
                     }
                 },
                 {
@@ -4837,16 +4837,16 @@
                     "statistics": {
                         "@id": "efc4e5df-447b-411b-bca2-d7ea1cf768a5",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 13939,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 13939,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -4878,16 +4878,16 @@
                     "statistics": {
                         "@id": "a09a97be-cb31-4e59-bf3b-e57be5f5411f",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 13939,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2791
+                        "rowCount": 13939,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2791
                     }
                 },
                 {
@@ -4919,16 +4919,16 @@
                     "statistics": {
                         "@id": "03d035c8-d657-485b-8f32-c863078e3987",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 234,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 13705,
-                        "dg:missingPercentage": 98.32125690508646,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 224
+                        "rowCount": 234,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 13705,
+                        "missingPercentage": 98.32125690508646,
+                        "histogram": null,
+                        "uniqueCount": 224
                     }
                 },
                 {
@@ -4960,16 +4960,16 @@
                     "statistics": {
                         "@id": "73294371-b723-4053-803d-adaba457c276",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 3,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 13936,
-                        "dg:missingPercentage": 99.97847765262932,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 3
+                        "rowCount": 3,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 13936,
+                        "missingPercentage": 99.97847765262932,
+                        "histogram": null,
+                        "uniqueCount": 3
                     }
                 },
                 {
@@ -5001,16 +5001,16 @@
                     "statistics": {
                         "@id": "e4318c1c-1ff4-4659-8745-007617102459",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 13939,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 83
+                        "rowCount": 13939,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 83
                     }
                 },
                 {
@@ -5042,16 +5042,16 @@
                     "statistics": {
                         "@id": "334481b7-e8c6-4441-8621-a537f1f6ce6a",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 13939,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 13936
+                        "rowCount": 13939,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 13936
                     }
                 }
             ],
@@ -5091,16 +5091,16 @@
                     "statistics": {
                         "@id": "6423aa7f-bc92-4a7a-9568-b0ee2557c1d5",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 95,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 95,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -5132,16 +5132,16 @@
                     "statistics": {
                         "@id": "9fde0516-76f8-4448-ad01-bc53814e4ce2",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 95,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 95
+                        "rowCount": 95,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 95
                     }
                 },
                 {
@@ -5173,16 +5173,16 @@
                     "statistics": {
                         "@id": "628e8dc2-6364-44d9-befb-e23ebf2c4d1d",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 95,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 95,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -5214,16 +5214,16 @@
                     "statistics": {
                         "@id": "e604cc43-f320-47f7-9100-045c516c87e1",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 95,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 95,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -5255,16 +5255,16 @@
                     "statistics": {
                         "@id": "d047302e-fae3-40a6-84fe-be3508e63e64",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 95,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 95
+                        "rowCount": 95,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 95
                     }
                 },
                 {
@@ -5296,16 +5296,16 @@
                     "statistics": {
                         "@id": "b8ac2413-0ba7-4ce6-8e37-ca4c35a45359",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 95,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 95,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -5337,16 +5337,16 @@
                     "statistics": {
                         "@id": "c10ca16b-38b6-4b76-91b1-d7265978c7e8",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 95,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 95
+                        "rowCount": 95,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 95
                     }
                 },
                 {
@@ -5378,16 +5378,16 @@
                     "statistics": {
                         "@id": "82fd0b52-0f83-4fe1-93f5-175d371752e0",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 95,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 95
+                        "rowCount": 95,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 95
                     }
                 },
                 {
@@ -5419,16 +5419,16 @@
                     "statistics": {
                         "@id": "cac90a06-fd34-49e5-8443-159961214216",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 95,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 24
+                        "rowCount": 95,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 24
                     }
                 },
                 {
@@ -5460,16 +5460,16 @@
                     "statistics": {
                         "@id": "3da5fa97-cdad-42ce-b6ac-e8f069baa677",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 95,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 24
+                        "rowCount": 95,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 24
                     }
                 }
             ],
@@ -5509,16 +5509,16 @@
                     "statistics": {
                         "@id": "d85ed351-f935-473d-bb82-36cc49593be8",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 591,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 591,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -5550,16 +5550,16 @@
                     "statistics": {
                         "@id": "7491c673-1229-46d6-b549-5e2476b7c338",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 591,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 591
+                        "rowCount": 591,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 591
                     }
                 },
                 {
@@ -5591,16 +5591,16 @@
                     "statistics": {
                         "@id": "6d8a38d8-fe9f-4c3f-8dd0-a7d96f431755",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 591,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 591
+                        "rowCount": 591,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 591
                     }
                 },
                 {
@@ -5632,16 +5632,16 @@
                     "statistics": {
                         "@id": "ceafc54c-cc64-4732-8cd7-daae559e03b3",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 591,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 591,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -5673,16 +5673,16 @@
                     "statistics": {
                         "@id": "c095ac45-2c14-46bf-9fb5-98cd69ce431c",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 591,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 591,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -5714,16 +5714,16 @@
                     "statistics": {
                         "@id": "4ec5a3c6-f50a-4d06-9159-aa1e71f98062",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 591,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 4
+                        "rowCount": 591,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 4
                     }
                 },
                 {
@@ -5755,16 +5755,16 @@
                     "statistics": {
                         "@id": "5edf3a8e-a39f-4526-838b-4784bced0ed0",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 591,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 591
+                        "rowCount": 591,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 591
                     }
                 },
                 {
@@ -5796,16 +5796,16 @@
                     "statistics": {
                         "@id": "ef352a91-e185-444c-90b3-b62102ee5e02",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 591,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 591
+                        "rowCount": 591,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 591
                     }
                 },
                 {
@@ -5837,16 +5837,16 @@
                     "statistics": {
                         "@id": "019a2fc2-ec33-4c84-8ba9-7ac377dec2d6",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 591,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 287
+                        "rowCount": 591,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 287
                     }
                 },
                 {
@@ -5878,16 +5878,16 @@
                     "statistics": {
                         "@id": "862b27cb-3e79-4489-bb9d-6dc1f0137596",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 591,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 286
+                        "rowCount": 591,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 286
                     }
                 }
             ],
@@ -5927,16 +5927,16 @@
                     "statistics": {
                         "@id": "c42968f9-a0e3-4886-b130-dca1fae594bb",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 40,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 40,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -5968,16 +5968,16 @@
                     "statistics": {
                         "@id": "46e325e8-fb74-4ca3-8fd3-2621d68053f8",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 40,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 40
+                        "rowCount": 40,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 40
                     }
                 },
                 {
@@ -6009,16 +6009,16 @@
                     "statistics": {
                         "@id": "eb40486e-8f11-48dc-bd59-32a0c363c6d0",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 40,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 40
+                        "rowCount": 40,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 40
                     }
                 },
                 {
@@ -6050,16 +6050,16 @@
                     "statistics": {
                         "@id": "609f6cd1-0fc1-476f-bbe3-c62cf360cfdd",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 40,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 40,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -6091,16 +6091,16 @@
                     "statistics": {
                         "@id": "29f135f0-9a40-4bfc-abf0-8f03b07b593f",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 40,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 1
+                        "rowCount": 40,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 1
                     }
                 },
                 {
@@ -6132,16 +6132,16 @@
                     "statistics": {
                         "@id": "21f9f8b5-aca3-4cbc-b6c8-c2a07191ce80",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 40,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 3
+                        "rowCount": 40,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 3
                     }
                 },
                 {
@@ -6173,16 +6173,16 @@
                     "statistics": {
                         "@id": "4b5fff0b-8dc9-4322-b671-2f20d3d7a485",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 40,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 40
+                        "rowCount": 40,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 40
                     }
                 },
                 {
@@ -6214,16 +6214,16 @@
                     "statistics": {
                         "@id": "73136009-d813-4dce-80a2-02bfae9e9309",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 40,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 40
+                        "rowCount": 40,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 40
                     }
                 },
                 {
@@ -6255,16 +6255,16 @@
                     "statistics": {
                         "@id": "84d1a14c-e01f-4914-8a97-2ac2a992f93f",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 40,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 34
+                        "rowCount": 40,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 34
                     }
                 },
                 {
@@ -6296,16 +6296,16 @@
                     "statistics": {
                         "@id": "c11253d3-4907-4b4b-8551-8d29faf9bac7",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 40,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 34
+                        "rowCount": 40,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 34
                     }
                 }
             ],

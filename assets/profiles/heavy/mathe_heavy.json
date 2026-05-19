@@ -122,16 +122,16 @@
                     "statistics": {
                         "@id": "4f80d536-76db-43b8-bd89-1ac05e49da24",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 9546,
-                        "dg:mean": 775.4022627278441,
-                        "dg:median": 885.0,
-                        "dg:standardDeviation": 460.59055918139757,
-                        "dg:min": 26.0,
-                        "dg:max": 1565.0,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": "[{\"binRange\": [24.461, 179.9], \"count\": 1871}, {\"binRange\": [179.9, 333.8], \"count\": 205}, {\"binRange\": [333.8, 487.7], \"count\": 1056}, {\"binRange\": [487.7, 641.6], \"count\": 811}, {\"binRange\": [641.6, 795.5], \"count\": 353}, {\"binRange\": [795.5, 949.4], \"count\": 831}, {\"binRange\": [949.4, 1103.3], \"count\": 1456}, {\"binRange\": [1103.3, 1257.2], \"count\": 1542}, {\"binRange\": [1257.2, 1411.1], \"count\": 899}, {\"binRange\": [1411.1, 1565.0], \"count\": 522}]",
-                        "dg:uniqueCount": 372
+                        "rowCount": 9546,
+                        "mean": 775.4022627278441,
+                        "median": 885.0,
+                        "standardDeviation": 460.59055918139757,
+                        "min": 26.0,
+                        "max": 1565.0,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": "[{\"binRange\": [24.461, 179.9], \"count\": 1871}, {\"binRange\": [179.9, 333.8], \"count\": 205}, {\"binRange\": [333.8, 487.7], \"count\": 1056}, {\"binRange\": [487.7, 641.6], \"count\": 811}, {\"binRange\": [641.6, 795.5], \"count\": 353}, {\"binRange\": [795.5, 949.4], \"count\": 831}, {\"binRange\": [949.4, 1103.3], \"count\": 1456}, {\"binRange\": [1103.3, 1257.2], \"count\": 1542}, {\"binRange\": [1257.2, 1411.1], \"count\": 899}, {\"binRange\": [1411.1, 1565.0], \"count\": 522}]",
+                        "uniqueCount": 372
                     }
                 },
                 {
@@ -163,16 +163,16 @@
                     "statistics": {
                         "@id": "a47ea631-f97f-4971-827a-e5ffd0193fb8",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 9546,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 8
+                        "rowCount": 9546,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 8
                     }
                 },
                 {
@@ -204,16 +204,16 @@
                     "statistics": {
                         "@id": "05b71260-73eb-41f2-aefa-0bab47add4dd",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 9546,
-                        "dg:mean": 478.9123192960402,
-                        "dg:median": 428.0,
-                        "dg:standardDeviation": 249.2440614325178,
-                        "dg:min": 77.0,
-                        "dg:max": 1549.0,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": "[{\"binRange\": [75.528, 224.2], \"count\": 1039}, {\"binRange\": [224.2, 371.4], \"count\": 2127}, {\"binRange\": [371.4, 518.6], \"count\": 3692}, {\"binRange\": [518.6, 665.8], \"count\": 734}, {\"binRange\": [665.8, 813.0], \"count\": 950}, {\"binRange\": [813.0, 960.2], \"count\": 443}, {\"binRange\": [960.2, 1107.4], \"count\": 331}, {\"binRange\": [1107.4, 1254.6], \"count\": 204}, {\"binRange\": [1254.6, 1401.8], \"count\": 0}, {\"binRange\": [1401.8, 1549.0], \"count\": 26}]",
-                        "dg:uniqueCount": 833
+                        "rowCount": 9546,
+                        "mean": 478.9123192960402,
+                        "median": 428.0,
+                        "standardDeviation": 249.2440614325178,
+                        "min": 77.0,
+                        "max": 1549.0,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": "[{\"binRange\": [75.528, 224.2], \"count\": 1039}, {\"binRange\": [224.2, 371.4], \"count\": 2127}, {\"binRange\": [371.4, 518.6], \"count\": 3692}, {\"binRange\": [518.6, 665.8], \"count\": 734}, {\"binRange\": [665.8, 813.0], \"count\": 950}, {\"binRange\": [813.0, 960.2], \"count\": 443}, {\"binRange\": [960.2, 1107.4], \"count\": 331}, {\"binRange\": [1107.4, 1254.6], \"count\": 204}, {\"binRange\": [1254.6, 1401.8], \"count\": 0}, {\"binRange\": [1401.8, 1549.0], \"count\": 26}]",
+                        "uniqueCount": 833
                     }
                 },
                 {
@@ -245,16 +245,16 @@
                     "statistics": {
                         "@id": "13db6c9a-4547-4cd5-ab58-9fb6c6bc8c76",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 9546,
-                        "dg:mean": 0.46825895663104966,
-                        "dg:median": 0.0,
-                        "dg:standardDeviation": 0.4990176272811076,
-                        "dg:min": 0.0,
-                        "dg:max": 1.0,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": "[{\"binRange\": [-0.001, 0.1], \"count\": 5076}, {\"binRange\": [0.1, 0.2], \"count\": 0}, {\"binRange\": [0.2, 0.3], \"count\": 0}, {\"binRange\": [0.3, 0.4], \"count\": 0}, {\"binRange\": [0.4, 0.5], \"count\": 0}, {\"binRange\": [0.5, 0.6], \"count\": 0}, {\"binRange\": [0.6, 0.7], \"count\": 0}, {\"binRange\": [0.7, 0.8], \"count\": 0}, {\"binRange\": [0.8, 0.9], \"count\": 0}, {\"binRange\": [0.9, 1.0], \"count\": 4470}]",
-                        "dg:uniqueCount": 2
+                        "rowCount": 9546,
+                        "mean": 0.46825895663104966,
+                        "median": 0.0,
+                        "standardDeviation": 0.4990176272811076,
+                        "min": 0.0,
+                        "max": 1.0,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": "[{\"binRange\": [-0.001, 0.1], \"count\": 5076}, {\"binRange\": [0.1, 0.2], \"count\": 0}, {\"binRange\": [0.2, 0.3], \"count\": 0}, {\"binRange\": [0.3, 0.4], \"count\": 0}, {\"binRange\": [0.4, 0.5], \"count\": 0}, {\"binRange\": [0.5, 0.6], \"count\": 0}, {\"binRange\": [0.6, 0.7], \"count\": 0}, {\"binRange\": [0.7, 0.8], \"count\": 0}, {\"binRange\": [0.8, 0.9], \"count\": 0}, {\"binRange\": [0.9, 1.0], \"count\": 4470}]",
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -286,16 +286,16 @@
                     "statistics": {
                         "@id": "3379470a-5a75-4e4b-a7fb-84de98c0c3da",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 9546,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 2
+                        "rowCount": 9546,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 2
                     }
                 },
                 {
@@ -327,16 +327,16 @@
                     "statistics": {
                         "@id": "004685f5-367a-4755-88b3-bd57b0bfb91b",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 9546,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 14
+                        "rowCount": 9546,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 14
                     }
                 },
                 {
@@ -368,16 +368,16 @@
                     "statistics": {
                         "@id": "67be973c-4a50-436b-ae17-74f8aed448c9",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 9546,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 24
+                        "rowCount": 9546,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 24
                     }
                 },
                 {
@@ -409,16 +409,16 @@
                     "statistics": {
                         "@id": "701ff524-075f-465e-847d-74abf43f8d5a",
                         "@type": "dg:ColumnStatistics",
-                        "dg:rowCount": 9546,
-                        "dg:mean": null,
-                        "dg:median": null,
-                        "dg:standardDeviation": null,
-                        "dg:min": null,
-                        "dg:max": null,
-                        "dg:missingCount": 0,
-                        "dg:missingPercentage": 0.0,
-                        "dg:histogram": null,
-                        "dg:uniqueCount": 365
+                        "rowCount": 9546,
+                        "mean": null,
+                        "median": null,
+                        "standardDeviation": null,
+                        "min": null,
+                        "max": null,
+                        "missingCount": 0,
+                        "missingPercentage": 0.0,
+                        "histogram": null,
+                        "uniqueCount": 365
                     }
                 }
             ],

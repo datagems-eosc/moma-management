@@ -106,6 +106,9 @@ def build_schema_registry() -> SchemaRegistry:
     from moma_management.domain.generated.nodes.dataset.column_schema import (
         PgProperties as ColumnProps,
     )
+    from moma_management.domain.generated.nodes.dataset.columnStatistics_schema import (
+        PgProperties as ColumnStatisticsProps,
+    )
     from moma_management.domain.generated.nodes.dataset.data_schema import (
         PgProperties as DataProps,
     )
@@ -117,6 +120,7 @@ def build_schema_registry() -> SchemaRegistry:
         "Dataset": get_model_fields(DatasetProps),
         "Distribution": get_model_fields(DataProps),
         "Column": get_model_fields(ColumnProps),
+        "Statistics": get_model_fields(ColumnStatisticsProps),
     }
 
 
