@@ -68,7 +68,7 @@ def _make_dataset(data_id: str) -> tuple[str, Dataset]:
     return ds_id, Dataset(
         nodes=[
             Node(id=ds_id, labels=["sc:Dataset"],
-                 properties={"status": "published"}),
+                 properties={"status": "ready"}),
             Node(id=data_id, labels=["Data"], properties={"name": "data"}),
         ],
         edges=[Edge(**{"from": ds_id, "to": data_id,
@@ -171,7 +171,7 @@ async def test_get_excludes_deep_dataset_nodes(
     await dataset_repository.create(Dataset(
         nodes=[
             Node(id=ds_id, labels=["sc:Dataset"],
-                 properties={"status": "published"}),
+                 properties={"status": "ready"}),
             Node(id=data_id, labels=[
                  "Data", "RelationalDatabase"], properties={"name": "db"}),
             Node(id=deep_table_id, labels=[
@@ -339,7 +339,7 @@ async def test_shallow_retrieval_does_not_include_deep_dataset_nodes(
     dataset = Dataset(
         nodes=[
             Node(id=ds_id, labels=["sc:Dataset"],
-                 properties={"status": "published"}),
+                 properties={"status": "ready"}),
             Node(id=data_id, labels=[
                  "Data", "RelationalDatabase"], properties={"name": "db"}),
             Node(id=deep_table_id, labels=[
@@ -429,7 +429,7 @@ async def test_delete_preserves_data_nodes(
     dataset = Dataset(
         nodes=[
             Node(id=ds_id, labels=["sc:Dataset"],
-                 properties={"status": "published"}),
+                 properties={"status": "ready"}),
             Node(id=data_id, labels=["Data"], properties={"name": "data"}),
         ],
         edges=[
@@ -530,7 +530,7 @@ def _make_dataset_for_data(ds_id: str, data_id: str) -> Dataset:
     return Dataset(
         nodes=[
             Node(id=ds_id, labels=["sc:Dataset"],
-                 properties={"status": "published"}),
+                 properties={"status": "ready"}),
             Node(id=data_id, labels=["Data"], properties={"name": "data"}),
         ],
         edges=[

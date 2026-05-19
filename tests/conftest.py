@@ -150,11 +150,11 @@ async def populated_repository(
 
     Dataset layout
     --------------
-    ds-alpha  id=ds-alpha  datePublished=2024-01-15  dg:status=published
+    ds-alpha  id=ds-alpha  datePublished=2024-01-15  dg:status=ready
               └─ cr:FileObject + CSV  (distribution edge)
-    ds-beta   id=ds-beta   datePublished=2024-06-01  dg:status=draft
+    ds-beta   id=ds-beta   datePublished=2024-06-01  dg:status=staged
               └─ cr:FileObject + CSV  (distribution edge)
-    ds-gamma  id=ds-gamma  datePublished=2025-03-01  dg:status=published
+    ds-gamma  id=ds-gamma  datePublished=2025-03-01  dg:status=ready
               └─ cr:FileObject  (no CSV label)  (distribution edge)
 
     Labels are stored with Neo4j-compatible ``__`` encoding so that the
@@ -203,11 +203,11 @@ async def populated_repository(
         repo = Neo4jDatasetRepository(session)
         for ds in [
             _make_dataset(DS_ALPHA_ID, DS_ALPHA_FILE_ID,
-                          "2024-01-15", "published", ["CSV"]),
+                          "2024-01-15", "ready",  ["CSV"]),
             _make_dataset(DS_BETA_ID,  DS_BETA_FILE_ID,
-                          "2024-06-01", "draft",     ["CSV"]),
+                          "2024-06-01", "staged", ["CSV"]),
             _make_dataset(DS_GAMMA_ID, DS_GAMMA_FILE_ID,
-                          "2025-03-01", "published", []),
+                          "2025-03-01", "ready",  []),
         ]:
             await repo.create(ds)
         yield repo
@@ -247,7 +247,7 @@ async def mixed_date_repository(
                     id=ds_id,
                     labels=["sc:Dataset"],
                     properties={"datePublished": date_published,
-                                "status": "published"},
+                                "status": "ready"},
                 ),
                 Node(id=file_id, labels=[
                      "cr:FileObject", "Data"], properties={}),
@@ -309,7 +309,7 @@ async def mixed_types_repository(
                 id=ds_id,
                 labels=["sc:Dataset"],
                 properties={"datePublished": "2024-01-01",
-                            "status": "published"},
+                            "status": "ready"},
             )
         ]
         edges = []

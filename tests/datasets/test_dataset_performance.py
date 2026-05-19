@@ -126,7 +126,7 @@ _LIST_CASES = [
 
     # -- combined filters --
     ("nodeid_plus_status", {
-        "nodeIds": [_ALL_ROOT_IDS[0]], "status": Status.published,
+        "nodeIds": [_ALL_ROOT_IDS[0]], "status": Status.ready,
     }, None),
     ("nodeid_plus_type", {
         "nodeIds": [_FIRST_CHILD_ID], "types": [NodeLabel.FILE_OBJECT],
@@ -139,7 +139,7 @@ _LIST_CASES = [
     ("all_filters", {
         "nodeIds": [_FIRST_CHILD_ID],
         "types": [NodeLabel.FILE_OBJECT], "mimeTypes": [MimeType.CSV],
-        "status": Status.published,
+        "status": Status.ready,
         "orderBy": [DatasetSortField.DATE_PUBLISHED], "direction": "desc",
         "pageSize": 5, "page": 1,
     }, None),

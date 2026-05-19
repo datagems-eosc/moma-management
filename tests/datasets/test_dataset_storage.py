@@ -171,9 +171,9 @@ async def test_deletion(
 # the class-scoped populated_repository fixture.
 #
 # Seed data (from conftest.populated_repository):
-#   ds-alpha  datePublished=2024-01-15  status=published  cr__FileObject + CSV
-#   ds-beta   datePublished=2024-06-01  status=draft      cr__FileObject + CSV
-#   ds-gamma  datePublished=2025-03-01  status=published  cr__FileObject (no CSV)
+#   ds-alpha  datePublished=2024-01-15  status=ready   cr__FileObject + CSV
+#   ds-beta   datePublished=2024-06-01  status=staged  cr__FileObject + CSV
+#   ds-gamma  datePublished=2025-03-01  status=ready   cr__FileObject (no CSV)
 # ---------------------------------------------------------------------------
 
 
@@ -277,21 +277,21 @@ class TestListMethod:
     # -- filter by status ----------------------------------------------------
 
     @pytest.mark.asyncio
-    async def test_published_status(self, populated_repository):
-        result = await _list(populated_repository, status=Status.published)
+    async def test_ready_status(self, populated_repository):
+        result = await _list(populated_repository, status=Status.ready)
         assert result["total"] == 2
         for ds in result["datasets"]:
             root = next(n for n in ds.nodes if "sc:Dataset" in n.labels)
-            assert root.properties.get("status") == "published"
+            assert root.properties.get("status") == "ready"
 
     @pytest.mark.asyncio
-    async def test_draft_status(self, populated_repository):
-        result = await _list(populated_repository, status=Status.draft)
+    async def test_staged_status(self, populated_repository):
+        result = await _list(populated_repository, status=Status.staged)
         assert result["total"] == 1
 
     @pytest.mark.asyncio
     async def test_nonexistent_status_returns_empty(self, populated_repository):
-        result = await _list(populated_repository, status=Status.archived)
+        result = await _list(populated_repository, status=Status.loaded)
         assert result["total"] == 0
         assert result["datasets"] == []
 
@@ -333,7 +333,7 @@ class TestListMethod:
             populated_repository,
             publishedFrom=date(2024, 1, 1),
             publishedTo=date(2024, 12, 31),
-            status=Status.published,
+            status=Status.ready,
         )
         assert result["total"] == 1  # only ds-alpha
 
@@ -687,7 +687,7 @@ async def test_prevent_ap_or_ml_traversal(
     dataset = Dataset.model_construct(
         nodes=[
             Node(id=ds_id, labels=["sc:Dataset"],
-                 properties={"status": "published"}),
+                 properties={"status": "ready"}),
             Node(id=blue_id, labels=["cr:FileObject", "Data"], properties={}),
             *[
                 Node(id=node_id, labels=["Operator"], properties={})
