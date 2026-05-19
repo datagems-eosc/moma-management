@@ -136,7 +136,9 @@ graph LR
 
   AP -- consist_of --> Operator
   Operator -- input --> ResultType
+  Operator -- input --> Dataset
   Operator -- output --> ResultType
+  Operator -- output --> Dataset
   Operator -- follows --> Operator
   User -- uses --> Operator
   Task -- is_accomplished_by --> AP
@@ -181,8 +183,8 @@ graph LR
 | `statistics` | `Column` | `Statistics` | Column links to its computed statistics |
 | `intervalStatistics` | `Column` | `IntervalColumnStatistics` | Column links to statistics computed over a specific time window (streaming datasets) |
 | `consist_of` | `Analytical_Pattern` | `Operator` | AP is composed of operator steps |
-| `input` | `Operator` | `ResultType` | Operator reads a typed value; `Data` (persistent) and transient subtypes (`StringResult`, etc.) are both valid targets |
-| `output` | `Operator` | `ResultType` | Operator writes a typed value; same targets as `input` |
+| `input` | `Operator` | `ResultType` or `sc:Dataset` | Operator reads a typed value; `Data` (persistent) and transient subtypes (`StringResult`, etc.) are valid `ResultType` targets; `sc:Dataset` is also valid for whole-dataset references (mapping is Any — not checked at AP design time) |
+| `output` | `Operator` | `ResultType` or `sc:Dataset` | Operator writes a typed value; same targets as `input` |
 | `follows` | `Operator` | `Operator` | Operator executes after another operator |
 | `uses` | `User` | `Operator` | User triggers or configures an operator |
 | `perform_inference` | `Operator` | `ML_Model` | Operator runs inference against an ML model |
