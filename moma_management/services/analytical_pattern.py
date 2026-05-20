@@ -9,6 +9,7 @@ from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.exceptions import NotFoundError, ValidationError
 from moma_management.domain.filters import AnalyticalPatternFilter, DatasetFilter
 from moma_management.domain.generated.edges.edge_schema import Edge
+from moma_management.domain.generated.moma_schema import MoMaGraphModel
 from moma_management.domain.generated.nodes.ap.evaluation_schema import (
     Type as EvaluationType,
 )
@@ -194,8 +195,7 @@ class AnalyticalPatternService:
         the candidate is valid).
         """
         try:
-            AnalyticalPattern.model_validate(candidate)
-            return []
+            base = MoMaGraphModel.model_validate(candidate)
         except PydanticValidationError as e:
             return [
                 SchemaError(
@@ -208,3 +208,6 @@ class AnalyticalPatternService:
                 )
                 for err in e.errors()
             ]
+        ap = AnalyticalPattern.model_construct(
+            nodes=base.nodes, edges=base.edges)
+        return AnalyticalPattern.validation_chain.handle(ap)
