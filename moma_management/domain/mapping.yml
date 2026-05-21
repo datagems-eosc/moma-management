@@ -58,11 +58,17 @@ Distribution:
     - case: "encodingFormat ==
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'"
       value: [ "Data", "EXCEL", "@type" ]
+      # XLS (legacy binary Excel format), also mapped to EXCEL
+    - case: "encodingFormat == 'application/vnd.ms-excel' && @type == 'cr:FileObject'"
+      value: [ "EXCEL", "Data", "@type" ]
+      # TODO: add mapping for application/vnd.openxmlformats-officedocument.presentationml.presentation (PPTX)
       # JSON
     - case: "encodingFormat == 'application/json' && @type == 'cr:FileSet'"
       value: [ "JSONSet", "Data", "@type" ]
     - case: "encodingFormat == 'application/json' && @type == 'cr:FileObject'"
       value: [ "JSON", "Data", "@type" ]
+      # TODO: add mapping for application/jsonl (JSONL)
+      # TODO: add mapping for application/x-ipynb+json (Jupyter notebooks)
       # XML
     - case: "encodingFormat == 'application/xml' && @type == 'cr:FileSet'"
       value: [ "XMLSet", "Data", "@type" ]
@@ -73,6 +79,14 @@ Distribution:
       value: [ "TextSet", "Data", "@type" ]
     - case: "encodingFormat == 'text/plain' && @type == 'cr:FileObject'"
       value: [ "Text", "Data", "@type" ]
+      # Markdown and DOCX are treated as Text documents
+    - case: "encodingFormat == 'text/markdown' && @type == 'cr:FileObject'"
+      value: [ "Text", "Data", "@type" ]
+    - case: "encodingFormat ==
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' &&
+        @type == 'cr:FileObject'"
+      value: [ "Text", "Data", "@type" ]
+      # TODO: add mapping for text/html (HTML)
       # Images (catch-all for any image/* MIME type using startsWith)
     - case: "encodingFormat ^= 'image/' && @type == 'cr:FileSet'"
       value: [ "ImageSet", "Data", "@type" ]
