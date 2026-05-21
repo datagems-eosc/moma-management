@@ -227,7 +227,8 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                 if criteria.orderBy else "n.id ASC"
             )
 
-            types = criteria.resolved_types
+            node_labels = [t.value for t in criteria.types]
+            mime_type_values = [mt.value for mt in criteria.mimeTypes]
 
             params = dict(
                 nodeIds=criteria.nodeIds or [],
@@ -235,7 +236,8 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                 ) if criteria.publishedFrom else None,
                 publishedDateTo=criteria.publishedTo.isoformat() if criteria.publishedTo else None,
                 status=criteria.status.value if criteria.status is not None else None,
-                types=types,
+                nodeLabels=node_labels,
+                mimeTypeValues=mime_type_values,
                 forbiddenEdges=self.FORBIDDEN_EDGES,
                 skip=skip,
                 limit=limit,
@@ -255,12 +257,17 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             AND ($publishedDateFrom IS NULL OR n.datePublished >= $publishedDateFrom)
             AND ($publishedDateTo IS NULL OR n.datePublished <= $publishedDateTo)
             AND ($status IS NULL OR n.status = $status)
-            AND ($types = []
-            OR EXISTS {
-                MATCH path=(n)-[*1..4]-(m)
-                WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
-                AND ANY(t IN $types WHERE t IN labels(m))
-            })
+            AND (
+                ($nodeLabels = [] AND $mimeTypeValues = [])
+                OR EXISTS {
+                    MATCH path=(n)-[*1..4]-(m)
+                    WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
+                    AND (
+                        ANY(t IN $nodeLabels WHERE t IN labels(m))
+                        OR m.encodingFormat IN $mimeTypeValues
+                    )
+                }
+            )
             RETURN count(DISTINCT n) AS total
             """
 
@@ -278,12 +285,17 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             AND ($publishedDateFrom IS NULL OR n.datePublished >= $publishedDateFrom)
             AND ($publishedDateTo IS NULL OR n.datePublished <= $publishedDateTo)
             AND ($status IS NULL OR n.status = $status)
-            AND ($types = []
-            OR EXISTS {{
-                MATCH path=(n)-[*1..4]-(m)
-                WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
-                AND ANY(t IN $types WHERE t IN labels(m))
-            }})
+            AND (
+                ($nodeLabels = [] AND $mimeTypeValues = [])
+                OR EXISTS {{
+                    MATCH path=(n)-[*1..4]-(m)
+                    WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
+                    AND (
+                        ANY(t IN $nodeLabels WHERE t IN labels(m))
+                        OR m.encodingFormat IN $mimeTypeValues
+                    )
+                }}
+            )
 
             WITH n
             ORDER BY {order_clause}

@@ -576,3 +576,39 @@ class TestListEndpoint:
                 f"total={total} but received {len(datasets)} datasets "
                 "via pageSize=1 pagination"
             )
+
+    def test_mimetype_enum_validation(self, api_server):
+        """
+        New valid MIME types must be accepted (HTTP 200), removed non-standard
+        values must be rejected (HTTP 422).
+        """
+        valid_new = [
+            "application/json",
+            "application/jsonl",
+            "text/html",
+            "text/markdown",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        ]
+        invalid_removed = [
+            "application/docx",
+            "application/pptx",
+        ]
+        with http_requests.Session() as session:
+            for mime in valid_new:
+                resp = session.get(
+                    f"{api_server}/api/v1/datasets",
+                    params={"mimeTypes": mime, "pageSize": 1},
+                    timeout=10,
+                )
+                assert resp.status_code == 200, (
+                    f"Expected 200 for valid mimeTypes={mime!r}, got {resp.status_code}: {resp.text}"
+                )
+            for mime in invalid_removed:
+                resp = session.get(
+                    f"{api_server}/api/v1/datasets",
+                    params={"mimeTypes": mime, "pageSize": 1},
+                    timeout=10,
+                )
+                assert resp.status_code == 422, (
+                    f"Expected 422 for removed/invalid mimeTypes={mime!r}, got {resp.status_code}"
+                )

@@ -170,6 +170,7 @@ async def populated_repository(
         date_published: str,
         status: str,
         file_node_extra_labels: List[str],
+        encoding_format: str = "",
     ) -> Dataset:
         return Dataset(
             nodes=[
@@ -187,7 +188,8 @@ async def populated_repository(
                     id=file_id,
                     # cr:FileObject → matches allowedLabels in list()
                     labels=["cr:FileObject", "Data"] + file_node_extra_labels,
-                    properties={},
+                    properties={
+                        "encodingFormat": encoding_format} if encoding_format else {},
                 ),
             ],
             edges=[
@@ -203,9 +205,9 @@ async def populated_repository(
         repo = Neo4jDatasetRepository(session)
         for ds in [
             _make_dataset(DS_ALPHA_ID, DS_ALPHA_FILE_ID,
-                          "2024-01-15", "ready",  ["CSV"]),
+                          "2024-01-15", "ready",  ["CSV"], "text/csv"),
             _make_dataset(DS_BETA_ID,  DS_BETA_FILE_ID,
-                          "2024-06-01", "staged", ["CSV"]),
+                          "2024-06-01", "staged", ["CSV"], "text/csv"),
             _make_dataset(DS_GAMMA_ID, DS_GAMMA_FILE_ID,
                           "2025-03-01", "ready",  []),
         ]:
@@ -302,7 +304,7 @@ async def mixed_types_repository(
 
     def _make_multi(ds_id: str, file_specs: List[tuple]) -> Dataset:
         """
-        file_specs: list of (file_id, extra_labels) pairs, one per file node.
+        file_specs: list of (file_id, extra_labels, encoding_format) triples, one per file node.
         """
         nodes = [
             Node(
@@ -313,9 +315,10 @@ async def mixed_types_repository(
             )
         ]
         edges = []
-        for fid, extra_labels in file_specs:
+        for fid, extra_labels, encoding_format in file_specs:
+            props = {"encodingFormat": encoding_format} if encoding_format else {}
             nodes.append(
-                Node(id=fid, labels=["cr:FileObject", "Data"] + extra_labels, properties={}))
+                Node(id=fid, labels=["cr:FileObject", "Data"] + extra_labels, properties=props))
             edges.append(
                 Edge(**{"from": ds_id, "to": fid, "labels": ["distribution"]}))
         return Dataset(nodes=nodes, edges=edges)
@@ -326,10 +329,12 @@ async def mixed_types_repository(
     async with driver.session() as session:
         repo = Neo4jDatasetRepository(session)
         for ds in [
-            _make_multi(DS_MIXED_ID,    [(DS_MIXED_CSV_FILE_ID, [
-                        "CSV"]), (DS_MIXED_PDF_FILE_ID, ["PDFSet"])]),
-            _make_multi(DS_CSV_ONLY_ID, [(DS_CSV_ONLY_FILE_ID, ["CSV"])]),
-            _make_multi(DS_PDF_ONLY_ID, [(DS_PDF_ONLY_FILE_ID, ["PDFSet"])]),
+            _make_multi(DS_MIXED_ID,    [(DS_MIXED_CSV_FILE_ID, ["CSV"], "text/csv"),
+                                         (DS_MIXED_PDF_FILE_ID, ["PDFSet"], "application/pdf")]),
+            _make_multi(DS_CSV_ONLY_ID, [
+                        (DS_CSV_ONLY_FILE_ID, ["CSV"], "text/csv")]),
+            _make_multi(DS_PDF_ONLY_ID, [
+                        (DS_PDF_ONLY_FILE_ID, ["PDFSet"], "application/pdf")]),
         ]:
             await repo.create(ds)
         yield repo

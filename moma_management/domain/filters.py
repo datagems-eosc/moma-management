@@ -18,44 +18,24 @@ class MimeType(str, Enum):
     EXCEL = "application/vnd.ms-excel"
     JUPYTER = "application/x-ipynb+json"
     JSON = "application/json"
-    DOCX = "application/docx"
-    PPTX = "application/pptx"
+    JSONL = "application/jsonl"
     PDF = "application/pdf"
+    PPTX = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    XML = "application/xml"
     JPEG = "image/jpeg"
     PNG = "image/png"
-    CSV = "text/csv"
-    SQL = "text/sql"
-    XML = "application/xml"
-    TXT = "text/plain"
     GIF = "image/gif"
     WEBP = "image/webp"
     BMP = "image/bmp"
     TIFF = "image/tiff"
+    CSV = "text/csv"
+    SQL = "text/sql"
+    HTML = "text/html"
+    MARKDOWN = "text/markdown"
+    TXT = "text/plain"
     # TODO: add video MIME types when VideoSet ingestion is supported (VideoSet schema exists)
     SHEET = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     DOCUMENT = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-
-
-MIME_TYPE_TO_NODE_LABEL: dict["MimeType", str] = {
-    MimeType.EXCEL:    "EXCEL",
-    MimeType.JUPYTER:  "JSONSet",
-    MimeType.DOCX:     "DOCXSet",
-    MimeType.PPTX:     "PPTXSet",
-    MimeType.PDF:      "PDFSet",
-    MimeType.JPEG:     "JPEGSet",
-    MimeType.PNG:      "PNGSet",
-    MimeType.CSV:      "CSV",
-    MimeType.JSON:     "JSON",
-    MimeType.SQL:      "Table",
-    MimeType.XML:      "XML",
-    MimeType.TXT:      "Text",
-    MimeType.GIF:      "Image",
-    MimeType.WEBP:     "Image",
-    MimeType.BMP:      "Image",
-    MimeType.TIFF:     "Image",
-    MimeType.SHEET:    "Sheet",
-    MimeType.DOCUMENT: "DocumentSet",
-}
 
 
 class DatasetSortField(str, Enum):
@@ -135,11 +115,6 @@ class DatasetFilter(BaseModel):
     status:        Optional[Status] = None
     page:     int = Field(default=1,  ge=1)
     pageSize: int = Field(default=10, ge=1, le=100)
-
-    @property
-    def resolved_types(self) -> List[str]:
-        """Node labels to filter on: explicit types + those derived from mimeTypes."""
-        return [t.value for t in self.types] + [MIME_TYPE_TO_NODE_LABEL[mt] for mt in self.mimeTypes]
 
 
 class APSearchParams(BaseModel):

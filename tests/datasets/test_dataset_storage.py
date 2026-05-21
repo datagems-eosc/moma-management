@@ -37,6 +37,8 @@ from tests.utils import (
     DS_DATE_C_ID,
     DS_FORBIDDEN_TEST_ID,
     DS_GAMMA_ID,
+    DS_JSON_FILE_ID,
+    DS_JSON_ID,
     DS_MIXED_ID,
     DS_PDF_ONLY_ID,
     ORANGE_NODE_BASE,
@@ -357,7 +359,7 @@ class TestListMethod:
     @pytest.mark.asyncio
     async def test_mimetype_csv_maps_to_csv_label(self, populated_repository):
         result = await _list(populated_repository, mimeTypes=[MimeType.CSV])
-        # MimeType.CSV maps to the CSV node label via MIME_TYPE_TO_NODE_LABEL
+        # MimeType.CSV filters by encodingFormat="text/csv" on connected file nodes
         assert result["total"] == 2
 
     # -- sorting -------------------------------------------------------------
@@ -662,6 +664,99 @@ class TestMimeTypeFullSubgraph:
         assert len(self._file_labels(mixed)) == 2, (
             "ds-mixed should have 2 file nodes when no filter is applied"
         )
+
+
+# ---------------------------------------------------------------------------
+# mimeType filter: encodingFormat property on cr:FileObject (no type label)
+#
+# Requirement: mimeTypes filter must find datasets whose file nodes store the
+# MIME type in the ``encodingFormat`` property even when no specific type label
+# (e.g. "JSON") is present — as is the case for newer-ingested datasets.
+#
+# Seed:
+#   ds-json  cr:FileObject only (no "JSON" label), encodingFormat="application/json"
+# ---------------------------------------------------------------------------
+
+class TestEncodingFormatFilter:
+
+    @pytest_asyncio.fixture(scope="class")
+    async def encoding_format_repository(
+        self,
+        neo4j_container_class: Neo4jContainer,
+    ) -> AsyncGenerator[Neo4jDatasetRepository, None]:
+        """
+        Repository seeded with a single dataset whose file node has
+        encodingFormat="application/json" but NO "JSON" node label.
+        """
+        from moma_management.domain.dataset import Dataset
+        from moma_management.domain.generated.edges.edge_schema import Edge
+        from moma_management.domain.generated.nodes.node_schema import Node
+
+        uri = neo4j_container_class.get_connection_url()
+        auth = (neo4j_container_class.username, neo4j_container_class.password)
+        driver = AsyncGraphDatabase.driver(uri, auth=auth)
+        async with driver.session() as session:
+            repo = Neo4jDatasetRepository(session)
+            ds = Dataset(
+                nodes=[
+                    Node(
+                        id=DS_JSON_ID,
+                        labels=["sc:Dataset"],
+                        properties={"datePublished": "2025-01-01",
+                                    "status": "ready"},
+                    ),
+                    Node(
+                        id=DS_JSON_FILE_ID,
+                        # Only cr:FileObject — no "JSON" label
+                        labels=["cr:FileObject", "Data"],
+                        properties={"encodingFormat": "application/json"},
+                    ),
+                ],
+                edges=[
+                    Edge(**{"from": DS_JSON_ID, "to": DS_JSON_FILE_ID, "labels": ["distribution"]})],
+            )
+            await repo.create(ds)
+            yield repo
+        await driver.close()
+
+    @pytest.mark.asyncio
+    async def test_encoding_format_matched_without_type_label(
+        self, encoding_format_repository
+    ):
+        """
+        A cr:FileObject node with encodingFormat="application/json" but no
+        "JSON" label must be returned when filtering by mimeTypes=application/json.
+        """
+        result = await _list(
+            encoding_format_repository, mimeTypes=[MimeType.JSON]
+        )
+        assert result["total"] == 1
+        root_ids = {
+            str(n.id)
+            for ds in result["datasets"]
+            for n in ds.nodes
+            if "sc:Dataset" in n.labels
+        }
+        assert root_ids == {DS_JSON_ID}
+
+    @pytest.mark.asyncio
+    async def test_different_mime_type_does_not_match(
+        self, encoding_format_repository
+    ):
+        """
+        Filtering by a MIME type not present in any encodingFormat must return
+        no datasets (no cross-contamination).
+        """
+        result = await _list(
+            encoding_format_repository, mimeTypes=[MimeType.PDF]
+        )
+        assert result["total"] == 0
+
+    @pytest.mark.asyncio
+    async def test_no_mime_filter_returns_all(self, encoding_format_repository):
+        """Empty mimeTypes list must not restrict results."""
+        result = await _list(encoding_format_repository, mimeTypes=[])
+        assert result["total"] == 1
 
 
 @pytest.mark.asyncio
