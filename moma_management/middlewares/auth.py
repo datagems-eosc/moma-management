@@ -2,6 +2,7 @@ import logging
 from enum import Enum
 from typing import AsyncGenerator, List, Optional
 
+import structlog
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
@@ -33,7 +34,12 @@ def _authenticate(
         raise HTTPException(status_code=401, detail="Not authenticated")
     token = credentials.credentials
     try:
-        return token, authentication.validate(token)
+        claims = authentication.validate(token)
+        structlog.contextvars.bind_contextvars(
+            UserId=claims.get("sub", ""),
+            ClientId=claims.get("sub", ""),
+        )
+        return token, claims
     except JWTError as exc:
         logger.warning("JWT validation failed: %s", exc)
         raise HTTPException(status_code=401, detail="Invalid or expired token")

@@ -1,13 +1,14 @@
 import logging
 import os
+import time
 from os import getenv
 from pathlib import Path
 from tomllib import loads as loads_toml
+from uuid import uuid4
 
 import uvicorn
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
-from pyinstrument import Profiler
+from fastapi.responses import JSONResponse
 
 from moma_management.api.v1.routes import router
 from moma_management.di import container_lifespan
@@ -19,8 +20,13 @@ from moma_management.domain.exceptions import (
     RepositoryError,
     ValidationError,
 )
+from moma_management.logger import configure_logging
+from moma_management.middlewares.correlation_id_passtrough import (
+    correlation_id_passtrough,
+)
+from moma_management.middlewares.profiling import profile_request
 
-logging.basicConfig(level=logging.INFO)
+configure_logging()
 logger = logging.getLogger(__name__)
 
 pyproject = loads_toml(Path("pyproject.toml").read_text())
@@ -100,19 +106,18 @@ async def unhandled_error_handler(request: Request, exc: Exception) -> JSONRespo
     logger.exception("Unhandled exception")
     return JSONResponse(status_code=500, content={"detail": "An unexpected error occurred."})
 
+
+########################
+# Middleware setup
+########################
+
+app.middleware("http")(correlation_id_passtrough)
+
+# The profiling middleware changes the response to be an HTML page with the
+# profiling results, so we only add it if explicitly enabled.
 PROFILING = os.getenv("PROFILING", "false").lower() == "true"
-
 if PROFILING:
-    @app.middleware("http")
-    async def profile_request(request: Request, call_next):
-        if not request.url.path.startswith("/api/v1"):
-            return await call_next(request)
-
-        profiler = Profiler()
-        profiler.start()
-        await call_next(request)
-        profiler.stop()
-        return HTMLResponse(profiler.output_html())
+    app.middleware("http")(profile_request)
 
 
 if __name__ == "__main__":
