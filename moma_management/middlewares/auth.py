@@ -37,7 +37,7 @@ def _authenticate(
         claims = authentication.validate(token)
         structlog.contextvars.bind_contextvars(
             UserId=claims.get("sub", ""),
-            ClientId=claims.get("sub", ""),
+            ClientId=claims.get("azp", ""),
         )
         return token, claims
     except JWTError as exc:
