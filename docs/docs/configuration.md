@@ -18,13 +18,16 @@ The MoMa Management API is configured entirely through **environment variables**
 |---|---|---|
 | `MAPPING_FILE` | `moma_management/domain/mapping.yml` | Path to the Croissant → PG-JSON field mapping file |
 | `ROOT_PATH` | *(empty)* | ASGI root path prefix (useful when running behind a reverse proxy or API gateway) |
+| `PROFILING` | `false` | Set to `true` to enable the request profiling middleware. Responses become an HTML profiling report when enabled. |
 
 ### Authentication
 
 | Variable | Default | Description |
 |---|---|---|
 | `OIDC_ISSUER` | *(empty)* | Base URL of the OIDC issuer (e.g. `https://aai.datagems.eu/realms/datagems`). **Authentication is disabled when this is unset.** |
-| `OIDC_AUDIENCE` | *(empty)* | Expected `aud` claim value in the JWT. Optional; audience validation is skipped when unset. |
+| `OIDC_CLIENT_ID` | *(empty)* | OIDC client ID. Used as the expected `aud` claim value in JWT validation and as the token-exchange client identifier. Required when token exchange is enabled. |
+| `OIDC_CLIENT_SECRET` | *(empty)* | OIDC client secret for RFC 8693 token exchange. Must be set together with `OIDC_CLIENT_ID` and `OIDC_EXCHANGE_SCOPE`. |
+| `OIDC_EXCHANGE_SCOPE` | *(empty)* | Scope requested during token exchange (e.g. `dg-app-api`). Must be set together with `OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET`. |
 | `JWKS_TTL_SECONDS` | `300` | How long (seconds) to cache the JWKS fetched from the OIDC issuer before refreshing. |
 
 ### Authorization
@@ -41,7 +44,7 @@ The MoMa Management API is configured entirely through **environment variables**
 
 ## Secrets
 
-The variables `NEO4J_PASSWORD` and `OIDC_*` contain sensitive data. In production these should be supplied via a secrets manager (e.g. Kubernetes Secrets, Docker secrets, Vault) rather than plain environment variables or `.env` files.
+The variables `NEO4J_PASSWORD`, `OIDC_CLIENT_SECRET`, and `OIDC_ISSUER` contain sensitive data. In production these should be supplied via a secrets manager (e.g. Kubernetes Secrets, Docker secrets, Vault) rather than plain environment variables or `.env` files.
 
 ## Mapping file
 

@@ -14,7 +14,7 @@ The service only accepts JWTs issued by a trusted identity provider, the [DataGE
 
 1. Verifies the token signature using the public keys fetched from the OIDC issuer's JWKS endpoint (`<OIDC_ISSUER>/protocol/openid-connect/certs`).
 2. Checks the `iss` (issuer) claim to confirm it matches the configured `OIDC_ISSUER`.
-3. Validates the `aud` (audience) claim against `OIDC_AUDIENCE` if that variable is set.
+3. Validates the `aud` (audience) claim against `OIDC_CLIENT_ID`.
 4. Checks the `exp` (expiration) claim to confirm the token has not expired.
 
 Only RS256-signed tokens are accepted. JWKS are cached in memory for `JWKS_TTL_SECONDS` seconds (default 300) to reduce latency.
