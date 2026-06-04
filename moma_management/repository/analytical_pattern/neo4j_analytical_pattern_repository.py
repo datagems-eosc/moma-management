@@ -2,12 +2,15 @@
 import json
 from logging import getLogger
 from typing import Any, Dict, List, Optional, Tuple
+from uuid import UUID
 
 from neo4j import AsyncSession
 
 from moma_management.domain import EDGE_CONSTRAINTS_PATH
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.filters import AnalyticalPatternFilter
+from moma_management.domain.generated.edges.edge_schema import Edge
+from moma_management.domain.generated.nodes.node_schema import Node
 from moma_management.repository.analytical_pattern.analytical_pattern_repository import (
     AnalyticalPatternRepository,
 )
@@ -217,9 +220,23 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             if e["from"] in nodes and e["to"] in nodes
         ]
 
-        return AnalyticalPattern(
-            nodes=list(nodes.values()),
-            edges=valid_edges or None,
+        node_objects = [
+            Node.model_construct(id=UUID(n["id"]), labels=n["labels"], properties=n["properties"])
+            for n in nodes.values()
+        ]
+        edge_objects = (
+            [
+                Edge.model_construct(
+                    from_=UUID(e["from"]), to=UUID(e["to"]),
+                    labels=e["labels"], properties=e.get("properties"),
+                )
+                for e in valid_edges
+            ]
+            if valid_edges else None
+        )
+        return AnalyticalPattern.model_construct(
+            nodes=node_objects,
+            edges=edge_objects,
         )
 
     @staticmethod

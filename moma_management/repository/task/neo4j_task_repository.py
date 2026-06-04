@@ -1,5 +1,6 @@
 from logging import getLogger
 from typing import Optional
+from uuid import UUID
 
 from neo4j import AsyncSession
 
@@ -49,4 +50,5 @@ class Neo4jTaskRepository(Neo4jPgJsonMixin, TaskRepository):
         record = await result.single()
         if record is None:
             return None
-        return Node(**self._deserialize_node(record["t"]))
+        data = self._deserialize_node(record["t"])
+        return Node.model_construct(id=UUID(data["id"]), labels=data["labels"], properties=data["properties"])

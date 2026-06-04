@@ -1,5 +1,6 @@
 from logging import getLogger
 from typing import List, Optional
+from uuid import UUID
 
 from neo4j import AsyncSession
 
@@ -50,7 +51,8 @@ class Neo4jMlModelRepository(Neo4jPgJsonMixin, MlModelRepository):
         record = await result.single()
         if record is None:
             return None
-        return Node(**self._deserialize_node(record["n"]))
+        data = self._deserialize_node(record["n"])
+        return Node.model_construct(id=UUID(data["id"]), labels=data["labels"], properties=data["properties"])
 
     async def update(self, node: Node) -> dict:
         """Update properties of an existing ML_Model node."""
@@ -89,7 +91,11 @@ class Neo4jMlModelRepository(Neo4jPgJsonMixin, MlModelRepository):
         """
         result = await self._session.run(query)
         records = [record async for record in result]
-        return [Node(**self._deserialize_node(r["n"])) for r in records]
+        return [
+            Node.model_construct(id=UUID(d["id"]), labels=d["labels"], properties=d["properties"])
+            for r in records
+            for d in (self._deserialize_node(r["n"]),)
+        ]
 
     async def has_referencing_aps(self, ml_model_id: str) -> bool:
         """Return True if at least one AP has an Operator with a perform_inference edge to this ML_Model."""
