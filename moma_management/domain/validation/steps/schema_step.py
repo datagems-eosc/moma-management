@@ -25,6 +25,9 @@ class SchemaStep(ValidationStep):
 
     # Cached label-ancestry map, built once from the dataset node schemas
     _label_ancestors_cache: dict[str, frozenset[str]] | None = None
+    _edge_constraints_cache: list[dict] | None = None
+
+    _validator_cache: dict[str, "Draft202012Validator"] = {}
 
     def __init__(self, schema_name: str = "moma.schema.json") -> None:
         super().__init__()
@@ -37,8 +40,13 @@ class SchemaStep(ValidationStep):
     def handle(self, data: MomaEntity) -> List[SchemaError]:
         # mode="json" serialises UUIDs → strings, which the JSON schema expects.
         raw = data.model_dump(by_alias=True, mode="json")
-        schema = loads(self._schema.read_text())
-        validator = Draft202012Validator(schema, registry=self._registry)
+        key = str(self._schema)
+        if key not in SchemaStep._validator_cache:
+            schema = loads(self._schema.read_text())
+            SchemaStep._validator_cache[key] = Draft202012Validator(
+                schema, registry=self._registry
+            )
+        validator = SchemaStep._validator_cache[key]
         errors = [self._wrap_to_ajv(e) for e in validator.iter_errors(raw)]
         errors += self.validate_edge_constraints(raw)
         return errors + self._chain(data)
@@ -71,7 +79,9 @@ class SchemaStep(ValidationStep):
         so that e.g. ``"RelationalDatabase"`` also satisfies a constraint
         requiring ``"Data"``.
         """
-        constraints: list[dict] = loads(constraints_path.read_text())
+        if SchemaStep._edge_constraints_cache is None:
+            SchemaStep._edge_constraints_cache = loads(constraints_path.read_text())
+        constraints: list[dict] = SchemaStep._edge_constraints_cache
         if not constraints:
             return []
 
