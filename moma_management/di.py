@@ -51,7 +51,7 @@ async def container_lifespan(_: FastAPI):
     driver = AsyncGraphDatabase.driver(
         NEO4J_URI,
         auth=(NEO4J_USER, NEO4J_PASSWORD),
-        max_connection_pool_size=50,
+        max_connection_pool_size=100,
         connection_acquisition_timeout=10,
         max_transaction_retry_time=30,
     )
