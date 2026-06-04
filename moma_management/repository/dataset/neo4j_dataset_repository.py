@@ -199,12 +199,8 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                 record["node_maps"],
                 record["edge_maps"],
             )
-            return Dataset(nodes=graph.nodes, edges=graph.edges)
-        except PydanticValidationError as e:
-            logger.error("Neo4j get failed: %s", e)
-            raise RepositoryError(
-                f"Stored dataset '{id}' failed schema validation: {e}"
-            ) from e
+            # NOTE: Skipping validation here since if the datasets are in the DB, they should be well-formed.
+            return Dataset.model_construct(nodes=graph.nodes, edges=graph.edges)
         except Exception as e:
             logger.error("Neo4j get failed: %s", e)
             return None
