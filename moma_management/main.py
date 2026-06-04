@@ -121,4 +121,16 @@ if PROFILING:
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    uvicorn.run(
+        "moma_management.main:app",
+        host="0.0.0.0",
+        port=int(os.getenv("APP_PORT", "5000")),
+        workers=int(os.getenv("APP_CONCURRENCY", "1")),
+        loop="uvloop",
+        http="httptools",
+        log_level=os.getenv("LOG_LEVEL", "info"),
+        access_log=False,
+        timeout_keep_alive=5,
+        limit_concurrency=1000,
+        backlog=2048,
+    )

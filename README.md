@@ -247,6 +247,8 @@ Configuration is managed entirely through environment variables:
 | `PROFILING`               | no       | `false`                              | Set to `true` to enable the request profiling middleware                  |
 | `PERMISSIONS_GATEWAY_URL` | no       | *(empty)*                            | External gateway URL for dataset-level authorization (disabled if unset) |
 | `EMBEDDER_MODEL`          | no       | `all-MiniLM-L6-v2`                  | Sentence-transformers model for AP semantic search (set empty to disable) |
+| `APP_PORT`                | no       | `5000`                               | TCP port the Uvicorn server listens on                                    |
+| `APP_CONCURRENCY`         | no       | `1`                                  | Number of Uvicorn worker processes                                        |
 
 *¹ These three variables must be set together to enable token exchange. Required only if using token exchange for the permissions gateway.*
 
