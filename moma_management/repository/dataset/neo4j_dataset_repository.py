@@ -205,6 +205,49 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             logger.error("Neo4j get failed: %s", e)
             return None
 
+    async def _get_batch(self, ids: List[str]) -> List[Dataset]:
+        """Fetch full subgraphs for multiple dataset IDs in a single query.
+
+        Uses VIRTUAL_BELONGS_TO edges (maintained on every write) to collect
+        child nodes without a per-dataset 4-hop traversal, then gathers edges
+        in one pass.  Result order matches the input *ids* order.
+        """
+        query = """//cypher
+        UNWIND $datasetIds AS datasetId
+        MATCH (n:`sc:Dataset` {id: datasetId})
+        OPTIONAL MATCH (child)-[:VIRTUAL_BELONGS_TO]->(n)
+        WITH n, [n] + collect(DISTINCT child) AS allNodes
+
+        UNWIND allNodes AS a
+        OPTIONAL MATCH (a)-[r]->(b)
+        WHERE b IN allNodes AND NOT type(r) IN $forbiddenEdges
+        WITH n, allNodes,
+             collect(DISTINCT {from: startNode(r).id, to: endNode(r).id,
+                                type: type(r), props: properties(r)}) AS edgeMaps
+
+        RETURN n.id AS datasetId,
+               [x IN allNodes | {id: x.id, labels: labels(x), props: properties(x)}] AS node_maps,
+               [e IN edgeMaps WHERE e.from IS NOT NULL] AS edge_maps
+        """
+        result = await self._session.run(
+            query, datasetIds=ids, forbiddenEdges=self.FORBIDDEN_EDGES
+        )
+        by_id: dict[str, Dataset] = {}
+        async for record in result:
+            try:
+                graph = self._build_dataset_from_maps(
+                    record["node_maps"], record["edge_maps"]
+                )
+                by_id[record["datasetId"]] = Dataset.model_construct(
+                    nodes=graph.nodes, edges=graph.edges
+                )
+            except Exception as e:
+                logger.error("Neo4j _get_batch error for %s: %s",
+                             record["datasetId"], e)
+
+        # Preserve the sort order from the ID query
+        return [by_id[id_] for id_ in ids if id_ in by_id]
+
     async def list(self, criteria: DatasetFilter) -> List[Dataset]:
         try:
             t0 = time.monotonic()
@@ -226,7 +269,24 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             node_labels = [t.value for t in criteria.types]
             mime_type_values = [mt.value for mt in criteria.mimeTypes]
 
-            params = dict(
+            filter_where = """(
+                $nodeIds = []
+                OR {alias}.id IN $nodeIds
+                OR EXISTS {{ MATCH (c)-[:VIRTUAL_BELONGS_TO]->({alias}) WHERE c.id IN $nodeIds }}
+            )
+            AND ($publishedDateFrom IS NULL OR {alias}.datePublished >= $publishedDateFrom)
+            AND ($publishedDateTo IS NULL OR {alias}.datePublished <= $publishedDateTo)
+            AND ($status IS NULL OR {alias}.status = $status)
+            AND (
+                ($nodeLabels = [] AND $mimeTypeValues = [])
+                OR EXISTS {{
+                    MATCH path=({alias})-[*1..4]-(x)
+                    WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
+                    AND (ANY(t IN $nodeLabels WHERE t IN labels(x)) OR x.encodingFormat IN $mimeTypeValues)
+                }}
+            )"""
+
+            base_params = dict(
                 nodeIds=criteria.nodeIds or [],
                 publishedDateFrom=criteria.publishedFrom.isoformat(
                 ) if criteria.publishedFrom else None,
@@ -235,85 +295,22 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                 nodeLabels=node_labels,
                 mimeTypeValues=mime_type_values,
                 forbiddenEdges=self.FORBIDDEN_EDGES,
-                skip=skip,
-                limit=limit,
             )
 
-            # ---------------- COUNT QUERY ----------------
-            count_query = """//cypher
-            MATCH (n:`sc:Dataset`)
-            WHERE (
-                $nodeIds = []
-                OR n.id IN $nodeIds
-                OR EXISTS {
-                    MATCH (m)-[:VIRTUAL_BELONGS_TO]->(n)
-                    WHERE m.id IN $nodeIds
-                }
-            )
-            AND ($publishedDateFrom IS NULL OR n.datePublished >= $publishedDateFrom)
-            AND ($publishedDateTo IS NULL OR n.datePublished <= $publishedDateTo)
-            AND ($status IS NULL OR n.status = $status)
-            AND (
-                ($nodeLabels = [] AND $mimeTypeValues = [])
-                OR EXISTS {
-                    MATCH path=(n)-[*1..4]-(m)
-                    WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
-                    AND (
-                        ANY(t IN $nodeLabels WHERE t IN labels(m))
-                        OR m.encodingFormat IN $mimeTypeValues
-                    )
-                }
-            )
-            RETURN count(DISTINCT n) AS total
+            # ---------------- COUNT query ----------------
+            count_query = f"""//cypher
+            MATCH (m:`sc:Dataset`)
+            WHERE {filter_where.format(alias="m")}
+            RETURN count(DISTINCT m) AS total
             """
 
-            # ---------------- ID QUERY (PAGINATED) ----------------
-            id_query = f"""//cypher
-            MATCH (n:`sc:Dataset`)
-            WHERE (
-                $nodeIds = []
-                OR n.id IN $nodeIds
-                OR EXISTS {{
-                    MATCH (m)-[:VIRTUAL_BELONGS_TO]->(n)
-                    WHERE m.id IN $nodeIds
-                }}
-            )
-            AND ($publishedDateFrom IS NULL OR n.datePublished >= $publishedDateFrom)
-            AND ($publishedDateTo IS NULL OR n.datePublished <= $publishedDateTo)
-            AND ($status IS NULL OR n.status = $status)
-            AND (
-                ($nodeLabels = [] AND $mimeTypeValues = [])
-                OR EXISTS {{
-                    MATCH path=(n)-[*1..4]-(m)
-                    WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
-                    AND (
-                        ANY(t IN $nodeLabels WHERE t IN labels(m))
-                        OR m.encodingFormat IN $mimeTypeValues
-                    )
-                }}
-            )
-
-            WITH n
-            ORDER BY {order_clause}
-            SKIP $skip
-            LIMIT $limit
-
-            RETURN n.id AS id
-            """
-
-            # Execute both queries
             t1 = time.monotonic()
 
-            count_result = await self._session.run(count_query, **params)
+            count_result = await self._session.run(count_query, **base_params)
             count_record = await count_result.single()
-            total = count_record["total"] if count_record else 0
+            total: int = count_record["total"] if count_record else 0
 
-            id_result = await self._session.run(id_query, **params)
-            ids = [record["id"] async for record in id_result]
-
-            t2 = time.monotonic()
-
-            if not ids:
+            if total == 0 or skip >= total:
                 return {
                     "datasets": [],
                     "page": criteria.page,
@@ -321,15 +318,27 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                     "total": total,
                 }
 
-            # ---------------- FETCH SUBGRAPHS (PARALLEL) ----------------
-            datasets = []
-            for id_ in ids:
-                ds = await self.get(id_)
-                if ds is not None:
-                    datasets.append(ds)
+            # ---------------- PAGINATED IDs query ----------------
+            ids_query = f"""//cypher
+            MATCH (n:`sc:Dataset`)
+            WHERE {filter_where.format(alias="n")}
+            WITH n
+            ORDER BY {order_clause}
+            SKIP $skip LIMIT $limit
+            RETURN n.id AS id
+            """
 
-            # Filter None (safety)
-            datasets = [ds for ds in datasets if ds is not None]
+            ids: list[str] = []
+            ids_result = await self._session.run(
+                ids_query, **base_params, skip=skip, limit=limit
+            )
+            async for record in ids_result:
+                ids.append(record["id"])
+
+            t2 = time.monotonic()
+
+            # ---------------- FETCH SUBGRAPHS (SINGLE BATCH QUERY) ----------------
+            datasets = await self._get_batch(ids)
 
             t3 = time.monotonic()
 
