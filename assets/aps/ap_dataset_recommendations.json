@@ -21,7 +21,7 @@
       ],
       "properties": {
         "name": "GetRecommendations Operator",
-        "description": "Dataset-to-Dataset recommender operator. Accepts a seed dataset as input and returns a ranked list of recommended datasets as output.",
+        "description": "Dataset-to-Dataset recommender operator. Accepts a seed dataset as input and returns a ranked list of recommended dataset IDs as output.",
         "command": "get_recommendations",
         "inputs": [
           {
@@ -39,7 +39,7 @@
         "outputs": [
           {
             "name": "recommendations",
-            "type": "sc:Dataset",
+            "type": "array",
             "required": true
           }
         ]
@@ -58,11 +58,19 @@
     {
       "id": "e7f8a9b0-c1d2-4e3f-8a5b-6c7d8e9f0a1b",
       "labels": [
-        "sc:Dataset"
+        "ResultType",
+        "array"
       ],
       "properties": {
-        "name": "Recommended Dataset",
-        "description": "A dataset recommended by the recommender operator."
+        "name": "recommendations",
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of a recommended sc:Dataset"
+          }
+        }
       }
     }
   ],
@@ -86,7 +94,12 @@
       "to": "e7f8a9b0-c1d2-4e3f-8a5b-6c7d8e9f0a1b",
       "labels": [
         "output"
-      ]
+      ],
+      "properties": {
+        "mapping": {
+          "to['recommendations']": "from['outputs']['recommendations']"
+        }
+      }
     }
   ]
 }

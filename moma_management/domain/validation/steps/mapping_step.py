@@ -11,7 +11,7 @@ class MappingStep(ValidationStep):
 
 
 def _extract_bracket_value(expr: str, prefix: str) -> str | None:
-    """Extract the innermost bracket key from notation ``prefix['key']``."""
+    """Extract the first bracket key from notation ``prefix['key']``."""
     marker = f"{prefix}['"
     if not expr.startswith(marker):
         return None
@@ -20,6 +20,37 @@ def _extract_bracket_value(expr: str, prefix: str) -> str | None:
     if end == -1:
         return None
     return rest[:end]
+
+
+def _extract_bracket_path(expr: str, prefix: str) -> list[str] | None:
+    """Extract all bracket keys from ``prefix['k1']['k2']...`` as a list."""
+    marker = f"{prefix}['"
+    if not expr.startswith(marker):
+        return None
+    rest = expr[len(marker):]
+    segments = []
+    while rest:
+        end = rest.find("']")
+        if end == -1:
+            break
+        segments.append(rest[:end])
+        rest = rest[end + 2:]
+        if rest.startswith("['"):
+            rest = rest[2:]
+        else:
+            break
+    return segments or None
+
+
+def _resolve_param_type(param: dict, nested: list[str]) -> str | None:
+    """Walk nested property segments through a parameter's ``properties`` to find the leaf type."""
+    current = param
+    for segment in nested:
+        props = current.get("properties") or {}
+        if segment not in props:
+            return current.get("type")
+        current = props[segment]
+    return current.get("type")
 
 
 def _validate_mappings(data: dict) -> list[SchemaError]:
@@ -180,18 +211,21 @@ def _validate_mappings(data: dict) -> list[SchemaError]:
                         None,
                     )
                     if param:
+                        output_path = _extract_bracket_path(value, "from['outputs']") or [param_name]
+                        nested_path = output_path[1:]
+                        resolved_type = _resolve_param_type(param, nested_path)
                         rt_type = next(
                             (lbl for lbl in to_labels if lbl != "ResultType"), None)
-                        if rt_type and param.get("type") != rt_type:
+                        if rt_type and resolved_type != rt_type:
+                            nested_suffix = ("." + ".".join(nested_path)) if nested_path else ""
                             errors.append(SchemaError(
                                 keyword="mappingTypeCompatibility",
                                 instancePath=f"{path_prefix}/{key}",
                                 schemaPath="#/x-mapping-rules/typeCompatibility",
-                                params={"paramType": param.get(
-                                    "type"), "resultType": rt_type},
+                                params={"paramType": resolved_type, "resultType": rt_type},
                                 message=(
-                                    f"Type mismatch: operator output '{param_name}' has type "
-                                    f"'{param.get('type')}' but ResultType node is '{rt_type}'"
+                                    f"Type mismatch: operator output '{param_name}{nested_suffix}' has type "
+                                    f"'{resolved_type}' but ResultType node is '{rt_type}'"
                                 ),
                             ))
 

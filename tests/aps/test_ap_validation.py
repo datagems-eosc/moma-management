@@ -587,6 +587,89 @@ class TestMappingValidation:
         errors = _validate_mappings(data)
         assert not any(e.keyword == "mappingTypeCompatibility" for e in errors)
 
+    def test_output_nested_property_type_match(self):
+        """Nested property path from['outputs']['payload']['query'] resolves to string → no error."""
+        op = {
+            "id": _OP_ID,
+            "labels": ["Operator"],
+            "properties": {
+                "name": "op",
+                "inputs": [],
+                "outputs": [
+                    {
+                        "name": "payload",
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string"},
+                            "confidence": {"type": "number"},
+                        },
+                        "required": True,
+                    }
+                ],
+            },
+        }
+        rt = _make_rt("query", "string")
+        data = {
+            "nodes": [
+                {"id": _AP_ROOT_ID, "labels": ["Analytical_Pattern"], "properties": {"name": "ap"}},
+                op,
+                rt,
+            ],
+            "edges": [
+                {"from": _AP_ROOT_ID, "to": _OP_ID, "labels": ["consist_of"]},
+                {
+                    "from": _OP_ID,
+                    "to": _RT_ID,
+                    "labels": ["output"],
+                    "properties": {"mapping": {"to['query']": "from['outputs']['payload']['query']"}},
+                },
+            ],
+        }
+        errors = _validate_mappings(data)
+        assert not any(e.keyword == "mappingTypeCompatibility" for e in errors)
+
+    def test_output_nested_property_type_mismatch(self):
+        """Nested property path from['outputs']['payload']['confidence'] (number) vs string RT → error."""
+        op = {
+            "id": _OP_ID,
+            "labels": ["Operator"],
+            "properties": {
+                "name": "op",
+                "inputs": [],
+                "outputs": [
+                    {
+                        "name": "payload",
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string"},
+                            "confidence": {"type": "number"},
+                        },
+                        "required": True,
+                    }
+                ],
+            },
+        }
+        rt = _make_rt("query", "string")
+        data = {
+            "nodes": [
+                {"id": _AP_ROOT_ID, "labels": ["Analytical_Pattern"], "properties": {"name": "ap"}},
+                op,
+                rt,
+            ],
+            "edges": [
+                {"from": _AP_ROOT_ID, "to": _OP_ID, "labels": ["consist_of"]},
+                {
+                    "from": _OP_ID,
+                    "to": _RT_ID,
+                    "labels": ["output"],
+                    "properties": {"mapping": {"to['query']": "from['outputs']['payload']['confidence']"}},
+                },
+            ],
+        }
+        errors = _validate_mappings(data)
+        assert any(e.keyword == "mappingTypeCompatibility" for e in errors)
+        assert any("number" in e.message and "string" in e.message for e in errors)
+
     # ── Regression ────────────────────────────────────────────────────────
 
     def test_ap_sql_typed_fixture(self):
