@@ -18,7 +18,7 @@ pip install moma_domain-*.whl
 **In a uv project:**
 ```toml
 [tool.uv.sources]
-moma-domain = { url = "https://github.com/datagems-eosc/moma-management/releases/download/v2.1.0/moma_domain-2.1.0-py3-none-any.whl" }
+moma-domain = { url = "https://github.com/datagems-eosc/moma-management/releases/download/v2.7.2/moma_domain-2.7.2-py3-none-any.whl" }
 ```
 
 ## Usage

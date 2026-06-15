@@ -144,7 +144,7 @@ class Neo4jPgJsonMixin:
         to_id = str(edge.to)
         # Edge type labels: encode "/" as "___" to keep Cypher valid
         labels = ":".join(
-            f"`{lbl.replace('/', '___')}`" for lbl in edge.labels
+            f"`{lbl.value.replace('/', '___')}`" for lbl in edge.labels
         )
         props = self._sanitize_properties(
             edge.properties.model_dump(exclude_none=True)

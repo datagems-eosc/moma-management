@@ -81,8 +81,12 @@ def test_dataset_rejects_ap_edge_label():
 
 
 def test_dataset_rejects_unknown_edge_label():
-    """A completely unknown edge label must be rejected."""
-    with pytest.raises(ValidationError, match="Edges violate graph constraints"):
+    """A completely unknown edge label must be rejected.
+
+    Since EdgeLabel is an enum, Pydantic rejects unrecognised values at
+    model-construction time (before domain constraint validation runs).
+    """
+    with pytest.raises(ValidationError):
         _make_dataset("unknown_edge", ["sc:Dataset"], ["Data"])
 
 
@@ -119,8 +123,12 @@ def test_ap_rejects_consist_of_to_wrong_target():
 
 
 def test_ap_rejects_unknown_edge_label():
-    """A completely unknown edge label must be rejected."""
-    with pytest.raises(ValidationError, match="Edges violate graph constraints"):
+    """A completely unknown edge label must be rejected.
+
+    Since EdgeLabel is an enum, Pydantic rejects unrecognised values at
+    model-construction time (before domain constraint validation runs).
+    """
+    with pytest.raises(ValidationError):
         _make_ap("unknown_edge", ["Analytical_Pattern"], ["Operator"])
 
 

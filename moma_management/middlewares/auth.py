@@ -9,6 +9,7 @@ from jose import JWTError
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.filters import DatasetFilter, DatasetProperty
+from moma_management.domain.generated.edges.edge_schema import EdgeLabel
 from moma_management.services.analytical_pattern import AnalyticalPatternService
 from moma_management.services.authentication import Authentication
 from moma_management.services.authorization import (
@@ -177,7 +178,7 @@ def require_permission(
                 input_node_ids = [
                     str(e.to)
                     for e in (ap_result.edges or [])
-                    if "input" in e.labels
+                    if EdgeLabel.input in e.labels
                 ]
                 if not input_node_ids:
                     # AP has no input constraint → no dataset to check, grant access
@@ -282,7 +283,7 @@ def require_browse_for_ap_creation():
         input_node_ids = [
             str(e.to)
             for e in (candidate.edges or [])
-            if "input" in e.labels
+            if EdgeLabel.input in e.labels
         ]
         if not input_node_ids:
             # No input references → no dataset constraint, grant access

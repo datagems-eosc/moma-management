@@ -8,7 +8,7 @@ from pydantic import ValidationError as PydanticValidationError
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.exceptions import NotFoundError, ValidationError
 from moma_management.domain.filters import AnalyticalPatternFilter, DatasetFilter
-from moma_management.domain.generated.edges.edge_schema import Edge
+from moma_management.domain.generated.edges.edge_schema import Edge, EdgeLabel
 from moma_management.domain.generated.moma_schema import MoMaGraphModel
 from moma_management.domain.generated.nodes.ap.evaluation_schema import (
     Type as EvaluationType,
@@ -62,7 +62,7 @@ class AnalyticalPatternService:
         input_node_ids = [
             str(e.to)
             for e in (ap.edges or [])
-            if "input" in e.labels and str(e.to) not in result_type_ids
+            if EdgeLabel.input in e.labels and str(e.to) not in result_type_ids
         ]
 
         if input_node_ids:

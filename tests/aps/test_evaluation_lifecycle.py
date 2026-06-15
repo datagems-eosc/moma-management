@@ -18,7 +18,7 @@ import pytest
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.exceptions import NotFoundError
-from moma_management.domain.generated.edges.edge_schema import Edge
+from moma_management.domain.generated.edges.edge_schema import Edge, EdgeLabel
 from moma_management.domain.generated.nodes.ap.evaluation_schema import (
     Type as EvaluationType,
 )
@@ -115,7 +115,7 @@ async def test_add_eval_on_existing_ap_succeeds(eval_type: EvaluationType):
     assert str(eval_nodes[0].id) == eval_id
 
     # is_measured_by edge was appended
-    eval_edges = [e for e in ap.edges if "is_measured_by" in e.labels]
+    eval_edges = [e for e in ap.edges if EdgeLabel.is_measured_by in e.labels]
     assert len(eval_edges) == 1
     assert str(eval_edges[0].to) == eval_id
 
