@@ -1,6 +1,34 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Edge",
+    "$defs": {
+        "EdgeLabel": {
+            "title": "EdgeLabel",
+            "type": "string",
+            "enum": [
+                "distribution",
+                "recordSet",
+                "linkTo",
+                "containedIn",
+                "field",
+                "source/fileObject",
+                "source/fileSet",
+                "statistics",
+                "intervalStatistics",
+                "consist_of",
+                "input",
+                "output",
+                "follows",
+                "uses",
+                "is_accomplished_by",
+                "perform_inference",
+                "is_measured_by",
+                "fitted_on",
+                "trained_on",
+                "VIRTUAL_BELONGS_TO"
+            ]
+        }
+    },
     "type": "object",
     "properties": {
         "from": {
@@ -16,7 +44,7 @@
         "labels": {
             "type": "array",
             "items": {
-                "type": "string"
+                "$ref": "#/$defs/EdgeLabel"
             },
             "description": "Edge type labels (e.g. distribution, field, statistics)"
         },
