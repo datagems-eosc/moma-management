@@ -15,6 +15,9 @@ services:
 
   neo4j:
     image: neo4j:5.26
+    ports:
+      - "7474:7474"
+      - "7687:7687"
     container_name: wp3_3_moma_management_neo4j
     environment:
       - NEO4J_AUTH=neo4j/momademo

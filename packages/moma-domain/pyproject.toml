@@ -1,0 +1,32 @@
+[project]
+name = "moma-domain"
+version = "0.0.0"
+description = "MoMa PG-JSON domain models, validation, and mapping engine"
+authors = [
+    { name = "Georgia Troullinou", email = "georgia.troullinou@univ-grenoble-alpes.fr" },
+    { name = "Lucas Peirone", email = "lucas.peirone@univ-grenoble-alpes.fr" },
+]
+readme = "README.md"
+requires-python = ">=3.14,<4.0"
+classifiers = [
+    "Intended Audience :: Developers",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "pydantic>=2.0",
+    "jsonschema>=4.23.0",
+    "deepdiff>=8.6.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel.force-include]
+# Paths are relative to this pyproject.toml.
+# Only the domain subtree and the namespace __init__.py are pulled in;
+# service code (api/, repository/, etc.) is not included.
+"../../moma_management/__init__.py" = "moma_management/__init__.py"
+"../../moma_management/domain" = "moma_management/domain"
