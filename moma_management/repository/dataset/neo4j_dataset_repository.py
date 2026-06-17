@@ -132,7 +132,7 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
             WITH collect(DISTINCT data) AS data_nodes
             UNWIND data_nodes AS dn
-            MATCH (:Operator)-[:input]->(dn)
+            MATCH (dn)-[:input]->(:Operator)
             RETURN true AS referenced
             LIMIT 1
         """

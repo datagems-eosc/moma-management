@@ -60,9 +60,9 @@ class AnalyticalPatternService:
         }
 
         input_node_ids = [
-            str(e.to)
+            str(e.from_)
             for e in (ap.edges or [])
-            if EdgeLabel.input in e.labels and str(e.to) not in result_type_ids
+            if EdgeLabel.input in e.labels and str(e.from_) not in result_type_ids
         ]
 
         if input_node_ids:

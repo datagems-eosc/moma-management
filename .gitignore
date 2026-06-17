@@ -143,3 +143,6 @@ generated
 !moma_management/domain/generated
 assets/backups
 .profiles
+
+#Slop
+.claude

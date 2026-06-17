@@ -141,10 +141,18 @@ def _make_ap_with_result_type(
     op_labels: list[str],
     rt_labels: list[str],
 ) -> AnalyticalPattern:
-    """Build a minimal AP: root → consist_of → Operator -(edge_label)→ ResultType."""
+    """Build a minimal AP with an edge between an Operator and a ResultType/Data node.
+
+    For ``input`` edges the direction is RT/Data → Operator.
+    For ``output`` edges the direction is Operator → RT/Data.
+    """
     root_id = str(uuid4())
     op_id = str(uuid4())
     rt_id = str(uuid4())
+    if edge_label == "input":
+        edge_from, edge_to = rt_id, op_id
+    else:
+        edge_from, edge_to = op_id, rt_id
     return AnalyticalPattern(
         nodes=[
             Node(id=root_id, labels=[
@@ -154,7 +162,7 @@ def _make_ap_with_result_type(
         ],
         edges=[
             Edge(**{"from": root_id, "to": op_id, "labels": ["consist_of"]}),
-            Edge(**{"from": op_id, "to": rt_id, "labels": [edge_label]}),
+            Edge(**{"from": edge_from, "to": edge_to, "labels": [edge_label]}),
         ],
     )
 
@@ -167,7 +175,7 @@ def test_ap_valid_operator_output_to_result_type():
 
 
 def test_ap_valid_operator_input_from_result_type():
-    """Operator --input--> ResultType is a permitted edge."""
+    """ResultType --input--> Operator is a permitted edge."""
     ap = _make_ap_with_result_type("input", ["Operator"], [
                                    "ResultType", "boolean"])
     assert ap is not None
@@ -202,7 +210,7 @@ def test_ap_valid_operator_output_object_result_type():
 
 
 def test_ap_valid_operator_input_sc_dataset():
-    """Operator --input--> sc:Dataset is permitted (whole-dataset reference, mapping is Any)."""
+    """sc:Dataset --input--> Operator is permitted (whole-dataset reference, mapping is Any)."""
     root_id = str(uuid4())
     op_id = str(uuid4())
     ds_id = str(uuid4())
@@ -215,7 +223,7 @@ def test_ap_valid_operator_input_sc_dataset():
         ],
         edges=[
             Edge(**{"from": root_id, "to": op_id, "labels": ["consist_of"]}),
-            Edge(**{"from": op_id, "to": ds_id, "labels": ["input"]}),
+            Edge(**{"from": ds_id, "to": op_id, "labels": ["input"]}),
         ],
     )
     assert ap is not None
@@ -242,7 +250,7 @@ def test_ap_valid_operator_output_sc_dataset():
 
 
 def test_ap_valid_operator_input_data_node():
-    """Operator --input--> Data is valid; Data is-a ResultType (persistent typed value)."""
+    """Data --input--> Operator is valid (persistent Data node feeds the Operator)."""
     root_id = str(uuid4())
     op_id = str(uuid4())
     data_id = str(uuid4())
@@ -255,7 +263,7 @@ def test_ap_valid_operator_input_data_node():
         ],
         edges=[
             Edge(**{"from": root_id, "to": op_id, "labels": ["consist_of"]}),
-            Edge(**{"from": op_id, "to": data_id, "labels": ["input"]}),
+            Edge(**{"from": data_id, "to": op_id, "labels": ["input"]}),
         ],
     )
     assert ap is not None

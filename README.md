@@ -135,8 +135,8 @@ graph LR
   User:::misc
 
   AP -- consist_of --> Operator
-  Operator -- input --> ResultType
-  Operator -- input --> Dataset
+  ResultType -- input --> Operator
+  Dataset -- input --> Operator
   Operator -- output --> ResultType
   Operator -- output --> Dataset
   Operator -- follows --> Operator
@@ -183,7 +183,7 @@ graph LR
 | `statistics` | `Column` | `Statistics` | Column links to its computed statistics |
 | `intervalStatistics` | `Column` | `IntervalColumnStatistics` | Column links to statistics computed over a specific time window (streaming datasets) |
 | `consist_of` | `Analytical_Pattern` | `Operator` | AP is composed of operator steps |
-| `input` | `Operator` | `ResultType` or `sc:Dataset` | Operator reads a typed value; `Data` (persistent) and transient subtypes (`StringResult`, etc.) are valid `ResultType` targets; `sc:Dataset` is also valid for whole-dataset references (mapping is Any — not checked at AP design time) |
+| `input` | `ResultType` or `sc:Dataset` | `Operator` | Data flows into an Operator; `Data` (persistent) and transient subtypes (`StringResult`, etc.) are valid `ResultType` sources; `sc:Dataset` is also valid for whole-dataset references (mapping is Any — not checked at AP design time) |
 | `output` | `Operator` | `ResultType` or `sc:Dataset` | Operator writes a typed value; same targets as `input` |
 | `follows` | `Operator` | `Operator` | Operator executes after another operator |
 | `uses` | `User` | `Operator` | User triggers or configures an operator |

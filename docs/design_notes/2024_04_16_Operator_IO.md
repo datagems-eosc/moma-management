@@ -260,7 +260,7 @@ graph LR
   User:::misc
 
   AP -- consist_of --> Operator
-  Operator -- input --> ResultType
+  ResultType -- input --> Operator
   Operator -- output --> ResultType
   Operator -- follows --> Operator
   User -- uses --> Operator
@@ -442,16 +442,16 @@ Taking the PG-JSON graph structure into account we can use the `input` and `outp
 Using this, the mapping syntax can use the existing `from` and `to` properties from the edges to map data like this :
 
 ```json
-// On an input edge, "from" is the Operator, "to" is the ResultType
+// On an input edge, "from" is the ResultType/Data, "to" is the Operator
 {
     "from": "<uuid>",
     "to": "<uuid",
     "labels": ["input"],
     "properties": {
         "mappings": [
-            // We want to set the value of the Operator input parameter (from)
-            // equiv. from["properties"]["inputs"]['<target_key1>'] = to["properties"][<target_key2>]
-            "from['inputs']['<target_key1>']": "to['<target_key2>']"
+            // We want to set the value of the Operator input parameter (to)
+            // equiv. to["properties"]["inputs"]['<target_key1>'] = from["properties"][<target_key2>]
+            "to['inputs']['<target_key1>']": "from['<target_key2>']"
         ]
     }
     
@@ -492,7 +492,7 @@ graph LR
     OP2["AnalyzeQuery(q: str) -> (is_safe: boolean)"]
 
     OP1 -->|"**output** <br> [to['sql_query']: from['outputs']['sql']]"| RT1
-    OP2 -->|"**input** <br> [from['inputs']['q']: to['sql_query']]"| RT1
+    RT1 -->|"**input** <br> [to['inputs']['q']: from['sql_query']]"| OP2
 
     style OP1 fill:#FFB347,stroke:#333,stroke-width:2px
     style OP2 fill:#FFB347,stroke:#333,stroke-width:2px
@@ -507,7 +507,7 @@ In this example, the `UpdateDatabase` operator takes as input a `name` parameter
 graph LR
     DN1["My great DB [Data; RelationalDatabase]"]
     OP2["UpdateDatabase(name: str))"]
-    OP2 -->|"**input** <br> [from['inputs']['name']: to['name']]"| DN1
+    DN1 -->|"**input** <br> [to['inputs']['name']: from['name']]"| OP2
 
     style OP2 fill:#FFB347,stroke:#333,stroke-width:2px
     style DN1 fill:#1E88E5,stroke:#1565C0,stroke-width:2px
@@ -533,8 +533,8 @@ graph LR
 The mapping syntax may allow futures extensions of this implementation to support [JSONPath (RFC 9535)](https://www.rfc-editor.org/rfc/rfc9535) expressions, alongside some utilities functions as [other solutions do](https://learn.microsoft.com/en-us/azure/logic-apps/expression-functions-reference). This could allow syntax such as :
 
 ```json
-// On an output edge, "from" is the Operator, "to" is the ResultType 
-// On an input edge, "from" is the ResultType, "to" is the Operator
+// On an input edge, "from" is the ResultType/Data, "to" is the Operator
+// On an output edge, "from" is the Operator, "to" is the ResultType
 {
     "from": "<uuid>",
     "to": "<uuid",
@@ -542,9 +542,9 @@ The mapping syntax may allow futures extensions of this implementation to suppor
     "properties": {
         "mappings": [
             // Assign the first element of the returned array
-            "to['<target_key>']": "from['<target_key>'][0]"
+            "to['inputs']['<target_key>']": "from['<target_key>'][0]"
             // Negating boolean returned from the previous Operator
-            "to['<target_key>']": "not(from['<target_key>'])"
+            "to['inputs']['<target_key>']": "not(from['<target_key>'])"
         ]
     }
     
@@ -581,11 +581,11 @@ graph TD
     AP -->|consist_of| OP2
     OP2 -->|follows| OP1
 
-    %% Data flow (all edges go FROM Operator TO data node)
-    OP1 -->|input| RT_NL
+    %% Data flow (input edges go FROM data node TO Operator; output edges go FROM Operator TO data node)
+    RT_NL -->|input| OP1
     OP1 -->|output| RT_SQL
-    OP2 -->|input| RT_SQL
-    OP2 -->|input| DS_DB
+    RT_SQL -->|input| OP2
+    DS_DB -->|input| OP2
     OP2 -->|output| DS_RESULT
 
     %% Styling
@@ -733,19 +733,19 @@ Mappings define how data flows:
 
 In a real use case, this mapping could be done during AP design, for example via drag-and-drop, using parameter types to ensure compatibility.
 
-All edges go **from the Operator** to the Data/ResultType node. The label (`input` / `output`) describes the role from the Operator's perspective.
+Input edges go **from the Data/ResultType node to the Operator**; output edges go **from the Operator to the Data/ResultType node**. The label (`input` / `output`) describes the role from the Operator's perspective.
 
-#### input edge (Text to SQL → nl_query ResultType)
+#### input edge (nl_query ResultType → Text to SQL)
 
 ```jsonc
-// Text to SQL reads the 'nl_query' value from the ResultType node into its 'nl' input
+// nl_query ResultType feeds into Text to SQL's 'nl' input parameter
 {
-    "from": "<Text_To_SQL>",
-    "to": "<nl_query_RT>",
+    "from": "<nl_query_RT>",
+    "to": "<Text_To_SQL>",
     "labels": ["input"],
     "properties": {
         "mappings": {
-            "from['inputs']['nl']": "to['nl_query']"
+            "to['inputs']['nl']": "from['nl_query']"
         }
     }
 }
@@ -767,29 +767,29 @@ All edges go **from the Operator** to the Data/ResultType node. The label (`inpu
 }
 ```
 
-#### input edge (SQL Execution → sql_query ResultType)
+#### input edge (sql_query ResultType → SQL Execution)
 
 ```jsonc
-// SQL Execution reads the sql_query node into its 'sql' parameter
+// sql_query ResultType feeds into SQL Execution's 'sql' parameter
 {
-    "from": "<SQL_Execution>",
-    "to": "<sql_query_RT>",
+    "from": "<sql_query_RT>",
+    "to": "<SQL_Execution>",
     "labels": ["input"],
     "properties": {
         "mappings": {
-            "from['inputs']['sql']": "to['sql_query']"
+            "to['inputs']['sql']": "from['sql_query']"
         }
     }
 }
 ```
 
-#### input edge (SQL Execution → DB)
+#### input edge (DB → SQL Execution)
 
 ```jsonc
 // No mapping needed — the whole Data node is passed as 'db'
 {
-    "from": "<SQL_Execution>",
-    "to": "<DS_DB>",
+    "from": "<DS_DB>",
+    "to": "<SQL_Execution>",
     "labels": ["input"]
 }
 ```
@@ -933,12 +933,12 @@ All edges go **from the Operator** to the Data/ResultType node. The label (`inpu
       "labels": ["follows"]
     },
     {
-      "from": "<op1_uuid>",
-      "to": "<rt_nl_uuid>",
+      "from": "<rt_nl_uuid>",
+      "to": "<op1_uuid>",
       "labels": ["input"],
       "properties": {
         "mappings": {
-          "from['inputs']['nl']": "to['nl_query']"
+          "to['inputs']['nl']": "from['nl_query']"
         }
       }
     },
@@ -953,18 +953,18 @@ All edges go **from the Operator** to the Data/ResultType node. The label (`inpu
       }
     },
     {
-      "from": "<op2_uuid>",
-      "to": "<rt_sql_uuid>",
+      "from": "<rt_sql_uuid>",
+      "to": "<op2_uuid>",
       "labels": ["input"],
       "properties": {
         "mappings": {
-          "from['inputs']['sql']": "to['sql_query']"
+          "to['inputs']['sql']": "from['sql_query']"
         }
       }
     },
     {
-      "from": "<op2_uuid>",
-      "to": "<ds_db_uuid>",
+      "from": "<ds_db_uuid>",
+      "to": "<op2_uuid>",
       "labels": ["input"]
     },
     {

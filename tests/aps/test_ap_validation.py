@@ -378,12 +378,20 @@ def _ap_with_rt(
     mapping: dict,
     param_type: str = "string",
 ) -> dict:
-    """AP with one Operator, one ResultType, and one mapping edge."""
+    """AP with one Operator, one ResultType, and one mapping edge.
+
+    For ``input`` edges the direction is RT → Operator.
+    For ``output`` edges the direction is Operator → RT.
+    """
     op = _make_op(
         inputs=[{"name": "sql", "type": param_type, "required": True}],
         outputs=[{"name": "result", "type": param_type, "required": True}],
     )
     rt = _make_rt(rt_name, subtype)
+    if edge_label == "input":
+        edge_from, edge_to = _RT_ID, _OP_ID
+    else:
+        edge_from, edge_to = _OP_ID, _RT_ID
     return {
         "nodes": [
             {"id": _AP_ROOT_ID, "labels": [
@@ -394,8 +402,8 @@ def _ap_with_rt(
         "edges": [
             {"from": _AP_ROOT_ID, "to": _OP_ID, "labels": ["consist_of"]},
             {
-                "from": _OP_ID,
-                "to": _RT_ID,
+                "from": edge_from,
+                "to": edge_to,
                 "labels": [edge_label],
                 "properties": {"mapping": mapping},
             },
@@ -404,13 +412,21 @@ def _ap_with_rt(
 
 
 def _ap_with_data(edge_label: str, mapping: dict) -> dict:
-    """AP with one Operator, one Data node, and one mapping edge."""
+    """AP with one Operator, one Data node, and one mapping edge.
+
+    For ``input`` edges the direction is Data → Operator.
+    For ``output`` edges the direction is Operator → Data.
+    """
     op = _make_op(
         inputs=[{"name": "db_name", "type": "RelationalDatabase", "required": True}],
         outputs=[
             {"name": "db_name", "type": "RelationalDatabase", "required": True}],
     )
     data = _make_data()
+    if edge_label == "input":
+        edge_from, edge_to = _DATA_ID, _OP_ID
+    else:
+        edge_from, edge_to = _OP_ID, _DATA_ID
     return {
         "nodes": [
             {"id": _AP_ROOT_ID, "labels": [
@@ -421,8 +437,8 @@ def _ap_with_data(edge_label: str, mapping: dict) -> dict:
         "edges": [
             {"from": _AP_ROOT_ID, "to": _OP_ID, "labels": ["consist_of"]},
             {
-                "from": _OP_ID,
-                "to": _DATA_ID,
+                "from": edge_from,
+                "to": edge_to,
                 "labels": [edge_label],
                 "properties": {"mapping": mapping},
             },
@@ -437,7 +453,7 @@ class TestMappingValidation:
     def test_no_mappings_passes(self):
         """Edges without mapping dicts are skipped without error."""
         data = _make_ap_with_edges(
-            {"from": _OP_ID, "to": _RT_ID, "labels": ["input"]}
+            {"from": _RT_ID, "to": _OP_ID, "labels": ["input"]}
         )
         # RT node not in graph here — but _validate_mappings only runs when
         # mapping is present, so no errors expected.
@@ -449,7 +465,7 @@ class TestMappingValidation:
             subtype="string",
             rt_name="sql_query",
             edge_label="input",
-            mapping={"from['inputs']['sql']": "to['sql_query']"},
+            mapping={"to['inputs']['sql']": "from['sql_query']"},
         )
         assert _validate_mappings(data) == []
 
@@ -464,10 +480,10 @@ class TestMappingValidation:
         assert _validate_mappings(data) == []
 
     def test_valid_input_edge_data_node(self):
-        """input edge to Data node: property exists on node → no errors."""
+        """input edge from Data node: property exists on node → no errors."""
         data = _ap_with_data(
             edge_label="input",
-            mapping={"from['inputs']['db_name']": "to['name']"},
+            mapping={"to['inputs']['db_name']": "from['name']"},
         )
         assert _validate_mappings(data) == []
 
@@ -487,7 +503,7 @@ class TestMappingValidation:
             subtype="string",
             rt_name="sql_query",
             edge_label="input",
-            mapping={"from['inputs']['nonexistent']": "to['sql_query']"},
+            mapping={"to['inputs']['nonexistent']": "from['sql_query']"},
         )
         errors = _validate_mappings(data)
         assert any(e.keyword == "mappingParameter" for e in errors)
@@ -513,7 +529,7 @@ class TestMappingValidation:
             subtype="string",
             rt_name="sql_query",
             edge_label="input",
-            mapping={"from['inputs']['sql']": "to['wrong_name']"},
+            mapping={"to['inputs']['sql']": "from['wrong_name']"},
         )
         errors = _validate_mappings(data)
         assert any(e.keyword == "mappingProperty" for e in errors)
@@ -532,10 +548,10 @@ class TestMappingValidation:
         assert any("bad_key" in e.message for e in errors)
 
     def test_input_data_property_missing(self):
-        """input edge to Data node references non-existent property → error."""
+        """input edge from Data node references non-existent property → error."""
         data = _ap_with_data(
             edge_label="input",
-            mapping={"from['inputs']['db_name']": "to['no_such_prop']"},
+            mapping={"to['inputs']['db_name']": "from['no_such_prop']"},
         )
         errors = _validate_mappings(data)
         assert any(e.keyword == "mappingProperty" for e in errors)
@@ -558,7 +574,7 @@ class TestMappingValidation:
             subtype="string",
             rt_name="sql_query",
             edge_label="input",
-            mapping={"from['inputs']['sql']": "to['sql_query']"},
+            mapping={"to['inputs']['sql']": "from['sql_query']"},
             param_type="boolean",
         )
         errors = _validate_mappings(data)
@@ -582,7 +598,7 @@ class TestMappingValidation:
         """Data nodes are exempt from type-compatibility checks → no error."""
         data = _ap_with_data(
             edge_label="input",
-            mapping={"from['inputs']['db_name']": "to['name']"},
+            mapping={"to['inputs']['db_name']": "from['name']"},
         )
         errors = _validate_mappings(data)
         assert not any(e.keyword == "mappingTypeCompatibility" for e in errors)
@@ -711,13 +727,21 @@ def _make_dataset_node(ds_id: str = _DS_ID) -> dict:
 
 
 def _ap_with_dataset(edge_label: str, mapping: dict | None = None) -> dict:
-    """Minimal AP with one Operator and one sc:Dataset node."""
+    """Minimal AP with one Operator and one sc:Dataset node.
+
+    For ``input`` edges the direction is sc:Dataset → Operator.
+    For ``output`` edges the direction is Operator → sc:Dataset.
+    """
     op = _make_op(
         inputs=[{"name": "seed", "type": "sc:Dataset", "required": True}],
         outputs=[{"name": "result", "type": "sc:Dataset", "required": True}],
     )
     ds = _make_dataset_node()
-    edge: dict = {"from": _OP_ID, "to": _DS_ID, "labels": [edge_label]}
+    if edge_label == "input":
+        edge_from, edge_to = _DS_ID, _OP_ID
+    else:
+        edge_from, edge_to = _OP_ID, _DS_ID
+    edge: dict = {"from": edge_from, "to": edge_to, "labels": [edge_label]}
     if mapping is not None:
         edge["properties"] = {"mapping": mapping}
     return {
@@ -740,7 +764,7 @@ class TestDatasetNodeIO:
     # ── Edge-constraint acceptance ────────────────────────────────────────
 
     def test_operator_input_from_dataset_node_passes_edge_constraint(self):
-        """Operator -[input]-> sc:Dataset must be an allowed edge."""
+        """sc:Dataset -[input]-> Operator must be an allowed edge."""
         data = _ap_with_dataset(edge_label="input")
         errors = SchemaStep.validate_edge_constraints(data)
         assert errors == [], [e.message for e in errors]
@@ -767,7 +791,7 @@ class TestDatasetNodeIO:
         """A mapping on a sc:Dataset input edge is accepted without validation (Any semantics)."""
         data = _ap_with_dataset(
             edge_label="input",
-            mapping={"from['inputs']['seed']": "to['whatever_prop']"},
+            mapping={"to['inputs']['seed']": "from['whatever_prop']"},
         )
         errors = _validate_mappings(data)
         assert errors == [], [e.message for e in errors]
@@ -785,7 +809,7 @@ class TestDatasetNodeIO:
         """sc:Dataset edges are exempt from type-compatibility checks."""
         data = _ap_with_dataset(
             edge_label="input",
-            mapping={"from['inputs']['seed']": "to['name']"},
+            mapping={"to['inputs']['seed']": "from['name']"},
         )
         errors = _validate_mappings(data)
         assert not any(e.keyword == "mappingTypeCompatibility" for e in errors)

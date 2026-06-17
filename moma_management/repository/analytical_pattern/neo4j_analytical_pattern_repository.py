@@ -255,9 +255,9 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             return "", {}
         clause = """
             WHERE (
-                NOT EXISTS { MATCH (root)-[:consist_of]->(:Operator)-[:input]->() }
+                NOT EXISTS { MATCH (root)-[:consist_of]->(:Operator)<-[:input]-() }
                 OR NOT EXISTS {
-                    MATCH (root)-[:consist_of]->(:Operator)-[:input]->(d)
+                    MATCH (root)-[:consist_of]->(:Operator)<-[:input]-(d)
                     WHERE NOT (d:ResultType AND NOT d:Data)
                     MATCH (d)-[*0..4]-(ds:`sc:Dataset`)
                     WHERE NOT ds.id IN $accessible_ids

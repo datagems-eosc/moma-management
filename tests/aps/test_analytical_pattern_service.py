@@ -28,7 +28,7 @@ _EVALUATIONS_DIR = Path(__file__).parent.parent.parent / \
 
 
 def _make_ap_with_input(data_node_id: str) -> AnalyticalPattern:
-    """Build a minimal AP with one 'input' edge targeting *data_node_id*."""
+    """Build a minimal AP with one 'input' edge from *data_node_id* to the Operator."""
     root_id = str(uuid4())
     op_id = str(uuid4())
     return AnalyticalPattern(
@@ -41,7 +41,7 @@ def _make_ap_with_input(data_node_id: str) -> AnalyticalPattern:
         ],
         edges=[
             Edge(**{"from": root_id, "to": op_id, "labels": ["consist_of"]}),
-            Edge(**{"from": op_id, "to": data_node_id, "labels": ["input"]}),
+            Edge(**{"from": data_node_id, "to": op_id, "labels": ["input"]}),
         ],
     )
 

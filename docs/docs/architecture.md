@@ -192,7 +192,7 @@ graph LR
   User:::misc
 
   AP -- consist_of --> Operator
-  Operator -- input --> Data
+  Data -- input --> Operator
   Operator -- output --> Data
   Operator -- follows --> Operator
   User -- uses --> Operator

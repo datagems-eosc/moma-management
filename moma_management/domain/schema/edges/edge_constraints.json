@@ -120,10 +120,10 @@
         "description": "AnalyticalPattern → Operator steps it is composed of"
     },
     {
-        "fromLabel": "Operator",
+        "fromLabel": "Data",
         "label": "input",
-        "toLabel": "Data",
-        "description": "Operator reads from a Data node (must belong to an existing dataset)"
+        "toLabel": "Operator",
+        "description": "Data node feeds into an Operator (must belong to an existing dataset)"
     },
     {
         "fromLabel": "Operator",
@@ -156,10 +156,10 @@
         "description": "Operator performs inference using an ML model"
     },
     {
-        "fromLabel": "Operator",
+        "fromLabel": "ResultType",
         "label": "input",
-        "toLabel": "ResultType",
-        "description": "Operator reads from an internal ResultType node"
+        "toLabel": "Operator",
+        "description": "ResultType node feeds into an Operator"
     },
     {
         "fromLabel": "Operator",
@@ -168,10 +168,10 @@
         "description": "Operator writes to an internal ResultType node"
     },
     {
-        "fromLabel": "Operator",
+        "fromLabel": "sc:Dataset",
         "label": "input",
-        "toLabel": "sc:Dataset",
-        "description": "Operator reads a Dataset node (whole-dataset semantics, mapping is Any)"
+        "toLabel": "Operator",
+        "description": "Dataset node feeds into an Operator (whole-dataset semantics, mapping is Any)"
     },
     {
         "fromLabel": "Operator",

@@ -58,10 +58,10 @@ def _validate_mappings(data: dict) -> list[SchemaError]:
 
     For every key/value pair in an edge's ``mapping``:
 
-    * **input** edge (``Operator -[input]-> Node``):
-      key ``from['inputs']['<param>']`` — ``<param>`` must exist in the
+    * **input** edge (``Node -[input]-> Operator``):
+      key ``to['inputs']['<param>']`` — ``<param>`` must exist in the
       Operator's declared ``inputs`` array.
-      value ``to['<prop>']`` — for a ``ResultType`` node ``<prop>`` must equal
+      value ``from['<prop>']`` — for a ``ResultType`` node ``<prop>`` must equal
       the node's ``name`` value; for a ``Data`` node ``<prop>`` must be a key
       in the node's ``properties``.
 
@@ -94,6 +94,7 @@ def _validate_mappings(data: dict) -> list[SchemaError]:
         edge_label = (edge.get("labels") or [""])[0]
 
         from_props: dict = from_node.get("properties") or {}
+        from_labels: list[str] = from_node.get("labels") or []
         to_props: dict = to_node.get("properties") or {}
         to_labels: list[str] = to_node.get("labels") or []
         is_result_type = "ResultType" in to_labels
@@ -127,10 +128,16 @@ def _validate_mappings(data: dict) -> list[SchemaError]:
             path_prefix = f"/edges/{i}/properties/mapping"
 
             if edge_label == "input":
-                # key: from['inputs']['<param>'] — operator input param
-                param_name = _extract_bracket_value(key, "from['inputs']")
+                # After edge reversal: Node -[input]-> Operator
+                # operator is to_node; data/RT source is from_node
+                # key: to['inputs']['<param>'] — operator input param
+                # value: from['<prop>'] — source node property
+                input_is_result_type = "ResultType" in from_labels
+                input_is_dataset = "sc:Dataset" in from_labels
+
+                param_name = _extract_bracket_value(key, "to['inputs']")
                 if param_name is not None:
-                    declared = from_props.get("inputs") or []
+                    declared = to_props.get("inputs") or []
                     known = {p["name"] for p in declared if isinstance(
                         p, dict) and "name" in p}
                     if param_name not in known:
@@ -146,15 +153,15 @@ def _validate_mappings(data: dict) -> list[SchemaError]:
                             ),
                         ))
 
-                # value: to['<prop>'] — target node property
-                prop_name = _extract_bracket_value(value, "to")
-                if prop_name is not None and not is_dataset:
-                    _check_node_prop(prop_name, to_props,
-                                     to_labels, f"{path_prefix}/{key}")
+                # value: from['<prop>'] — source node property
+                prop_name = _extract_bracket_value(value, "from")
+                if prop_name is not None and not input_is_dataset:
+                    _check_node_prop(prop_name, from_props,
+                                     from_labels, f"{path_prefix}/{key}")
 
                 # Type-compatibility check (ResultType only)
-                if param_name is not None and prop_name is not None and is_result_type and not is_dataset:
-                    declared = from_props.get("inputs") or []
+                if param_name is not None and prop_name is not None and input_is_result_type and not input_is_dataset:
+                    declared = to_props.get("inputs") or []
                     param = next(
                         (p for p in declared if isinstance(p, dict)
                          and p.get("name") == param_name),
@@ -162,7 +169,7 @@ def _validate_mappings(data: dict) -> list[SchemaError]:
                     )
                     if param:
                         rt_type = next(
-                            (lbl for lbl in to_labels if lbl != "ResultType"), None)
+                            (lbl for lbl in from_labels if lbl != "ResultType"), None)
                         if rt_type and param.get("type") != rt_type:
                             errors.append(SchemaError(
                                 keyword="mappingTypeCompatibility",

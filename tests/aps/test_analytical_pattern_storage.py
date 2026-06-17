@@ -57,7 +57,7 @@ def _make_ap(
         edges=[
             Edge(**{"from": root_id, "to": operator_id,
                  "labels": ["consist_of"]}),
-            Edge(**{"from": operator_id, "to": data_id, "labels": ["input"]}),
+            Edge(**{"from": data_id, "to": operator_id, "labels": ["input"]}),
         ],
     )
 
@@ -196,7 +196,7 @@ async def test_get_excludes_deep_dataset_nodes(
         ],
         edges=[
             Edge(**{"from": root_id, "to": op_id, "labels": ["consist_of"]}),
-            Edge(**{"from": op_id, "to": data_id, "labels": ["input"]}),
+            Edge(**{"from": data_id, "to": op_id, "labels": ["input"]}),
         ],
     ))
 
@@ -265,7 +265,7 @@ def _make_ap(
         edges=[
             Edge(**{"from": root_id, "to": operator_id,
                  "labels": ["consist_of"]}),
-            Edge(**{"from": operator_id, "to": data_id, "labels": ["input"]}),
+            Edge(**{"from": data_id, "to": operator_id, "labels": ["input"]}),
         ],
     )
 
@@ -374,7 +374,7 @@ async def test_shallow_retrieval_does_not_include_deep_dataset_nodes(
         ],
         edges=[
             Edge(**{"from": root_id, "to": op_id, "labels": ["consist_of"]}),
-            Edge(**{"from": op_id, "to": data_id, "labels": ["input"]}),
+            Edge(**{"from": data_id, "to": op_id, "labels": ["input"]}),
         ],
     )
     await ap_repository.create(ap)
@@ -509,7 +509,7 @@ def _make_standalone_ap(root_id: str) -> AnalyticalPattern:
 
 
 def _make_ap_with_input(root_id: str, data_id: str) -> AnalyticalPattern:
-    """AP whose operator has one input edge pointing to *data_id*."""
+    """AP whose operator has one input edge from *data_id*."""
     op_id = f"{root_id}-op"
     return AnalyticalPattern(
         nodes=[
@@ -520,7 +520,7 @@ def _make_ap_with_input(root_id: str, data_id: str) -> AnalyticalPattern:
         ],
         edges=[
             Edge(**{"from": root_id, "to": op_id, "labels": ["consist_of"]}),
-            Edge(**{"from": op_id, "to": data_id, "labels": ["input"]}),
+            Edge(**{"from": data_id, "to": op_id, "labels": ["input"]}),
         ],
     )
 

@@ -103,7 +103,7 @@ def _make_ap(data_node_id: str) -> AnalyticalPattern:
         ],
         edges=[
             Edge(**{"from": root_id, "to": op_id, "labels": ["consist_of"]}),
-            Edge(**{"from": op_id, "to": data_node_id, "labels": ["input"]}),
+            Edge(**{"from": data_node_id, "to": op_id, "labels": ["input"]}),
         ],
     )
 
