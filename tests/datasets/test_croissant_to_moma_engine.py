@@ -203,3 +203,83 @@ def test_text_recordset_attributes(mapping_file: Path):
     assert props["language"] == "n/a"
     assert props["numLines"] == 1
     assert props["numCharacters"] == 2
+
+
+def test_column_statistics_new_fields_mapped(mapping_file: Path):
+    """
+    New ColumnStatistics fields (variance, range, percentile05, percentile95,
+    generatedAt) must be mapped through to the Statistics node when present.
+    Null values (non-numeric columns) must not appear in the node properties.
+    """
+    mapping = yaml.safe_load(mapping_file.open("r"))
+
+    profile = {
+        "@id": "ds-1",
+        "@type": "sc:Dataset",
+        "name": "test",
+        "recordSet": [
+            {
+                "@type": "cr:RecordSet",
+                "@id": "rs-1",
+                "name": "rows",
+                "field": [
+                    {
+                        "@type": "cr:Field",
+                        "@id": "f-1",
+                        "name": "numeric_col",
+                        "source": {"fileObject": {"@id": "fo-1"}, "extract": {"column": "numeric_col"}},
+                        "statistics": {
+                            "@id": "stats-1",
+                            "@type": "dg:ColumnStatistics",
+                            "rowCount": 200,
+                            "mean": 5.0,
+                            "variance": 2.5,
+                            "range": 10.0,
+                            "percentile05": 1.2,
+                            "percentile95": 9.8,
+                            "generatedAt": "2026-06-18T08:00:00+00:00",
+                        },
+                    },
+                    {
+                        "@type": "cr:Field",
+                        "@id": "f-2",
+                        "name": "text_col",
+                        "source": {"fileObject": {"@id": "fo-1"}, "extract": {"column": "text_col"}},
+                        "statistics": {
+                            "@id": "stats-2",
+                            "@type": "dg:ColumnStatistics",
+                            "rowCount": 200,
+                            "mean": None,
+                            "variance": None,
+                            "range": None,
+                            "percentile05": None,
+                            "percentile95": None,
+                            "generatedAt": None,
+                        },
+                    },
+                ],
+            }
+        ],
+    }
+
+    result = croissant_to_pgjson(profile, mapping)
+    stats_nodes = {n["id"]: n for n in result["nodes"] if "Statistics" in n.get("labels", [])}
+
+    assert len(stats_nodes) == 2
+
+    # Numeric column: all new fields present
+    numeric = stats_nodes["stats-1"]["properties"]
+    assert numeric.get("variance") == 2.5
+    assert numeric.get("range") == 10.0
+    assert numeric.get("percentile05") == 1.2
+    assert numeric.get("percentile95") == 9.8
+    assert numeric.get("generatedAt") == "2026-06-18T08:00:00+00:00"
+
+    # Non-numeric column: null fields are absent from properties
+    text = stats_nodes["stats-2"]["properties"]
+    assert "variance" not in text
+    assert "range" not in text
+    assert "percentile05" not in text
+    assert "percentile95" not in text
+    assert "generatedAt" not in text
+    assert text.get("rowCount") == 200
