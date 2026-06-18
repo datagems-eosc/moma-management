@@ -45,11 +45,11 @@
                     "type": "number",
                     "description": "Difference between the maximum and minimum values within the time interval"
                 },
-                "perc05": {
+                "percentile05": {
                     "type": "number",
                     "description": "5th percentile value of the column within the time interval"
                 },
-                "perc95": {
+                "percentile95": {
                     "type": "number",
                     "description": "95th percentile value of the column within the time interval"
                 },

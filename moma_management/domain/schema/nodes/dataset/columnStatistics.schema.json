@@ -50,6 +50,27 @@
                 "uniqueCount": {
                     "type": ["integer", "null"],
                     "description": "Number of distinct values in the column"
+                },
+                "variance": {
+                    "type": ["number", "null"],
+                    "description": "Statistical variance of the column values (null for non-numeric columns)"
+                },
+                "range": {
+                    "type": ["number", "null"],
+                    "description": "Difference between the maximum and minimum values (null for non-numeric columns)"
+                },
+                "percentile05": {
+                    "type": ["number", "null"],
+                    "description": "5th percentile value of the column (null for non-numeric columns)"
+                },
+                "percentile95": {
+                    "type": ["number", "null"],
+                    "description": "95th percentile value of the column (null for non-numeric columns)"
+                },
+                "generatedAt": {
+                    "type": ["string", "null"],
+                    "format": "date-time",
+                    "description": "Timestamp indicating when these statistics were generated"
                 }
             },
             "unevaluatedProperties": true

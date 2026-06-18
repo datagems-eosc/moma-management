@@ -218,6 +218,11 @@ Statistics:
     missingPercentage: missingPercentage
     histogram: histogram
     uniqueCount: uniqueCount
+    variance: variance
+    range: range
+    percentile05: percentile05
+    percentile95: percentile95
+    generatedAt: generatedAt
 
   edges:
     - from: parent
