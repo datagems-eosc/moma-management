@@ -19,7 +19,6 @@ from uuid import uuid4
 import pytest
 import pytest_asyncio
 from neo4j import AsyncGraphDatabase
-from neo4j.exceptions import CypherTypeError
 from testcontainers.neo4j import Neo4jContainer
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
@@ -93,14 +92,7 @@ async def test_ap_fixture_lifecycle(
     ap = _load_rereid(ap_path)
     root_id = str(ap.root.id)
 
-    try:
-        await ap_repository.create(ap)
-    except CypherTypeError:
-        pytest.xfail(
-            f"{ap_path.name} contains list-of-dict node properties (e.g. "
-            "Operator.inputs / Operator.outputs) that the Neo4j storage layer "
-            "cannot persist until _sanitize_properties handles complex values."
-        )
+    await ap_repository.create(ap)
 
     retrieved = await ap_repository.get(root_id)
     assert retrieved is not None, f"AP from {ap_path.name} was not found after creation"

@@ -1,3 +1,4 @@
+import json
 from datetime import date as date_type
 from logging import getLogger
 from typing import Any, Dict, List, LiteralString, Optional, cast
@@ -29,6 +30,15 @@ _DATE_FORMATS = [
     # US slash          06/01/2024  (tried last to prefer DD/MM)
     "MM/DD/YYYY",
 ]
+
+
+_JSON_PREFIX = "__json__:"
+
+
+def _maybe_decode_json(value: Any) -> Any:
+    if isinstance(value, str) and value.startswith(_JSON_PREFIX):
+        return json.loads(value[len(_JSON_PREFIX):])
+    return value
 
 
 def _to_iso_date(value: Any) -> str | Any:
@@ -78,7 +88,14 @@ class Neo4jPgJsonMixin:
         for k, v in props.items():
             new_key = k.strip().replace(" ", "_").replace(":", "__")
             if isinstance(v, list):
-                cleaned[new_key] = v if len(v) > 0 else None
+                if len(v) == 0:
+                    cleaned[new_key] = None
+                elif any(isinstance(i, dict) for i in v):
+                    cleaned[new_key] = _JSON_PREFIX + json.dumps(v)
+                else:
+                    cleaned[new_key] = v
+            elif isinstance(v, dict):
+                cleaned[new_key] = _JSON_PREFIX + json.dumps(v)
             elif new_key in _DATE_PROPS:
                 cleaned[new_key] = _to_iso_date(v)
             else:
@@ -187,7 +204,7 @@ class Neo4jPgJsonMixin:
             A PG-JSON node dict with keys ``id``, ``labels``, ``properties``.
         """
         properties = {
-            k.replace("__", ":"): v
+            k.replace("__", ":"): _maybe_decode_json(v)
             for k, v in dict(neo4j_node).items()
             if v is not None and k != "id" and k not in ignore_props
         }
@@ -216,7 +233,7 @@ class Neo4jPgJsonMixin:
         """
         label = neo4j_rel.type.replace("___", "/")
         properties = {
-            k.replace("__", ":"): v
+            k.replace("__", ":"): _maybe_decode_json(v)
             for k, v in dict(neo4j_rel).items()
             if v is not None
         }
