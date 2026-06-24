@@ -168,7 +168,7 @@ def require_permission(
             case IdType.Dataset:
                 if not path_id and action != DatasetRole.CREATE:
                     raise ValueError("Dataset ID not found in path parameters")
-                dataset_ids = [path_id]
+                dataset_ids = [path_id] if path_id else []
 
             # For APs, resolve parent datasets via the AP's input edges.
             # Returns 404 to prevent enumeration of inaccessible APs.
