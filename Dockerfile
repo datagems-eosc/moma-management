@@ -32,4 +32,4 @@ FROM builder AS prod
 
 RUN uv sync --frozen
 
-CMD [ "uv", "run", "python", "moma_management/main.py" ]
+CMD [ "uv", "run", "opentelemetry-instrument", "python", "moma_management/main.py" ]

@@ -249,8 +249,23 @@ Configuration is managed entirely through environment variables:
 | `EMBEDDER_MODEL`          | no       | `all-MiniLM-L6-v2`                  | Sentence-transformers model for AP semantic search (set empty to disable) |
 | `APP_PORT`                | no       | `5000`                               | TCP port the Uvicorn server listens on                                    |
 | `APP_CONCURRENCY`         | no       | `1`                                  | Number of Uvicorn worker processes                                        |
+| `OTEL_SERVICE_NAME`       | no       | `moma-management`                    | Service name reported to the OTel backend                                |
+| `OTEL_TRACES_EXPORTER`    | no       | `none`                               | Trace exporter; set to `otlp` to enable tracing once a collector endpoint is available |
+| `OTEL_METRICS_EXPORTER`   | no       | `none`                               | Metrics export is disabled — unreliable across multiple Uvicorn workers  |
+| `OTEL_LOGS_EXPORTER`      | no       | `none`                               | Log export is disabled — the app already ships structured JSON logs to stdout |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | no   | *(empty)*                            | OTLP collector endpoint (`host:port`); if unset, traces are dropped/logged as export errors — set by the deployment environment |
 
 *¹ These three variables must be set together to enable token exchange. Required only if using token exchange for the permissions gateway.*
+
+## Observability
+
+Traces are enabled via OpenTelemetry's zero-code auto-instrumentation, which wraps the production entrypoint (`opentelemetry-instrument python moma_management/main.py`, see the `prod` stage of the `Dockerfile`). The app's Uvicorn worker processes are started via Python's `multiprocessing` `spawn` start method (not `os.fork()`), so each worker is a fresh interpreter that independently re-triggers auto-instrumentation on startup — this sidesteps the [pre-fork server issues](https://opentelemetry.io/docs/zero-code/python/troubleshooting/#pre-fork-server-issues) that affect classic `os.fork()`-based servers like gunicorn, and matches OpenTelemetry's own documented compatibility table for plain multi-worker Uvicorn (traces and logs are reliable; metrics are not).
+
+Tracing is opt-in: `OTEL_TRACES_EXPORTER=none` by default, since exporting to an unreachable/unconfigured collector produces periodic connection-error log noise without breaking anything (the exporter runs on a background thread and never blocks request handling). Set `OTEL_TRACES_EXPORTER=otlp` and `OTEL_EXPORTER_OTLP_ENDPOINT` once a collector is available. Metrics and logs export stay explicitly disabled even then (`OTEL_METRICS_EXPORTER=none`, `OTEL_LOGS_EXPORTER=none`) — metrics because OpenTelemetry's `PeriodicExportingMetricReader` background thread is not reliable across multiple worker processes, and logs because the app already ships structured JSON logs to stdout via `structlog` (see `moma_management/logger.py`), and enabling OTel's log exporter would stand up a redundant second pipeline.
+
+Known gap: the Neo4j async driver has no official/community OpenTelemetry instrumentor, so spans cover FastAPI/ASGI request handling and outbound `requests` calls (e.g. permissions gateway, OIDC token exchange) but not individual Neo4j queries.
+
+Note: when `PROFILING=true`, the profiling middleware replaces the normal response body with an HTML profiling report — the resulting trace span will reflect that HTML response rather than the real API response, so it's not meant to be combined with production trace sampling.
 
 ## API Endpoints
 

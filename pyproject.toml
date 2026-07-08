@@ -29,6 +29,10 @@ dependencies = [
     "sentence-transformers>=3.0.0",
     "uvicorn[standard]>=0.41.0",
     "torch>=2.10.0",
+    "opentelemetry-distro==0.64b0",
+    "opentelemetry-exporter-otlp==1.43.0",
+    "opentelemetry-instrumentation-fastapi==0.64b0",
+    "opentelemetry-instrumentation-requests==0.64b0",
 ]
 
 [dependency-groups]
