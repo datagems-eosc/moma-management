@@ -177,7 +177,7 @@ async def test_ingest_repo_error_propagates(mapping_file: Path):
     """A repository failure during ingest must propagate out of the service."""
     repo = AsyncMock()
     repo.create.side_effect = RuntimeError("Neo4j is down")
-    svc = DatasetService(repo=repo, mapping_file=mapping_file)
+    svc = DatasetService(repo=repo, mapping_file=mapping_file, relationship_repo=AsyncMock())
     light_profile = next(
         (Path(__file__).parent.parent.parent / "assets" /
          "profiles" / "light").glob("*.json")

@@ -7,11 +7,15 @@ from .delete import delete_dataset
 from .get import get_dataset
 from .ingest import ingest_profile
 from .list import list_datasets
+from .relationships.list_by_dataset import list_relationships_for_dataset
+from .relationships.routes import router as relationship_routes
 from .validate import validate_dataset
 
 router = APIRouter(
     tags=["datasets"],
 )
+
+router.include_router(relationship_routes, prefix="/relationships")
 
 # CRUD
 router.add_api_route(
@@ -69,6 +73,18 @@ router.add_api_route(
     summary="Delete a dataset by ID",
     responses={
         204: {"description": "Dataset deleted successfully"},
+        401: {"description": "Unauthorized"},
+        403: {"description": "Forbidden"},
+        404: {"description": "Dataset not found"},
+        500: {"description": "Internal server error"},
+    },
+)
+router.add_api_route(
+    "/{id}/relationships",
+    list_relationships_for_dataset,
+    methods=["GET"],
+    summary="List all DatasetRelationships targeting a dataset",
+    responses={
         401: {"description": "Unauthorized"},
         403: {"description": "Forbidden"},
         404: {"description": "Dataset not found"},

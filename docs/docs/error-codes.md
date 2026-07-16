@@ -13,7 +13,7 @@ The MoMa Management API uses standard HTTP status codes to communicate the outco
 | `401 Unauthorized` | Authentication failure | Missing, expired, or invalid Bearer token |
 | `403 Forbidden` | Authorization failure | Token is valid but the caller lacks the required permission |
 | `404 Not Found` | Resource not found | Dataset, AP, task, or node with the given ID does not exist |
-| `409 Conflict` | Resource conflict | Dataset cannot be deleted because it is referenced by an AP |
+| `409 Conflict` | Resource conflict | Dataset cannot be deleted because it is referenced by an AP; or a Dataset Relationship already exists for the given dataset pair |
 | `422 Unprocessable Entity` | Validation error | FastAPI request model validation failed (e.g. wrong query parameter type) |
 | `500 Internal Server Error` | Server error | Unexpected error during processing |
 | `502 Bad Gateway` | Upstream error | Permissions gateway returned an unexpected error or was unreachable |

@@ -7,6 +7,9 @@ from neo4j import AsyncGraphDatabase
 from testcontainers.neo4j import Neo4jContainer
 
 from moma_management.repository.dataset import Neo4jDatasetRepository
+from moma_management.repository.dataset_relationship import (
+    Neo4jDatasetRelationshipRepository,
+)
 from moma_management.repository.node import Neo4jNodeRepository
 from moma_management.services.dataset import DatasetService
 from tests.utils import (
@@ -216,10 +219,25 @@ async def populated_repository(
     await driver.close()
 
 
+@pytest_asyncio.fixture(scope="module")
+async def dataset_relationship_repository(neo4j_container_module: Neo4jContainer) -> AsyncGenerator[Neo4jDatasetRelationshipRepository, None]:
+    """Provide a Neo4jDatasetRelationshipRepository backed by a module-scoped Neo4j container."""
+    uri = neo4j_container_module.get_connection_url()
+    auth = (neo4j_container_module.username, neo4j_container_module.password)
+    driver = AsyncGraphDatabase.driver(uri, auth=auth)
+    async with driver.session() as session:
+        yield Neo4jDatasetRelationshipRepository(session)
+    await driver.close()
+
+
 @pytest_asyncio.fixture
-async def dataset_service(dataset_repository: Neo4jDatasetRepository, mapping_file: Path) -> DatasetService:
+async def dataset_service(
+    dataset_repository: Neo4jDatasetRepository,
+    mapping_file: Path,
+    dataset_relationship_repository: Neo4jDatasetRelationshipRepository,
+) -> DatasetService:
     """Provide a DatasetService with a Neo4jDatasetRepository and mapping file."""
-    return DatasetService(dataset_repository, mapping_file)
+    return DatasetService(dataset_repository, mapping_file, dataset_relationship_repository)
 
 
 @pytest_asyncio.fixture(scope="class")

@@ -25,7 +25,10 @@
                 "is_measured_by",
                 "fitted_on",
                 "trained_on",
-                "VIRTUAL_BELONGS_TO"
+                "VIRTUAL_BELONGS_TO",
+                "HAS_COMPARISON",
+                "HAS_EVIDENCE",
+                "HAS_TARGET"
             ]
         }
     },
@@ -61,6 +64,22 @@
                     "additionalProperties": {
                         "type": "string"
                     }
+                },
+                "weight": {
+                    "type": ["number", "null"],
+                    "description": "HAS_COMPARISON: weight of this PropertyComparison in the BasicDLElement's similarity computation"
+                },
+                "rank": {
+                    "type": ["integer", "null"],
+                    "description": "HAS_EVIDENCE: importance ranking of this TextEvidence within its PropertyComparison"
+                },
+                "chunk": {
+                    "type": ["string", "null"],
+                    "description": "HAS_TARGET: the specific chunk of text/value looked into the target dataset"
+                },
+                "similarityScore": {
+                    "type": ["number", "null"],
+                    "description": "HAS_TARGET (on PropertyComparison/TextEvidence edges): similarity value computed against this specific target dataset"
                 }
             },
             "propertyNames": {

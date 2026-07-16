@@ -576,6 +576,60 @@
                     }
                 }
             }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "BasicDLElement"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset_relationship/basicDLElement.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "PropertyComparison"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset_relationship/propertyComparison.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "TextEvidence"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset_relationship/textEvidence.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
         }
     ],
     "$id": "nodes/node.schema.json"

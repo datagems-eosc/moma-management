@@ -1,0 +1,26 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "nodes/dataset_relationship/basicDLElement.schema.json",
+    "title": "BasicDLElement",
+    "description": "Root node of a Dataset Relationship: links exactly two sc:Dataset nodes that were found similar by an external dataset-linking pipeline.",
+    "$defs": {
+        "pgProperties": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Date the dataset linking element was produced"
+                },
+                "similarityScore": {
+                    "type": "number",
+                    "description": "Similarity value computed between the two datasets"
+                },
+                "usesMetrics": {
+                    "type": "string",
+                    "description": "Metric used to compute the similarity score"
+                }
+            }
+        }
+    }
+}

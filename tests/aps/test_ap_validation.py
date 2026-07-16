@@ -826,7 +826,7 @@ class TestDatasetServiceValidate:
 
         mapping_file = Path(__file__).resolve(
         ).parent.parent.parent / "moma_management" / "domain" / "mapping.yml"
-        svc = DatasetService(MagicMock(), mapping_file)
+        svc = DatasetService(MagicMock(), mapping_file, MagicMock())
         errors = svc.validate(_make_valid_dataset())
         assert errors == []
 
@@ -838,6 +838,6 @@ class TestDatasetServiceValidate:
 
         mapping_file = Path(__file__).resolve(
         ).parent.parent.parent / "moma_management" / "domain" / "mapping.yml"
-        svc = DatasetService(MagicMock(), mapping_file)
+        svc = DatasetService(MagicMock(), mapping_file, MagicMock())
         errors = svc.validate({"nodes": []})
         assert len(errors) >= 1

@@ -20,6 +20,7 @@ from moma_management.services.authorization import (
     UserError,
 )
 from moma_management.services.dataset import DatasetService
+from moma_management.services.dataset_relationship import DatasetRelationshipService
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,7 @@ class IdType(str, Enum):
     Dataset = "Dataset"
     Node = "Node"
     AP = "AP"
+    Relationship = "Relationship"
 
 
 def require_permission(
@@ -110,12 +112,17 @@ def require_permission(
     root node ID.  The parent dataset(s) are resolved via the AP's ``input``
     edges, and the caller must hold *action* on at least one of them.
 
+    ``id_type=IdType.Relationship``: the ``id`` path parameter is a
+    DatasetRelationship root node ID.  The two datasets it links are
+    resolved via its ``HAS_TARGET`` edges.
+
     ``require_all``: when ``True``, the caller must hold *action* on **all**
     resolved datasets, not just one.
     """
     from moma_management.di import (
         get_ap_service,
         get_authorization_service,
+        get_dataset_relationship_service,
         get_dataset_service,
     )
 
@@ -129,6 +136,8 @@ def require_permission(
         ),
         dataset_svc: DatasetService = Depends(get_dataset_service),
         ap_svc: AnalyticalPatternService = Depends(get_ap_service),
+        relationship_svc: DatasetRelationshipService = Depends(
+            get_dataset_relationship_service),
     ) -> dict | None:
 
         # Auth disabled -> Skip
@@ -196,6 +205,12 @@ def require_permission(
                         status_code=404,
                         detail=f"AnalyticalPattern '{path_id}' not found.",
                     )
+
+            # For Relationships, resolve the two linked datasets via the
+            # relationship's HAS_TARGET edges. NotFoundError -> 404 via app handler.
+            case IdType.Relationship:
+                relationship_result = await relationship_svc.get(path_id)
+                dataset_ids = list(relationship_result.target_dataset_ids)
 
             case _:
                 raise ValueError("Wrong auth type")

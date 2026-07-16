@@ -17,10 +17,11 @@ logger = getLogger(__name__)
 class Neo4jDatasetRepository(Neo4jPgJsonMixin):
     """Neo4j-backed implementation of DatasetRepository."""
 
-    # These edges links datasets to models or APs so must be excluded when maniulating datasets in isolation
+    # These edges links datasets to models, APs, or DatasetRelationships so must
+    # be excluded when maniulating datasets in isolation
     FORBIDDEN_EDGES: list[str] = ["fitted_on", "input",
                                   "output", "perform_inference", "trained_on",
-                                  "VIRTUAL_BELONGS_TO"]
+                                  "VIRTUAL_BELONGS_TO", "HAS_TARGET"]
 
     _INDEX_STATEMENTS: list[str] = [
         "CREATE CONSTRAINT dataset_id_unique IF NOT EXISTS "
@@ -50,7 +51,7 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             # Uses MERGE so it is idempotent and safe to re-run.
             backfill_edges = [
                 "fitted_on", "input", "output",
-                "perform_inference", "trained_on",
+                "perform_inference", "trained_on", "HAS_TARGET",
             ]
             await session.run(
                 """//cypher

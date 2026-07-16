@@ -12,6 +12,7 @@ from pydantic import ValidationError
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.dataset import Dataset
+from moma_management.domain.dataset_relationship import DatasetRelationship
 from moma_management.domain.generated.edges.edge_schema import Edge
 from moma_management.domain.generated.nodes.node_schema import Node
 
@@ -349,3 +350,153 @@ def test_dataset_rejects_interval_statistics_wrong_target():
     with pytest.raises(ValidationError, match="Edges violate graph constraints"):
         _make_dataset_with_interval_stats(
             "intervalStatistics", ["Column"], ["Operator"])
+
+
+# ---------------------------------------------------------------------------
+# DatasetRelationship — helpers
+# ---------------------------------------------------------------------------
+
+def _make_relationship(edge_label: str, from_labels: list[str], to_labels: list[str]) -> DatasetRelationship:
+    """Build a minimal two-node/one-edge DatasetRelationship for edge-constraint tests.
+
+    Not a structurally complete relationship (it does not necessarily target
+    two datasets) — only used for cases where an edge-constraint violation
+    is expected to be raised before the "exactly two datasets" check runs.
+    """
+    root_id = str(uuid4())
+    child_id = str(uuid4())
+    return DatasetRelationship(
+        nodes=[
+            Node(id=root_id, labels=["BasicDLElement"], properties={}),
+            Node(id=child_id, labels=to_labels, properties={}),
+        ],
+        edges=[
+            Edge(**{"from": root_id, "to": child_id, "labels": [edge_label]}),
+        ],
+    )
+
+
+def _make_valid_relationship_base() -> tuple[DatasetRelationship, str, str, str, str]:
+    """Build a minimal *valid* DatasetRelationship: root -HAS_TARGET-> two datasets.
+
+    Returns (relationship, root_id, dataset_id_a, dataset_id_b).
+    """
+    root_id = str(uuid4())
+    ds_a = str(uuid4())
+    ds_b = str(uuid4())
+    rel = DatasetRelationship(
+        nodes=[
+            Node(id=root_id, labels=["BasicDLElement"], properties={}),
+            Node(id=ds_a, labels=["sc:Dataset"], properties={}),
+            Node(id=ds_b, labels=["sc:Dataset"], properties={}),
+        ],
+        edges=[
+            Edge(**{"from": root_id, "to": ds_a, "labels": ["HAS_TARGET"]}),
+            Edge(**{"from": root_id, "to": ds_b, "labels": ["HAS_TARGET"]}),
+        ],
+    )
+    return rel, root_id, ds_a, ds_b
+
+
+# ---------------------------------------------------------------------------
+# DatasetRelationship — valid edges
+# ---------------------------------------------------------------------------
+
+def test_relationship_valid_has_target_from_root():
+    """BasicDLElement --HAS_TARGET--> sc:Dataset (x2) is a permitted, complete relationship."""
+    rel, *_ = _make_valid_relationship_base()
+    assert rel is not None
+
+
+def test_relationship_valid_has_comparison_edge():
+    """BasicDLElement --HAS_COMPARISON--> PropertyComparison is a permitted edge."""
+    base, root_id, ds_a, ds_b = _make_valid_relationship_base()
+    pc_id = str(uuid4())
+    rel = DatasetRelationship(
+        nodes=base.nodes + [Node(id=pc_id, labels=["PropertyComparison"], properties={})],
+        edges=base.edges + [Edge(**{"from": root_id, "to": pc_id, "labels": ["HAS_COMPARISON"]})],
+    )
+    assert rel is not None
+
+
+def test_relationship_valid_has_evidence_edge():
+    """PropertyComparison --HAS_EVIDENCE--> TextEvidence is a permitted edge."""
+    base, root_id, ds_a, ds_b = _make_valid_relationship_base()
+    pc_id = str(uuid4())
+    te_id = str(uuid4())
+    rel = DatasetRelationship(
+        nodes=base.nodes + [
+            Node(id=pc_id, labels=["PropertyComparison"], properties={}),
+            Node(id=te_id, labels=["TextEvidence"], properties={}),
+        ],
+        edges=base.edges + [
+            Edge(**{"from": root_id, "to": pc_id, "labels": ["HAS_COMPARISON"]}),
+            Edge(**{"from": pc_id, "to": te_id, "labels": ["HAS_EVIDENCE"]}),
+        ],
+    )
+    assert rel is not None
+
+
+def test_relationship_valid_has_target_from_property_comparison():
+    """PropertyComparison --HAS_TARGET--> sc:Dataset is a permitted edge."""
+    base, root_id, ds_a, ds_b = _make_valid_relationship_base()
+    pc_id = str(uuid4())
+    rel = DatasetRelationship(
+        nodes=base.nodes + [Node(id=pc_id, labels=["PropertyComparison"], properties={})],
+        edges=base.edges + [
+            Edge(**{"from": root_id, "to": pc_id, "labels": ["HAS_COMPARISON"]}),
+            Edge(**{"from": pc_id, "to": ds_a, "labels": ["HAS_TARGET"]}),
+        ],
+    )
+    assert rel is not None
+
+
+def test_relationship_valid_has_target_from_text_evidence():
+    """TextEvidence --HAS_TARGET--> sc:Dataset is a permitted edge."""
+    base, root_id, ds_a, ds_b = _make_valid_relationship_base()
+    pc_id = str(uuid4())
+    te_id = str(uuid4())
+    rel = DatasetRelationship(
+        nodes=base.nodes + [
+            Node(id=pc_id, labels=["PropertyComparison"], properties={}),
+            Node(id=te_id, labels=["TextEvidence"], properties={}),
+        ],
+        edges=base.edges + [
+            Edge(**{"from": root_id, "to": pc_id, "labels": ["HAS_COMPARISON"]}),
+            Edge(**{"from": pc_id, "to": te_id, "labels": ["HAS_EVIDENCE"]}),
+            Edge(**{"from": te_id, "to": ds_b, "labels": ["HAS_TARGET"]}),
+        ],
+    )
+    assert rel is not None
+
+
+# ---------------------------------------------------------------------------
+# DatasetRelationship — invalid edges
+# ---------------------------------------------------------------------------
+
+def test_relationship_rejects_ap_edge_label():
+    """An AP-specific edge label (consist_of) must be rejected inside a DatasetRelationship."""
+    with pytest.raises(ValidationError, match="Edges violate graph constraints"):
+        _make_relationship("consist_of", ["BasicDLElement"], ["Operator"])
+
+
+def test_relationship_rejects_unknown_edge_label():
+    """A completely unknown edge label must be rejected.
+
+    Since EdgeLabel is an enum, Pydantic rejects unrecognised values at
+    model-construction time (before domain constraint validation runs).
+    """
+    with pytest.raises(ValidationError):
+        _make_relationship("unknown_edge", ["BasicDLElement"], ["PropertyComparison"])
+
+
+def test_relationship_rejects_has_comparison_to_wrong_target():
+    """HAS_COMPARISON from BasicDLElement to TextEvidence (not PropertyComparison) must be rejected."""
+    with pytest.raises(ValidationError, match="Edges violate graph constraints"):
+        _make_relationship("HAS_COMPARISON", ["BasicDLElement"], ["TextEvidence"])
+
+
+def test_relationship_rejects_has_target_to_wrong_target():
+    """HAS_TARGET from BasicDLElement to Operator (not sc:Dataset) must be rejected."""
+    with pytest.raises(ValidationError, match="Edges violate graph constraints"):
+        _make_relationship("HAS_TARGET", ["BasicDLElement"], ["Operator"])

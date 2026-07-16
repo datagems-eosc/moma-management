@@ -16,6 +16,9 @@ from moma_management.domain.filters import DatasetFilter
 from moma_management.domain.mapping_engine import croissant_to_pgjson
 from moma_management.domain.validation.schema_error import SchemaError
 from moma_management.repository.dataset.dataset_repository import DatasetRepository
+from moma_management.repository.dataset_relationship.dataset_relationship_repository import (
+    DatasetRelationshipRepository,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +28,17 @@ class DatasetService:
     _repo: DatasetRepository
     _mapping_file: Path
 
-    def __init__(self, repo: DatasetRepository, mapping_file: Path):
+    def __init__(
+        self,
+        repo: DatasetRepository,
+        mapping_file: Path,
+        relationship_repo: DatasetRelationshipRepository,
+    ):
         self._repo = repo
         assert mapping_file.exists(
         ), f"Mapping file not found at {mapping_file}"
         self._mapping_file = mapping_file
+        self._relationship_repo = relationship_repo
 
     async def create(self, candidate: Dataset) -> Dataset:
         """
@@ -129,6 +138,9 @@ class DatasetService:
         """
         Delete a dataset and its connected subgraph by dataset ID.
 
+        Any DatasetRelationship targeting this dataset is deleted first
+        (relationships are weak references — see DatasetRelationshipService).
+
         Raises:
             NotFoundError: if no dataset with *id* exists.
             ConflictError: if at least one AnalyticalPattern references this dataset.
@@ -138,6 +150,7 @@ class DatasetService:
                 f"Dataset '{id}' cannot be deleted: it is referenced by at "
                 f"least one AnalyticalPattern."
             )
+        await self._relationship_repo.delete_referencing(id)
         rows = await self._repo.delete(id)
         if rows == 0:
             raise NotFoundError(f"Dataset '{id}' not found.")

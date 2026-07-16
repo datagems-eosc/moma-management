@@ -1,0 +1,17 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "nodes/dataset_relationship/textEvidence.schema.json",
+    "title": "TextEvidence",
+    "description": "Details a specific part of a compared property (e.g. a matching chunk of text) backing a PropertyComparison.",
+    "$defs": {
+        "pgProperties": {
+            "type": "object",
+            "properties": {
+                "similarityScore": {
+                    "type": "number",
+                    "description": "Similarity value computed between the concerned datasets"
+                }
+            }
+        }
+    }
+}

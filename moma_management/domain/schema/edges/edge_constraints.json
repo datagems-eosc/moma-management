@@ -184,5 +184,35 @@
         "label": "is_measured_by",
         "toLabel": "Evaluation",
         "description": "Analytical Pattern is measured by an Evaluation"
+    },
+    {
+        "fromLabel": "BasicDLElement",
+        "label": "HAS_COMPARISON",
+        "toLabel": "PropertyComparison",
+        "description": "Dataset Relationship root -> a PropertyComparison detailing how the similarity was computed"
+    },
+    {
+        "fromLabel": "PropertyComparison",
+        "label": "HAS_EVIDENCE",
+        "toLabel": "TextEvidence",
+        "description": "PropertyComparison -> TextEvidence detailing the comparison"
+    },
+    {
+        "fromLabel": "BasicDLElement",
+        "label": "HAS_TARGET",
+        "toLabel": "sc:Dataset",
+        "description": "Dataset Relationship root -> one of the two datasets it links"
+    },
+    {
+        "fromLabel": "PropertyComparison",
+        "label": "HAS_TARGET",
+        "toLabel": "sc:Dataset",
+        "description": "PropertyComparison -> the dataset it was computed against"
+    },
+    {
+        "fromLabel": "TextEvidence",
+        "label": "HAS_TARGET",
+        "toLabel": "sc:Dataset",
+        "description": "TextEvidence -> the dataset it was extracted from"
     }
 ]

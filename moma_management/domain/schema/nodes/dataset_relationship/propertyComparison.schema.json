@@ -1,0 +1,32 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "nodes/dataset_relationship/propertyComparison.schema.json",
+    "title": "PropertyComparison",
+    "description": "Compares one specific property (e.g. keywords, description) between the two datasets of a Dataset Relationship.",
+    "$defs": {
+        "pgProperties": {
+            "type": "object",
+            "properties": {
+                "targetProperty": {
+                    "type": "string",
+                    "description": "Which part of the datasets is compared (e.g. keywords, description)"
+                },
+                "similarityScore": {
+                    "type": "number",
+                    "description": "Similarity value computed between the concerned datasets"
+                },
+                "usesMetrics": {
+                    "type": "string",
+                    "description": "Metric used to compute the similarity score"
+                },
+                "relevantWords": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Highlight of specific values (e.g. common keywords between datasets)"
+                }
+            }
+        }
+    }
+}

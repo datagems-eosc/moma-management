@@ -50,6 +50,7 @@ The service follows a layered architecture:
 All routes are mounted under the `/v1` prefix via a single router. Four resource groups are exposed:
 
 - **Datasets** – CRUD on dataset subgraphs, Croissant ingestion/conversion, and schema validation.
+- **Dataset Relationships** – nested under `/datasets`; records that two datasets were found similar by an external comparison pipeline. Admin-only create/delete, `BROWSE`-on-both-datasets read, one relationship per dataset pair, cascades on dataset deletion.
 - **Analytical Patterns** – CRUD on AP subgraphs with natural-language semantic search.
 - **Tasks** – Task node creation and AP lookup by task.
 - **Nodes** – Retrieval and partial update of individual graph nodes.
@@ -60,7 +61,8 @@ Authentication and authorization are enforced as FastAPI dependencies injected i
 
 ### Services layer (`moma_management/services/`)
 
-- **`DatasetService`** – Orchestrates the conversion of Croissant profiles to PG-JSON, schema validation, and delegates persistence to the repository.
+- **`DatasetService`** – Orchestrates the conversion of Croissant profiles to PG-JSON, schema validation, and delegates persistence to the repository. On delete, first cascades removal of any `DatasetRelationship` targeting the dataset.
+- **`DatasetRelationshipService`** – CRUD for Dataset Relationships: validates both target datasets exist, enforces one relationship per dataset pair (`ConflictError` on duplicates).
 - **`AnalyticalPatternService`** – AP CRUD, input-dataset validation, and semantic search (via an embedder).
 - **`TaskService`** – Task creation and AP-id lookup.
 - **`NodeService`** – Retrieves and patches individual Neo4j nodes.
@@ -73,14 +75,14 @@ Authentication and authorization are enforced as FastAPI dependencies injected i
 
 - **`MappingEngine`** – Reads `mapping.yml` and transforms Croissant field values into the PG-JSON node/edge structure expected by the MoMa schema.
 - **`PgJsonGraph`** – Base Pydantic model for validated PG-JSON graphs, providing edge-constraint enforcement, DFS connectivity checks, and canonical equality.
-- **`Dataset`** / **`AnalyticalPattern`** – Concrete graph models with root-node and structural validation.
+- **`Dataset`** / **`AnalyticalPattern`** / **`DatasetRelationship`** – Concrete graph models with root-node and structural validation. `DatasetRelationship` additionally enforces that its root links exactly two datasets.
 - **`LocalSchemaValidator`** – Validates raw PG-JSON dicts against Draft 7 JSON schemas and returns AJV-style errors.
 - **`filters.py`** – Query filter and pagination models.
 - **`generated/`** – Pydantic v2 models auto-generated from the JSON Schema files in `schema/` via `make gen`.
 
 ### Repository layer (`moma_management/repository/`)
 
-Defines abstract interfaces (`DatasetRepository`, `AnalyticalPatternRepository`, `TaskRepository`, `NodeRepository`, `MlModelRepository`) with Neo4j-backed implementations. All graph I/O uses the official `neo4j` Python driver with PG-JSON serialization helpers provided by `Neo4jPGSONMixin`. The AP repository also manages a Neo4j vector index for semantic search.
+Defines abstract interfaces (`DatasetRepository`, `DatasetRelationshipRepository`, `AnalyticalPatternRepository`, `TaskRepository`, `NodeRepository`, `MlModelRepository`) with Neo4j-backed implementations. All graph I/O uses the official `neo4j` Python driver with PG-JSON serialization helpers provided by `Neo4jPGSONMixin`. The AP repository also manages a Neo4j vector index for semantic search. `DatasetRelationshipRepository` additionally exposes `find_id_for_dataset_pair` (uniqueness check) and `delete_referencing` (cascade delete on dataset removal); the dataset repository's own traversals exclude `HAS_TARGET` so a dataset's subgraph never includes relationship nodes.
 
 ## Authentication flow
 
@@ -202,6 +204,18 @@ graph LR
   MLModel["ML_Model"]:::ml
 
   Operator -- perform_inference --> MLModel
+
+  %% ── Dataset Relationship subgraph ──────────────────────
+  classDef relationship fill:#6D4C41,stroke:#4E342E,color:#fff
+  BasicDLElement:::relationship
+  PropertyComparison:::relationship
+  TextEvidence:::relationship
+
+  BasicDLElement -- HAS_TARGET --> Dataset
+  BasicDLElement -- HAS_COMPARISON --> PropertyComparison
+  PropertyComparison -- HAS_TARGET --> Dataset
+  PropertyComparison -- HAS_EVIDENCE --> TextEvidence
+  TextEvidence -- HAS_TARGET --> Dataset
 ```
 
 | Colour | Domain |
@@ -210,6 +224,9 @@ graph LR
 | 🟥 Red shades | Analytical Pattern & Operators |
 | 🟩 Green | ML Model |
 | ⬜ Grey | Task & User |
+| 🟤 Brown | Dataset Relationship (dataset linking) |
+
+A **Dataset Relationship** ("dataset linking") is a small subgraph produced by an external comparison pipeline — never authored directly by end users — recording that two datasets were found similar. Its root `BasicDLElement` links exactly two `sc:Dataset` nodes; optional `PropertyComparison` children break the similarity down by dataset property (keywords, description, …), each optionally backed by `TextEvidence`. It is treated as a **weak reference**: only admins may create or delete one, reading it requires `BROWSE` on both linked datasets, at most one relationship may exist per dataset pair, and deleting either dataset cascades to delete the relationship.
 
 ## External dependencies
 

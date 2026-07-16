@@ -17,12 +17,17 @@ from moma_management.repository.ml_model import (
     MlModelRepository,
     Neo4jMlModelRepository,
 )
+from moma_management.repository.dataset_relationship import (
+    DatasetRelationshipRepository,
+    Neo4jDatasetRelationshipRepository,
+)
 from moma_management.repository.node import Neo4jNodeRepository, NodeRepository
 from moma_management.repository.task import Neo4jTaskRepository, TaskRepository
 from moma_management.services.analytical_pattern import AnalyticalPatternService
 from moma_management.services.authentication import Authentication
 from moma_management.services.authorization import DatagemsAuthorizationService
 from moma_management.services.dataset import DatasetService
+from moma_management.services.dataset_relationship import DatasetRelationshipService
 from moma_management.services.embeddings import Embedder, LocalEmbedder
 from moma_management.services.ml_model import MlModelService
 from moma_management.services.node import NodeService
@@ -82,12 +87,26 @@ async def get_dataset_repo(session: AsyncSession = Depends(get_db_session)) -> D
     return await Neo4jDatasetRepository.create_with_indexes(session)
 
 
+async def get_dataset_relationship_repo(session: AsyncSession = Depends(get_db_session)) -> DatasetRelationshipRepository:
+    """Return the repository for DatasetRelationship graph operations."""
+    return await Neo4jDatasetRelationshipRepository.create_with_indexes(session)
+
+
 def get_dataset_service(
     repo: DatasetRepository = Depends(get_dataset_repo),
     mapping_file: Path = Depends(get_mapping_file),
+    relationship_repo: DatasetRelationshipRepository = Depends(get_dataset_relationship_repo),
 ) -> DatasetService:
     """Return the service for Dataset operations."""
-    return DatasetService(repo, mapping_file)
+    return DatasetService(repo, mapping_file, relationship_repo)
+
+
+def get_dataset_relationship_service(
+    repo: DatasetRelationshipRepository = Depends(get_dataset_relationship_repo),
+    dataset_svc: DatasetService = Depends(get_dataset_service),
+) -> DatasetRelationshipService:
+    """Return the service for DatasetRelationship operations."""
+    return DatasetRelationshipService(repo, dataset_svc)
 
 
 async def get_node_repo(session: AsyncSession = Depends(get_db_session)) -> NodeRepository:

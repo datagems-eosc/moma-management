@@ -164,7 +164,7 @@ class Neo4jPgJsonMixin:
             f"`{lbl.value.replace('/', '___')}`" for lbl in edge.labels
         )
         props = self._sanitize_properties(
-            edge.properties.model_dump(exclude_none=True)
+            edge.properties.model_dump(exclude_none=True, by_alias=True)
             if edge.properties is not None else {}
         )
 
