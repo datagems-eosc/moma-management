@@ -1,0 +1,254 @@
+{
+    "$schema": "../../moma_management/domain/schema/moma.schema.json",
+    "nodes": [
+        {
+            "id": "69c6e807-f476-46d4-a64b-45e50fdb51b1",
+            "labels": ["Analytical_Pattern"],
+            "properties": {
+                "name": "Adaptive MCQ Recommendation AP",
+                "description": "Personalized progression of 5 MCQ tests for a beginner student (proficiency ~0.2) on a given topic/subtopic: Aptitude -> Aptitude -> Gap -> Performance -> Aptitude. The operator sequence itself is fixed/deterministic; it was computed offline, once, by an LLM orchestrator that is not part of this graph (see 'orchestration' property). Storing only the resolved sequence lets the same proven path be replayed for any student in this proficiency band without re-invoking the LLM.",
+                "process": "recommend",
+                "publishedDate": "2026-07-17",
+                "orchestration": {
+                    "producedBy": "LLM Orchestrator (offline pre-processing step, not part of this AP graph)",
+                    "targetCohort": "beginner students, proficiency level ~0.2",
+                    "decisionTrace": [
+                        {"step": 1, "operator": "Aptitude_Learning"},
+                        {"step": 2, "operator": "Aptitude_Learning"},
+                        {"step": 3, "operator": "Gap_Learning"},
+                        {"step": 4, "operator": "Performance_Learning"},
+                        {"step": 5, "operator": "Aptitude_Learning"}
+                    ]
+                }
+            }
+        },
+        {
+            "id": "366d419d-1793-4fa7-97b4-ef407ad17e0d",
+            "labels": ["JSON", "Data", "cr:FileObject"],
+            "properties": {
+                "name": "Student Context",
+                "description": "Input context: which student, which topic/subtopic, and their starting proficiency estimate.",
+                "contentUrl": "",
+                "student_id": "",
+                "topic": "",
+                "proficiency_level": 0.2
+            }
+        },
+        {
+            "id": "53468819-79c5-4a3f-8ab2-691fe665ddd6",
+            "labels": ["Aptitude_Learning_Operator", "Operator"],
+            "properties": {
+                "name": "Aptitude Learning Operator (step 1)",
+                "description": "Selects MCQ items matching the student's current estimated proficiency level for the given topic/subtopic.",
+                "version": "1.0.0",
+                "command": "select_aptitude_questions",
+                "step": 1,
+                "inputs": [
+                    {"name": "student_id", "type": "number", "required": true, "default": ""},
+                    {"name": "topic", "type": "string", "required": true, "default": ""},
+                    {"name": "num_questions", "type": "number", "required": false, "default": 1},
+                    {"name": "excluded_question_ids", "type": "array", "required": false, "default": []}
+                ],
+                "outputs": [
+                    {"name": "questions_ids", "type": "array", "required": true, "default": []},
+                    {"name": "excluded_question_ids", "type": "array", "required": true, "default": []}
+                ]
+            }
+        },
+        {
+            "id": "fe229466-23a2-40e4-99d3-3852ffb20d52",
+            "labels": ["Aptitude_Learning_Operator", "Operator"],
+            "properties": {
+                "name": "Aptitude Learning Operator (step 2)",
+                "description": "Selects MCQ items matching the student's current estimated proficiency level for the given topic/subtopic.",
+                "version": "1.0.0",
+                "command": "select_aptitude_questions",
+                "step": 2,
+                "inputs": [
+                    {"name": "student_id", "type": "number", "required": true, "default": ""},
+                    {"name": "topic", "type": "string", "required": true, "default": ""},
+                    {"name": "num_questions", "type": "number", "required": false, "default": 1},
+                    {"name": "excluded_question_ids", "type": "array", "required": false, "default": []}
+                ],
+                "outputs": [
+                    {"name": "questions_ids", "type": "array", "required": true, "default": []},
+                    {"name": "excluded_question_ids", "type": "array", "required": true, "default": []}
+                ]
+            }
+        },
+        {
+            "id": "1f1e903c-5ddc-4458-9599-cff6fd6ddeee",
+            "labels": ["Gap_Learning_Operator", "Operator"],
+            "properties": {
+                "name": "Gap Learning Operator (step 3)",
+                "description": "Selects MCQ items from questions the student has previously answered incorrectly for the given topic/subtopic, reinforcing weak spots.",
+                "version": "1.0.0",
+                "command": "select_gap_questions",
+                "step": 3,
+                "inputs": [
+                    {"name": "student_id", "type": "number", "required": true, "default": ""},
+                    {"name": "topic", "type": "string", "required": true, "default": ""},
+                    {"name": "num_questions", "type": "number", "required": false, "default": 1},
+                    {"name": "excluded_question_ids", "type": "array", "required": false, "default": []}
+                ],
+                "outputs": [
+                    {"name": "questions_ids", "type": "array", "required": true, "default": []},
+                    {"name": "excluded_question_ids", "type": "array", "required": true, "default": []}
+                ]
+            }
+        },
+        {
+            "id": "c0e3a8b7-e3de-4789-b3b8-9fc9199b91a9",
+            "labels": ["Performance_Learning_Operator", "Operator"],
+            "properties": {
+                "name": "Performance Learning Operator (step 4)",
+                "description": "Selects MCQ items slightly harder than the student's current proficiency to push improvement.",
+                "version": "1.0.0",
+                "command": "select_performance_questions",
+                "step": 4,
+                "inputs": [
+                    {"name": "student_id", "type": "number", "required": true, "default": ""},
+                    {"name": "topic", "type": "string", "required": true, "default": ""},
+                    {"name": "num_questions", "type": "number", "required": false, "default": 1},
+                    {"name": "excluded_question_ids", "type": "array", "required": false, "default": []},
+                    {"name": "difficulty_offset", "type": "number", "required": false, "default": 0.15}
+                ],
+                "outputs": [
+                    {"name": "questions_ids", "type": "array", "required": true, "default": []},
+                    {"name": "excluded_question_ids", "type": "array", "required": true, "default": []}
+                ]
+            }
+        },
+        {
+            "id": "f33eff80-87fe-4772-858d-47509d67f8a0",
+            "labels": ["Aptitude_Learning_Operator", "Operator"],
+            "properties": {
+                "name": "Aptitude Learning Operator (step 5)",
+                "description": "Selects MCQ items matching the student's current estimated proficiency level for the given topic/subtopic.",
+                "version": "1.0.0",
+                "command": "select_aptitude_questions",
+                "step": 5,
+                "inputs": [
+                    {"name": "student_id", "type": "number", "required": true, "default": ""},
+                    {"name": "topic", "type": "string", "required": true, "default": ""},
+                    {"name": "num_questions", "type": "number", "required": false, "default": 1},
+                    {"name": "excluded_question_ids", "type": "array", "required": false, "default": []}
+                ],
+                "outputs": [
+                    {"name": "questions_ids", "type": "array", "required": true, "default": []},
+                    {"name": "excluded_question_ids", "type": "array", "required": true, "default": []}
+                ]
+            }
+        },
+        {
+            "id": "d1069a4c-7494-4b5b-8865-24d3bc5e0cd0",
+            "labels": ["ResultType", "array"],
+            "properties": {
+                "name": "excluded_after_1",
+                "schema": {"type": "array", "items": {"type": "number"}}
+            }
+        },
+        {
+            "id": "68b34ec6-7161-49b3-8b98-237fff039cc5",
+            "labels": ["ResultType", "array"],
+            "properties": {
+                "name": "excluded_after_2",
+                "schema": {"type": "array", "items": {"type": "number"}}
+            }
+        },
+        {
+            "id": "08f0263a-6269-49ca-98e8-b14b7f9433ad",
+            "labels": ["ResultType", "array"],
+            "properties": {
+                "name": "excluded_after_3",
+                "schema": {"type": "array", "items": {"type": "number"}}
+            }
+        },
+        {
+            "id": "120c9e1a-6cef-4546-a5eb-c03ea6e72007",
+            "labels": ["ResultType", "array"],
+            "properties": {
+                "name": "excluded_after_4",
+                "schema": {"type": "array", "items": {"type": "number"}}
+            }
+        },
+        {
+            "id": "56e546ec-c1a9-4de6-bc7f-ddfa64a29e65",
+            "labels": ["JSON", "Data", "cr:FileObject"],
+            "properties": {
+                "name": "Recommended MCQ Sequence",
+                "description": "Final ordered list of question ids recommended across all 5 steps of the sequence.",
+                "contentUrl": ""
+            }
+        }
+    ],
+    "edges": [
+        {"from": "69c6e807-f476-46d4-a64b-45e50fdb51b1", "to": "53468819-79c5-4a3f-8ab2-691fe665ddd6", "labels": ["consist_of"]},
+        {"from": "69c6e807-f476-46d4-a64b-45e50fdb51b1", "to": "fe229466-23a2-40e4-99d3-3852ffb20d52", "labels": ["consist_of"]},
+        {"from": "69c6e807-f476-46d4-a64b-45e50fdb51b1", "to": "1f1e903c-5ddc-4458-9599-cff6fd6ddeee", "labels": ["consist_of"]},
+        {"from": "69c6e807-f476-46d4-a64b-45e50fdb51b1", "to": "c0e3a8b7-e3de-4789-b3b8-9fc9199b91a9", "labels": ["consist_of"]},
+        {"from": "69c6e807-f476-46d4-a64b-45e50fdb51b1", "to": "f33eff80-87fe-4772-858d-47509d67f8a0", "labels": ["consist_of"]},
+
+        {"from": "366d419d-1793-4fa7-97b4-ef407ad17e0d", "to": "53468819-79c5-4a3f-8ab2-691fe665ddd6", "labels": ["input"]},
+
+        {"from": "53468819-79c5-4a3f-8ab2-691fe665ddd6", "to": "fe229466-23a2-40e4-99d3-3852ffb20d52", "labels": ["follows"]},
+        {"from": "fe229466-23a2-40e4-99d3-3852ffb20d52", "to": "1f1e903c-5ddc-4458-9599-cff6fd6ddeee", "labels": ["follows"]},
+        {"from": "1f1e903c-5ddc-4458-9599-cff6fd6ddeee", "to": "c0e3a8b7-e3de-4789-b3b8-9fc9199b91a9", "labels": ["follows"]},
+        {"from": "c0e3a8b7-e3de-4789-b3b8-9fc9199b91a9", "to": "f33eff80-87fe-4772-858d-47509d67f8a0", "labels": ["follows"]},
+
+        {
+            "from": "53468819-79c5-4a3f-8ab2-691fe665ddd6",
+            "to": "d1069a4c-7494-4b5b-8865-24d3bc5e0cd0",
+            "labels": ["output"],
+            "properties": {"mapping": {"to['excluded_after_1']": "from['outputs']['excluded_question_ids']"}}
+        },
+        {
+            "from": "d1069a4c-7494-4b5b-8865-24d3bc5e0cd0",
+            "to": "fe229466-23a2-40e4-99d3-3852ffb20d52",
+            "labels": ["input"],
+            "properties": {"mapping": {"to['inputs']['excluded_question_ids']": "from['excluded_after_1']"}}
+        },
+        {
+            "from": "fe229466-23a2-40e4-99d3-3852ffb20d52",
+            "to": "68b34ec6-7161-49b3-8b98-237fff039cc5",
+            "labels": ["output"],
+            "properties": {"mapping": {"to['excluded_after_2']": "from['outputs']['excluded_question_ids']"}}
+        },
+        {
+            "from": "68b34ec6-7161-49b3-8b98-237fff039cc5",
+            "to": "1f1e903c-5ddc-4458-9599-cff6fd6ddeee",
+            "labels": ["input"],
+            "properties": {"mapping": {"to['inputs']['excluded_question_ids']": "from['excluded_after_2']"}}
+        },
+        {
+            "from": "1f1e903c-5ddc-4458-9599-cff6fd6ddeee",
+            "to": "08f0263a-6269-49ca-98e8-b14b7f9433ad",
+            "labels": ["output"],
+            "properties": {"mapping": {"to['excluded_after_3']": "from['outputs']['excluded_question_ids']"}}
+        },
+        {
+            "from": "08f0263a-6269-49ca-98e8-b14b7f9433ad",
+            "to": "c0e3a8b7-e3de-4789-b3b8-9fc9199b91a9",
+            "labels": ["input"],
+            "properties": {"mapping": {"to['inputs']['excluded_question_ids']": "from['excluded_after_3']"}}
+        },
+        {
+            "from": "c0e3a8b7-e3de-4789-b3b8-9fc9199b91a9",
+            "to": "120c9e1a-6cef-4546-a5eb-c03ea6e72007",
+            "labels": ["output"],
+            "properties": {"mapping": {"to['excluded_after_4']": "from['outputs']['excluded_question_ids']"}}
+        },
+        {
+            "from": "120c9e1a-6cef-4546-a5eb-c03ea6e72007",
+            "to": "f33eff80-87fe-4772-858d-47509d67f8a0",
+            "labels": ["input"],
+            "properties": {"mapping": {"to['inputs']['excluded_question_ids']": "from['excluded_after_4']"}}
+        },
+
+        {"from": "53468819-79c5-4a3f-8ab2-691fe665ddd6", "to": "56e546ec-c1a9-4de6-bc7f-ddfa64a29e65", "labels": ["output"]},
+        {"from": "fe229466-23a2-40e4-99d3-3852ffb20d52", "to": "56e546ec-c1a9-4de6-bc7f-ddfa64a29e65", "labels": ["output"]},
+        {"from": "1f1e903c-5ddc-4458-9599-cff6fd6ddeee", "to": "56e546ec-c1a9-4de6-bc7f-ddfa64a29e65", "labels": ["output"]},
+        {"from": "c0e3a8b7-e3de-4789-b3b8-9fc9199b91a9", "to": "56e546ec-c1a9-4de6-bc7f-ddfa64a29e65", "labels": ["output"]},
+        {"from": "f33eff80-87fe-4772-858d-47509d67f8a0", "to": "56e546ec-c1a9-4de6-bc7f-ddfa64a29e65", "labels": ["output"]}
+    ]
+}

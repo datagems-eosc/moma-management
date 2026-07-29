@@ -1,0 +1,31 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: moma-management
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - name: Datagems Consortium
+    website: 'https://datagems.eu/'
+  - given-names: Lucas
+    family-names: Peirone
+    orcid: 'https://orcid.org/0009-0000-7142-0756'
+    affiliation: CNRS
+  - given-names: Georgia
+    family-names: Troullinou
+    orcid: 'https://orcid.org/0000-0001-8033-7372'
+    affiliation: Foundation for Research and Technology Hellas
+  - given-names: Bianca
+    family-names: Benelli
+    affiliation: University of Verona
+    orcid: 'https://orcid.org/0009-0001-1135-191X'
+  - given-names: Silviu
+    family-names: Maniu
+    orcid: 'https://orcid.org/0000-0002-8623-1533'
+    affiliation: CNRS
+repository-code: 'https://github.com/datagems-eosc/moma-management'
+abstract: MoMa system CRUD resources management
+license: MIT
