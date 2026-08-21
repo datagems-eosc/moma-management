@@ -217,6 +217,42 @@
                 "properties": {
                     "labels": {
                         "contains": {
+                            "const": "DataQuality"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/dataQuality.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "DataQualityError"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/dataQualityError.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
                             "const": "ColumnCSV"
                         }
                     }

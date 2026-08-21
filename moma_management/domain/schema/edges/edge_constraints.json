@@ -114,6 +114,18 @@
         "description": "Column → statistics computed over a specific time interval"
     },
     {
+        "fromLabel": "cr:RecordSet",
+        "label": "dataQuality",
+        "toLabel": "DataQuality",
+        "description": "RecordSet → its data quality detection result"
+    },
+    {
+        "fromLabel": "DataQuality",
+        "label": "error",
+        "toLabel": "DataQualityError",
+        "description": "DataQuality → an individual detected error"
+    },
+    {
         "fromLabel": "Analytical_Pattern",
         "label": "consist_of",
         "toLabel": "Operator",

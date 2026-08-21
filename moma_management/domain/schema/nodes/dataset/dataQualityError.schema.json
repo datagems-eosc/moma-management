@@ -1,0 +1,53 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "nodes/dataset/dataQualityError.schema.json",
+    "title": "DataQualityError",
+    "description": "An individual data quality error pattern detected within a column. Deliberately not linked to a Column node by edge: profiler-generated column names may not exactly match stored Column node names (e.g. LLM generation variations).",
+    "$defs": {
+        "pgProperties": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Vocabulary type annotation for the node (e.g. dg:DataQualityError)"
+                },
+                "column": {
+                    "type": "string",
+                    "description": "Column name as reported by the profiler (not an edge reference to a Column node)"
+                },
+                "errorType": {
+                    "type": "string",
+                    "enum": ["format_inconsistency", "value_error", "consistency_error"],
+                    "description": "Classification of the detected data quality issue"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Human-readable description of the error"
+                },
+                "totalAffectedRows": {
+                    "type": "integer",
+                    "description": "Number of rows affected by this error, counted across the entire table"
+                },
+                "errorExamples": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "value": {
+                                "type": ["string", "number", "boolean", "null"],
+                                "description": "The offending value"
+                            },
+                            "row": {
+                                "type": "integer",
+                                "description": "1-indexed row number where this example occurs"
+                            }
+                        }
+                    },
+                    "maxItems": 5,
+                    "description": "Up to 5 illustrative occurrences of this error, each with its value and 1-indexed row"
+                }
+            },
+            "unevaluatedProperties": true
+        }
+    }
+}

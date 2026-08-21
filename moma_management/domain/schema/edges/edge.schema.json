@@ -15,6 +15,8 @@
                 "source/fileSet",
                 "statistics",
                 "intervalStatistics",
+                "dataQuality",
+                "error",
                 "consist_of",
                 "input",
                 "output",

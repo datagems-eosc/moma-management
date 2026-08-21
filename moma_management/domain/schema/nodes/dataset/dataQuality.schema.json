@@ -1,0 +1,23 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "nodes/dataset/dataQuality.schema.json",
+    "title": "DataQuality",
+    "description": "Overall data quality detection result for a RecordSet, produced by an external profiler pipeline.",
+    "$defs": {
+        "pgProperties": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Vocabulary type annotation for the node (e.g. dg:DataQuality)"
+                },
+                "summary": {
+                    "type": "string",
+                    "description": "Summary of detected data quality issues, or 'No data quality errors were detected.' when none exist"
+                }
+            },
+            "required": ["type", "summary"],
+            "unevaluatedProperties": true
+        }
+    }
+}

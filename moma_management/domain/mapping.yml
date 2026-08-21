@@ -134,6 +134,7 @@ RecordSet:
 
   children:
     field: Field
+    dataQuality: DataQuality
 
   variants:
 
@@ -229,3 +230,41 @@ Statistics:
     - from: parent
       to: self
       label: statistics
+
+# Overall data quality detection result for a RecordSet, produced by an
+# external profiler pipeline. Optional: not every RecordSet has been profiled.
+DataQuality:
+  id: "@id"
+  labels: [ "DataQuality", "@type" ]
+
+  map:
+    type: "@type"
+    summary: summary
+
+  edges:
+    - from: parent
+      to: self
+      label: dataQuality
+
+  children:
+    errors: DataQualityError
+
+# An individual data quality error pattern detected within a column.
+# Deliberately not linked to a Column node by edge: profiler-generated
+# column names may not exactly match stored Column node names.
+DataQualityError:
+  id: "@id"
+  labels: [ "DataQualityError", "@type" ]
+
+  map:
+    type: "@type"
+    column: column
+    errorType: errorType
+    description: description
+    totalAffectedRows: totalAffectedRows
+    errorExamples: errorExamples
+
+  edges:
+    - from: parent
+      to: self
+      label: error
