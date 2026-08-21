@@ -43,7 +43,7 @@
         "source": "cr:source",
         "subField": "cr:subField",
         "transform": "cr:transform",
-        "access": "dg:access",
+        "semanticType": "dg:semanticType", "access": "dg:access",
         "uploadedBy": "dg:uploadedBy",
         "wd": "https://www.wikidata.org/wiki/"
     },
@@ -99,6 +99,7 @@
                     "name": "Student ID",
                     "description": "",
                     "dataType": "sc:Integer",
+                    "dg:semanticType": "identifier",
                     "source": {
                         "fileObject": {
                             "@id": "8472d05f-cd6f-4976-aa6d-5cebc63c4975"

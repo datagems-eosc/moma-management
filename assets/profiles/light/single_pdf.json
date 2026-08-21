@@ -44,7 +44,7 @@
         "source": "cr:source",
         "subField": "cr:subField",
         "transform": "cr:transform",
-        "access": "dg:access",
+        "semanticType": "dg:semanticType", "access": "dg:access",
         "uploadedBy": "dg:uploadedBy",
         "statistics": "dg:statistics",
         "doi": "dg:doi",
