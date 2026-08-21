@@ -353,6 +353,127 @@ def test_dataset_rejects_interval_statistics_wrong_target():
 
 
 # ---------------------------------------------------------------------------
+# Dataset — RecordSet → dataQuality → DataQuality → error → DataQualityError
+# ---------------------------------------------------------------------------
+
+_VALID_DATA_QUALITY_PROPS = {"type": "dg:DataQuality",
+                             "summary": "1 issue detected"}
+_VALID_DATA_QUALITY_ERROR_PROPS = {
+    "type": "dg:DataQualityError",
+    "column": "country",
+    "errorType": "value_error",
+    "description": "Negative or invalid values detected.",
+    "totalAffectedRows": 12,
+}
+
+
+def _make_dataset_with_data_quality(
+    edge_label: str,
+    from_labels: list[str],
+    to_labels: list[str],
+    to_properties: dict | None = None,
+) -> Dataset:
+    """Build a connected Dataset:
+      sc:Dataset -recordSet-> cr:RecordSet -(edge_label)-> to_labels
+    """
+    root_id = str(uuid4())
+    record_set_id = str(uuid4())
+    target_id = str(uuid4())
+    return Dataset(
+        nodes=[
+            Node(id=root_id, labels=["sc:Dataset"], properties={}),
+            Node(id=record_set_id, labels=from_labels, properties={}),
+            Node(id=target_id, labels=to_labels,
+                 properties=to_properties or {}),
+        ],
+        edges=[
+            Edge(**{"from": root_id, "to": record_set_id,
+                 "labels": ["recordSet"]}),
+            Edge(**{"from": record_set_id, "to": target_id,
+                 "labels": [edge_label]}),
+        ],
+    )
+
+
+def test_dataset_valid_recordset_data_quality_edge():
+    """cr:RecordSet --dataQuality--> DataQuality is a permitted edge."""
+    ds = _make_dataset_with_data_quality(
+        "dataQuality", ["cr:RecordSet"], ["DataQuality"],
+        to_properties=_VALID_DATA_QUALITY_PROPS)
+    assert ds is not None
+
+
+def test_dataset_valid_full_data_quality_chain():
+    """The full chain sc:Dataset -recordSet-> RecordSet -dataQuality->
+    DataQuality -error-> DataQualityError validates end to end."""
+    root_id = str(uuid4())
+    record_set_id = str(uuid4())
+    dq_id = str(uuid4())
+    dqe_id = str(uuid4())
+    ds = Dataset(
+        nodes=[
+            Node(id=root_id, labels=["sc:Dataset"], properties={}),
+            Node(id=record_set_id, labels=["cr:RecordSet"], properties={}),
+            Node(id=dq_id, labels=["DataQuality"],
+                 properties=_VALID_DATA_QUALITY_PROPS),
+            Node(id=dqe_id, labels=["DataQualityError"],
+                 properties=_VALID_DATA_QUALITY_ERROR_PROPS),
+        ],
+        edges=[
+            Edge(**{"from": root_id, "to": record_set_id,
+                 "labels": ["recordSet"]}),
+            Edge(**{"from": record_set_id, "to": dq_id,
+                 "labels": ["dataQuality"]}),
+            Edge(**{"from": dq_id, "to": dqe_id, "labels": ["error"]}),
+        ],
+    )
+    assert ds is not None
+
+
+def test_dataset_rejects_data_quality_wrong_source():
+    """sc:Dataset --dataQuality--> DataQuality must be rejected: only a RecordSet may carry a dataQuality edge."""
+    with pytest.raises(ValidationError, match="Edges violate graph constraints"):
+        _make_dataset("dataQuality", ["sc:Dataset"], ["DataQuality"])
+
+
+def test_dataset_rejects_data_quality_error_skipping_hop():
+    """cr:RecordSet --error--> DataQualityError must be rejected: DataQualityError only attaches under DataQuality, not directly under RecordSet."""
+    with pytest.raises(ValidationError, match="Edges violate graph constraints"):
+        _make_dataset_with_data_quality(
+            "error", ["cr:RecordSet"], ["DataQualityError"])
+
+
+def test_data_quality_error_rejects_unknown_error_type():
+    """A DataQualityError with an out-of-enum errorType must fail schema
+    validation, even when every other required property is present."""
+    root_id = str(uuid4())
+    record_set_id = str(uuid4())
+    dq_id = str(uuid4())
+    dqe_id = str(uuid4())
+    with pytest.raises(ValidationError):
+        Dataset(
+            nodes=[
+                Node(id=root_id, labels=["sc:Dataset"], properties={}),
+                Node(id=record_set_id, labels=[
+                     "cr:RecordSet"], properties={}),
+                Node(id=dq_id, labels=["DataQuality"],
+                     properties=_VALID_DATA_QUALITY_PROPS),
+                Node(id=dqe_id, labels=["DataQualityError"], properties={
+                    **_VALID_DATA_QUALITY_ERROR_PROPS,
+                    "errorType": "typo_error",
+                }),
+            ],
+            edges=[
+                Edge(**{"from": root_id, "to": record_set_id,
+                     "labels": ["recordSet"]}),
+                Edge(**{"from": record_set_id, "to": dq_id,
+                     "labels": ["dataQuality"]}),
+                Edge(**{"from": dq_id, "to": dqe_id, "labels": ["error"]}),
+            ],
+        )
+
+
+# ---------------------------------------------------------------------------
 # DatasetRelationship — helpers
 # ---------------------------------------------------------------------------
 
