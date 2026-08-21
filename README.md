@@ -24,6 +24,8 @@ The diagram below shows all MoMa node types and their relationships. Solid arrow
 | `Statistics` | Column statistics node |
 | `IntervalColumnStatistics` | Column statistics computed over a specific time window (streaming datasets) |
 | `cr:RecordSet` | Croissant record-set node |
+| `DataQuality` | Overall data quality detection result for a record set |
+| `DataQualityError` | An individual data quality error pattern detected within a column |
 | `Analytical_Pattern` | Root node of an Analytical Pattern subgraph |
 | `Operator` | Single processing step within an AP |
 | `ResultType` | Base typed value exchanged between Operators (transient or persistent) |
@@ -90,6 +92,8 @@ graph LR
   Statistics:::dataLeaf
   IntervalColumnStatistics["Interval Column Statistics"]:::dataLeaf
   RecordSet["cr:RecordSet"]:::record
+  DataQuality:::dataLeaf
+  DataQualityError["Data Quality Error"]:::dataLeaf
 
   Dataset -- distribution --> Data
   Dataset -- recordSet --> RecordSet
@@ -118,6 +122,8 @@ graph LR
   Column -- "source/fileObject" --> Data
   Column -- statistics --> Statistics
   Column -- intervalStatistics --> IntervalColumnStatistics
+  RecordSet -- dataQuality --> DataQuality
+  DataQuality -- error --> DataQualityError
 
   %% ── ResultType subgraph ─────────────────────────────────
   ResultType:::resulttype
@@ -200,6 +206,8 @@ graph LR
 | `source/fileSet` | `PDF` | `Data` | PDF field is sourced from a file set |
 | `statistics` | `Column` | `Statistics` | Column links to its computed statistics |
 | `intervalStatistics` | `Column` | `IntervalColumnStatistics` | Column links to statistics computed over a specific time window (streaming datasets) |
+| `dataQuality` | `cr:RecordSet` | `DataQuality` | Record set links to its data quality detection result |
+| `error` | `DataQuality` | `DataQualityError` | Data quality result links to an individual detected error |
 | `consist_of` | `Analytical_Pattern` | `Operator` | AP is composed of operator steps |
 | `input` | `ResultType` or `sc:Dataset` | `Operator` | Data flows into an Operator; `Data` (persistent) and transient subtypes (`StringResult`, etc.) are valid `ResultType` sources; `sc:Dataset` is also valid for whole-dataset references (mapping is Any — not checked at AP design time) |
 | `output` | `Operator` | `ResultType` or `sc:Dataset` | Operator writes a typed value; same targets as `input` |
