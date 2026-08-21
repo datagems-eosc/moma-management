@@ -18,6 +18,10 @@
                     "type": "string",
                     "description": "Data type of the column"
                 },
+                "semanticType": {
+                    "type": "string",
+                    "description": "Inferred semantic type of the column content (e.g. 'country name', 'identifier'); empty string if not executed, 'unknown'/'error' as reserved sentinel values"
+                },
                 "column": {
                     "type": "string",
                     "description": "Column identifier within the source file"

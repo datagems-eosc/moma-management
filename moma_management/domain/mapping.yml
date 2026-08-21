@@ -190,6 +190,7 @@ Field:
         name: name
         column: source.extract.column
         sample: sample
+        semanticType: dg:semanticType
 
       edges:
         - from: parent
