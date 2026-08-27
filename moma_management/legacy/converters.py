@@ -22,23 +22,23 @@ def Croissant2PGjson(data: dict) -> dict:
     metadata = {
         "type": data.get("@type"),
         "name": data.get("name"),
-        "archivedAt": data.get("sc:archivedAt"),
+        "archivedAt": data.get("archivedAt"),
         "description": data.get("description"),
         "conformsTo": data.get("conformsTo"),
         "citeAs": data.get("citeAs"),
         "license": data.get("license"),
         "url": data.get("url"),
-        "doi": data.get("dg:doi"),
+        "doi": data.get("doi"),
         "version": data.get("version"),
-        "headline": data.get("dg:headline"),
-        "keywords": data.get("dg:keywords"),
-        "fieldOfScience": data.get("dg:fieldOfScience"),
+        "headline": data.get("headline"),
+        "keywords": data.get("keywords"),
+        "fieldOfScience": data.get("fieldOfScience"),
         "inLanguage": data.get("inLanguage"),
         "country": data.get("country"),
         "datePublished": data.get("datePublished"),
-        "access": data.get("dg:access"),
-        "uploadedBy": data.get("dg:uploadedBy"),
-        "status": data.get("dg:status")
+        "access": data.get("access"),
+        "uploadedBy": data.get("uploadedBy"),
+        "status": data.get("status")
     }
     # remove nulls
     metadata = {k: v for k, v in metadata.items() if v is not None}

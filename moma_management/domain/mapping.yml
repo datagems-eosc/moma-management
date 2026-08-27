@@ -15,14 +15,14 @@ Dataset:
     country: country
     citeAs: citeAs
     conformsTo: conformsTo
-    headline: dg:headline
-    keywords: dg:keywords
-    fieldOfScience: dg:fieldOfScience
-    status: dg:status
-    access: dg:access
-    doi: dg:doi
-    uploadedBy: dg:uploadedBy
-    archivedAt: sc:archivedAt
+    headline: headline
+    keywords: keywords
+    fieldOfScience: fieldOfScience
+    status: status
+    access: access
+    doi: doi
+    uploadedBy: uploadedBy
+    archivedAt: archivedAt
 
   children:
     distribution: Distribution
@@ -191,7 +191,7 @@ Field:
         name: name
         column: source.extract.column
         sample: sample
-        semanticType: dg:semanticType
+        semanticType: semanticType
 
       edges:
         - from: parent

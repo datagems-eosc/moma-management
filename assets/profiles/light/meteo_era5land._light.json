@@ -43,7 +43,7 @@
         "source": "cr:source",
         "subField": "cr:subField",
         "transform": "cr:transform",
-        "semanticType": "dg:semanticType", "access": "dg:access",
+        "semanticType": "dg:semanticType", "access": "dg:access", "doi": "dg:doi", "fieldOfScience": "dg:fieldOfScience", "status": "dg:status",
         "uploadedBy": "dg:uploadedBy",
         "wd": "https://www.wikidata.org/wiki/"
     },
@@ -51,19 +51,19 @@
     "@id": "7c4d20a0-33e8-471e-8a3f-a7a54aa09f68",
     "name": "Era5land",
     "description": "A global atmospheric reanalysis dataset produced by the European Centre for Medium\u2010Range Weather Forecast\u2019s (ECMWF) and has data available from 1950, providing a consistent view of the evolution of land variables. It has an enhanced resolution of 0.1\u00b0 x 0.1\u00b0, while the temporal frequency of the model output is hourly.",
-    "sc:archivedAt": "s3:/7c4d20a0-33e8-471e-8a3f-a7a54aa09f68",
+    "archivedAt": "s3:/7c4d20a0-33e8-471e-8a3f-a7a54aa09f68",
     "conformsTo": "",
     "citeAs": "",
     "license": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land?tab=download",
     "url": "https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land?tab=download",
-    "dg:doi": "",
+    "doi": "",
     "version": "",
-    "dg:headline": "Meteorological data time series by ECWMF",
-    "dg:keywords": [
+    "headline": "Meteorological data time series by ECWMF",
+    "keywords": [
         "weather",
         "weather prediction"
     ],
-    "dg:fieldOfScience": [
+    "fieldOfScience": [
         "EARTH AND RELATED ENVIRONMENTAL SCIENCES"
     ],
     "inLanguage": [
@@ -71,9 +71,9 @@
     ],
     "country": "GR",
     "datePublished": "24-05-2025",
-    "dg:access": "",
-    "dg:status": "loaded",
-    "dg:uploadedBy": "ADMIN",
+    "access": "",
+    "status": "loaded",
+    "uploadedBy": "ADMIN",
     "distribution": [
         {
             "@type": "dg:DatabaseConnection",

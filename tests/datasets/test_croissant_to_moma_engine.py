@@ -283,3 +283,81 @@ def test_column_statistics_new_fields_mapped(mapping_file: Path):
     assert "percentile95" not in text
     assert "generatedAt" not in text
     assert text.get("rowCount") == 200
+
+
+# Dataset attributes whose @context term expands to a dg:/sc: IRI. The producer
+# emits the bare term, so the mapping must look them up by the bare term too.
+_CONTEXT_TERM_DATASET_ATTRIBUTES = {
+    "headline": "a headline",
+    "keywords": ["math"],
+    "fieldOfScience": ["MATHEMATICS"],
+    "status": "loaded",
+    "access": "public",
+    "doi": "10.1234/abcd",
+    "uploadedBy": "ADMIN",
+    "archivedAt": "s3://bucket/ds-1",
+}
+
+
+def test_dataset_context_term_attributes_are_mapped(mapping_file: Path):
+    """
+    These attributes reach us as bare @context terms ("doi"), not as the compact
+    IRI the term expands to ("dg:doi"). Looking them up by the prefixed spelling
+    drops them from the Dataset node without any error.
+    """
+    mapping = yaml.safe_load(mapping_file.open("r"))
+
+    profile = {
+        "@id": "ds-1",
+        "@type": "sc:Dataset",
+        "name": "test",
+        **_CONTEXT_TERM_DATASET_ATTRIBUTES,
+    }
+
+    result = croissant_to_pgjson(profile, mapping)
+    props = next(n for n in result["nodes"] if n["id"] == "ds-1")["properties"]
+
+    missing = _CONTEXT_TERM_DATASET_ATTRIBUTES.keys() - props.keys()
+    assert not missing, f"Dropped dataset attributes: {missing}"
+    for key, value in _CONTEXT_TERM_DATASET_ATTRIBUTES.items():
+        assert props[key] == value
+
+
+def test_column_semantic_type_is_mapped(mapping_file: Path):
+    """semanticType is a bare @context term as well, same failure mode as doi."""
+    mapping = yaml.safe_load(mapping_file.open("r"))
+
+    profile = {
+        "@id": "ds-1",
+        "@type": "sc:Dataset",
+        "name": "test",
+        "distribution": [
+            {
+                "@type": "cr:FileObject",
+                "@id": "fo-1",
+                "name": "data.csv",
+                "encodingFormat": "text/csv",
+            }
+        ],
+        "recordSet": [
+            {
+                "@type": "cr:RecordSet",
+                "@id": "rs-1",
+                "name": "rows",
+                "field": [
+                    {
+                        "@type": "cr:Field",
+                        "@id": "f-1",
+                        "name": "col_a",
+                        "source": {"fileObject": {"@id": "fo-1"}, "extract": {"column": "col_a"}},
+                        "semanticType": "identifier",
+                    }
+                ],
+            }
+        ],
+    }
+
+    result = croissant_to_pgjson(profile, mapping)
+    column = next(n for n in result["nodes"] if n["id"] == "f-1")
+
+    assert column["properties"].get("semanticType") == "identifier"

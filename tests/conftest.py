@@ -153,11 +153,11 @@ async def populated_repository(
 
     Dataset layout
     --------------
-    ds-alpha  id=ds-alpha  datePublished=2024-01-15  dg:status=ready
+    ds-alpha  id=ds-alpha  datePublished=2024-01-15  status=ready
               └─ cr:FileObject + CSV  (distribution edge)
-    ds-beta   id=ds-beta   datePublished=2024-06-01  dg:status=staged
+    ds-beta   id=ds-beta   datePublished=2024-06-01  status=staged
               └─ cr:FileObject + CSV  (distribution edge)
-    ds-gamma  id=ds-gamma  datePublished=2025-03-01  dg:status=ready
+    ds-gamma  id=ds-gamma  datePublished=2025-03-01  status=ready
               └─ cr:FileObject  (no CSV label)  (distribution edge)
 
     Labels are stored with Neo4j-compatible ``__`` encoding so that the
