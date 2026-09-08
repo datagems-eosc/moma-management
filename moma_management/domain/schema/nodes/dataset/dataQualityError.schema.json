@@ -17,7 +17,7 @@
                 },
                 "errorType": {
                     "type": "string",
-                    "enum": ["format_inconsistency", "value_error", "consistency_error"],
+                    "enum": ["format_inconsistency", "value_error", "consistency_error", "missing_value"],
                     "description": "Classification of the detected data quality issue"
                 },
                 "description": {
@@ -28,7 +28,7 @@
                     "type": "integer",
                     "description": "Number of rows affected by this error, counted across the entire table"
                 },
-                "errorExamples": {
+                "examples": {
                     "type": "array",
                     "items": {
                         "type": "object",
