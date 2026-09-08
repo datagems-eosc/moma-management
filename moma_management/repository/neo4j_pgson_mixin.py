@@ -90,7 +90,10 @@ class Neo4jPgJsonMixin:
             if isinstance(v, list):
                 if len(v) == 0:
                     cleaned[new_key] = None
-                elif any(isinstance(i, dict) for i in v):
+                elif any(isinstance(i, dict) or i is None for i in v):
+                    # Neo4j property arrays must be homogeneous and cannot
+                    # contain nulls, but sample/example values legitimately can
+                    # (e.g. a column's sampled rows include a missing value).
                     cleaned[new_key] = _JSON_PREFIX + json.dumps(v)
                 else:
                     cleaned[new_key] = v
