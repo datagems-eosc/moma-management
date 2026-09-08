@@ -122,8 +122,8 @@ graph LR
   Column -- "source/fileObject" --> Data
   Column -- statistics --> Statistics
   Column -- intervalStatistics --> IntervalColumnStatistics
-  RecordSet -- dataQuality --> DataQuality
-  DataQuality -- error --> DataQualityError
+  RecordSet -- HAS_DATA_QUALITY --> DataQuality
+  DataQuality -- HAS_ERROR --> DataQualityError
 
   %% ── ResultType subgraph ─────────────────────────────────
   ResultType:::resulttype
@@ -206,8 +206,8 @@ graph LR
 | `source/fileSet` | `PDF` | `Data` | PDF field is sourced from a file set |
 | `statistics` | `Column` | `Statistics` | Column links to its computed statistics |
 | `intervalStatistics` | `Column` | `IntervalColumnStatistics` | Column links to statistics computed over a specific time window (streaming datasets) |
-| `dataQuality` | `cr:RecordSet` | `DataQuality` | Record set links to its data quality detection result |
-| `error` | `DataQuality` | `DataQualityError` | Data quality result links to an individual detected error |
+| `HAS_DATA_QUALITY` | `cr:RecordSet` | `DataQuality` | Record set links to its data quality detection result |
+| `HAS_ERROR` | `DataQuality` | `DataQualityError` | Data quality result links to an individual detected error |
 | `consist_of` | `Analytical_Pattern` | `Operator` | AP is composed of operator steps |
 | `input` | `ResultType` or `sc:Dataset` | `Operator` | Data flows into an Operator; `Data` (persistent) and transient subtypes (`StringResult`, etc.) are valid `ResultType` sources; `sc:Dataset` is also valid for whole-dataset references (mapping is Any — not checked at AP design time) |
 | `output` | `Operator` | `ResultType` or `sc:Dataset` | Operator writes a typed value; same targets as `input` |

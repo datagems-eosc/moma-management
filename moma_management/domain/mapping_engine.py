@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List, Tuple
 
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 # =========================================================
 # Errors
@@ -17,14 +20,29 @@ class MappingError(Exception):
 # JSON path helper
 # =========================================================
 
+#: Returned by :func:`_resolve_path` when a path segment is absent from the
+#: source, as opposed to present with a null value.
+_MISSING = object()
+
+
+def _resolve_path(data: dict, path: str) -> Any:
+    """Dot-path resolver returning :data:`_MISSING` when the path is absent.
+
+    Telling "the producer sent no such key" apart from "the producer sent null"
+    is what lets :func:`resolve_map` flag mapping/producer spelling drift.
+    """
+    cur: Any = data
+    for part in path.split("."):
+        if not isinstance(cur, dict) or part not in cur:
+            return _MISSING
+        cur = cur[part]
+    return cur
+
+
 def get_path(data: dict, path: str) -> Any:
     """Simple dot-path resolver."""
-    cur = data
-    for part in path.split("."):
-        if not isinstance(cur, dict):
-            return None
-        cur = cur.get(part)
-    return cur
+    value = _resolve_path(data, path)
+    return None if value is _MISSING else value
 
 
 # =========================================================
@@ -132,11 +150,32 @@ def resolve_map(data: dict, spec: Dict[str, str], schema_fields: set) -> Dict[st
     out: Dict[str, Any] = {}
 
     for k, path in (spec or {}).items():
-        v = get_path(data, path)
+        v = _resolve_path(data, path)
+
+        # A mapped path the source doesn't carry at all is the signature of a
+        # spelling drift between the mapping and the producer (e.g. reading
+        # 'dg:headline' from a profile that emits 'headline'). Every property is
+        # optional downstream, so the drop is otherwise entirely silent.
+        if v is _MISSING:
+            logger.debug(
+                "no source path %r for property %r on node %r",
+                path, k, data.get("@id"),
+            )
+            continue
+
         if v is None:
             continue
-        if k in schema_fields:
-            out[k] = v
+
+        # Same silent drop, from the other side: the mapping produces a property
+        # the node's schema does not declare.
+        if k not in schema_fields:
+            logger.debug(
+                "property %r (from %r) is not in the schema for node %r",
+                k, path, data.get("@id"),
+            )
+            continue
+
+        out[k] = v
 
     return out
 

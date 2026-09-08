@@ -353,7 +353,8 @@ def test_dataset_rejects_interval_statistics_wrong_target():
 
 
 # ---------------------------------------------------------------------------
-# Dataset — RecordSet → dataQuality → DataQuality → error → DataQualityError
+# Dataset — RecordSet → HAS_DATA_QUALITY → DataQuality → HAS_ERROR →
+# DataQualityError
 # ---------------------------------------------------------------------------
 
 _VALID_DATA_QUALITY_PROPS = {"type": "dg:DataQuality",
@@ -396,16 +397,16 @@ def _make_dataset_with_data_quality(
 
 
 def test_dataset_valid_recordset_data_quality_edge():
-    """cr:RecordSet --dataQuality--> DataQuality is a permitted edge."""
+    """cr:RecordSet --HAS_DATA_QUALITY--> DataQuality is a permitted edge."""
     ds = _make_dataset_with_data_quality(
-        "dataQuality", ["cr:RecordSet"], ["DataQuality"],
+        "HAS_DATA_QUALITY", ["cr:RecordSet"], ["DataQuality"],
         to_properties=_VALID_DATA_QUALITY_PROPS)
     assert ds is not None
 
 
 def test_dataset_valid_full_data_quality_chain():
-    """The full chain sc:Dataset -recordSet-> RecordSet -dataQuality->
-    DataQuality -error-> DataQualityError validates end to end."""
+    """The full chain sc:Dataset -recordSet-> RecordSet -HAS_DATA_QUALITY->
+    DataQuality -HAS_ERROR-> DataQualityError validates end to end."""
     root_id = str(uuid4())
     record_set_id = str(uuid4())
     dq_id = str(uuid4())
@@ -423,24 +424,24 @@ def test_dataset_valid_full_data_quality_chain():
             Edge(**{"from": root_id, "to": record_set_id,
                  "labels": ["recordSet"]}),
             Edge(**{"from": record_set_id, "to": dq_id,
-                 "labels": ["dataQuality"]}),
-            Edge(**{"from": dq_id, "to": dqe_id, "labels": ["error"]}),
+                 "labels": ["HAS_DATA_QUALITY"]}),
+            Edge(**{"from": dq_id, "to": dqe_id, "labels": ["HAS_ERROR"]}),
         ],
     )
     assert ds is not None
 
 
 def test_dataset_rejects_data_quality_wrong_source():
-    """sc:Dataset --dataQuality--> DataQuality must be rejected: only a RecordSet may carry a dataQuality edge."""
+    """sc:Dataset --HAS_DATA_QUALITY--> DataQuality must be rejected: only a RecordSet may carry a HAS_DATA_QUALITY edge."""
     with pytest.raises(ValidationError, match="Edges violate graph constraints"):
-        _make_dataset("dataQuality", ["sc:Dataset"], ["DataQuality"])
+        _make_dataset("HAS_DATA_QUALITY", ["sc:Dataset"], ["DataQuality"])
 
 
 def test_dataset_rejects_data_quality_error_skipping_hop():
-    """cr:RecordSet --error--> DataQualityError must be rejected: DataQualityError only attaches under DataQuality, not directly under RecordSet."""
+    """cr:RecordSet --HAS_ERROR--> DataQualityError must be rejected: DataQualityError only attaches under DataQuality, not directly under RecordSet."""
     with pytest.raises(ValidationError, match="Edges violate graph constraints"):
         _make_dataset_with_data_quality(
-            "error", ["cr:RecordSet"], ["DataQualityError"])
+            "HAS_ERROR", ["cr:RecordSet"], ["DataQualityError"])
 
 
 def test_data_quality_error_rejects_unknown_error_type():
@@ -467,8 +468,8 @@ def test_data_quality_error_rejects_unknown_error_type():
                 Edge(**{"from": root_id, "to": record_set_id,
                      "labels": ["recordSet"]}),
                 Edge(**{"from": record_set_id, "to": dq_id,
-                     "labels": ["dataQuality"]}),
-                Edge(**{"from": dq_id, "to": dqe_id, "labels": ["error"]}),
+                     "labels": ["HAS_DATA_QUALITY"]}),
+                Edge(**{"from": dq_id, "to": dqe_id, "labels": ["HAS_ERROR"]}),
             ],
         )
 

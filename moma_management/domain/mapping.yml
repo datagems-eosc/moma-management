@@ -188,7 +188,10 @@ Field:
       type: Column
       labels: [ "Column", "@type" ]
       map:
+        type: "@type"
         name: name
+        description: description
+        dataType: dataType
         column: source.extract.column
         sample: sample
         semanticType: semanticType
@@ -244,7 +247,7 @@ DataQuality:
   edges:
     - from: parent
       to: self
-      label: dataQuality
+      label: HAS_DATA_QUALITY
 
   children:
     errors: DataQualityError
@@ -267,4 +270,4 @@ DataQualityError:
   edges:
     - from: parent
       to: self
-      label: error
+      label: HAS_ERROR

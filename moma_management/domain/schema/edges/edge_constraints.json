@@ -115,15 +115,15 @@
     },
     {
         "fromLabel": "cr:RecordSet",
-        "label": "dataQuality",
+        "label": "HAS_DATA_QUALITY",
         "toLabel": "DataQuality",
         "description": "RecordSet → its data quality detection result"
     },
     {
         "fromLabel": "DataQuality",
-        "label": "error",
+        "label": "HAS_ERROR",
         "toLabel": "DataQualityError",
-        "description": "DataQuality → an individual detected error"
+        "description": "Data quality result → one detected error pattern"
     },
     {
         "fromLabel": "Analytical_Pattern",

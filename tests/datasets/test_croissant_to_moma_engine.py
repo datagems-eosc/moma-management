@@ -361,3 +361,50 @@ def test_column_semantic_type_is_mapped(mapping_file: Path):
     column = next(n for n in result["nodes"] if n["id"] == "f-1")
 
     assert column["properties"].get("semanticType") == "identifier"
+
+
+def test_column_describes_itself(mapping_file: Path):
+    """
+    description/dataType/type are declared on the Column schema and sent by every
+    producer, but the Column variant did not map them, so they never reached the
+    graph.
+    """
+    mapping = yaml.safe_load(mapping_file.open("r"))
+
+    profile = {
+        "@id": "ds-1",
+        "@type": "sc:Dataset",
+        "name": "test",
+        "distribution": [
+            {
+                "@type": "cr:FileObject",
+                "@id": "fo-1",
+                "name": "data.csv",
+                "encodingFormat": "text/csv",
+            }
+        ],
+        "recordSet": [
+            {
+                "@type": "cr:RecordSet",
+                "@id": "rs-1",
+                "name": "rows",
+                "field": [
+                    {
+                        "@type": "cr:Field",
+                        "@id": "f-1",
+                        "name": "col_a",
+                        "description": "the first column",
+                        "dataType": "sc:Integer",
+                        "source": {"fileObject": {"@id": "fo-1"}, "extract": {"column": "col_a"}},
+                    }
+                ],
+            }
+        ],
+    }
+
+    result = croissant_to_pgjson(profile, mapping)
+    props = next(n for n in result["nodes"] if n["id"] == "f-1")["properties"]
+
+    assert props.get("description") == "the first column"
+    assert props.get("dataType") == "sc:Integer"
+    assert props.get("type") == "cr:Field"
