@@ -178,9 +178,9 @@ async def test_node_not_found_raises_404():
 # require_permission — IdType.Relationship
 # ---------------------------------------------------------------------------
 
-def _make_relationship_result(ds_id_a: str, ds_id_b: str):
+def _make_relationship_result(*ds_ids: str):
     result = MagicMock()
-    result.target_dataset_ids = (ds_id_a, ds_id_b)
+    result.target_dataset_ids = ds_ids
     return result
 
 
@@ -251,6 +251,35 @@ async def test_relationship_permission_denied_when_one_dataset_lacks_grant():
             relationship_svc=relationship_svc,
         )
     assert exc_info.value.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_relationship_with_no_targets_is_denied():
+    """A relationship resolving to zero datasets must deny, not grant.
+
+    ``all([])`` is ``True``, so an empty dataset list would otherwise sail
+    through the require_all check without a single grant being examined.
+    """
+    authz_svc = MagicMock()
+    authz_svc.has_realm_roles = AsyncMock(return_value=False)
+    authz_svc.has_dataset_grant = AsyncMock(return_value=False)
+
+    relationship_svc = AsyncMock()
+    relationship_svc.get.return_value = _make_relationship_result()
+
+    check = require_permission(
+        DatasetRole.BROWSE, id_type=IdType.Relationship, require_all=True)
+    with pytest.raises(HTTPException) as exc_info:
+        await check(
+            request=_make_request("rel-xyz"),
+            credentials=_make_credentials(),
+            user={"sub": "user1"},
+            authorization=authz_svc,
+            dataset_svc=MagicMock(),
+            relationship_svc=relationship_svc,
+        )
+    assert exc_info.value.status_code == 403
+    authz_svc.has_dataset_grant.assert_not_awaited()
 
 
 # ---------------------------------------------------------------------------

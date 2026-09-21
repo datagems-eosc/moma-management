@@ -6,7 +6,7 @@ from typing import Any, Dict, List, LiteralString, Optional, cast
 import arrow
 from neo4j import AsyncManagedTransaction
 
-from moma_management.domain.generated.edges.edge_schema import Edge
+from moma_management.domain.generated.edges.edge_schema import Edge, EdgeLabel
 from moma_management.domain.generated.moma_schema import MoMaGraphModel
 from moma_management.domain.generated.nodes.node_schema import Node
 
@@ -226,6 +226,7 @@ class Neo4jPgJsonMixin:
         - ``___`` in the relationship type is restored to ``/``
         - ``__`` in property keys is restored to ``:``
         - ``None``-valued properties are excluded
+        - the type is resolved back to its :class:`EdgeLabel` member
 
         Args:
             neo4j_rel: A Neo4j ``Relationship`` object as returned by the driver.
@@ -233,8 +234,11 @@ class Neo4jPgJsonMixin:
         Returns:
             A PG-JSON edge dict with keys ``from``, ``to``, ``labels``,
             ``properties``.
+
+        Raises:
+            ValueError: if the stored relationship type is not a known EdgeLabel.
         """
-        label = neo4j_rel.type.replace("___", "/")
+        label = EdgeLabel(neo4j_rel.type.replace("___", "/"))
         properties = {
             k.replace("__", ":"): _maybe_decode_json(v)
             for k, v in dict(neo4j_rel).items()

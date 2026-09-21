@@ -343,6 +343,7 @@ RBAC and lifecycle rules:
 - **Get**: caller must hold the `dg_ds-browse` grant on **both** datasets the relationship links.
 - **Uniqueness**: at most one relationship may exist per (unordered) dataset pair — creating a duplicate returns `409 Conflict`.
 - **Cascading delete**: deleting either linked dataset automatically deletes the relationship (relationships are a *weak* reference — their absence never implies datasets are unrelated).
+- **Datasets are references, not payload**: the two `sc:Dataset` nodes must appear in a `POST` body so the graph is self-contained and its edges validate, but only their `id` is read — they must already exist in MoMa (`422` otherwise), and any properties or extra labels sent on them are ignored rather than written to the stored dataset. `GET` mirrors this: the linked datasets come back as reference stubs (`id` + labels, no properties); fetch `/datasets/{id}` for their contents.
 
 ### Analytical Patterns (`/aps`)
 

@@ -19,8 +19,12 @@ class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRe
     """Neo4j-backed implementation of ``DatasetRelationshipRepository``."""
 
     # HAS_TARGET links relationship nodes to external sc:Dataset nodes and must
-    # NOT be traversed when reading/deleting a relationship subgraph in isolation.
+    # NOT be traversed when deleting a relationship subgraph in isolation.
+    # (Reads stop *at* the sc:Dataset nodes instead — see ``get``.)
     FORBIDDEN_EDGES: list[str] = ["HAS_TARGET"]
+
+    # Label of the external nodes a relationship references but never owns.
+    _DATASET_LABEL = "sc:Dataset"
 
     _INDEX_STATEMENTS: list[str] = [
         "CREATE CONSTRAINT basic_dl_element_id_unique IF NOT EXISTS "
@@ -52,8 +56,20 @@ class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRe
     # ------------------------------------------------------------------
 
     async def create(self, relationship: DatasetRelationship) -> None:
-        """Store the full DatasetRelationship subgraph using the mixin's MERGE/SET helpers."""
-        await self._session.execute_write(self.create_pgson, relationship)
+        """Store the DatasetRelationship subgraph using the mixin's MERGE/SET helpers.
+
+        The targeted ``sc:Dataset`` nodes are references, not payload: they are
+        dropped before writing so their stored properties and labels are never
+        overwritten by whatever the caller put in the request body. The service
+        has already checked both exist, and ``create_pgson_edge`` binds them
+        with ``MATCH``.
+        """
+        await self._session.execute_write(
+            self.create_pgson,
+            relationship.model_copy(update={
+                "nodes": [n for n in relationship.nodes if self._DATASET_LABEL not in n.labels]
+            }),
+        )
 
     async def delete(self, relationship_id: str) -> None:
         """Delete the relationship and its connected subgraph; leaves dataset nodes intact."""
@@ -126,15 +142,17 @@ class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRe
         return record["existingId"] if record else None
 
     async def get(self, relationship_id: str) -> Optional[DatasetRelationship]:
-        """Shallow retrieval: root + connected subgraph (excluding HAS_TARGET)."""
+        """
+        Shallow retrieval: Return relationship subgraph + ref to datasets
+        Dataset ref have labels and id, but no properties.
+        """
         query = """//cypher
             MATCH (root:BasicDLElement {id: $relationshipId})
             OPTIONAL MATCH path=(root)-[*1..4]-(m)
-            WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
+            WHERE NONE(n IN nodes(path)[0..-1] WHERE n:`sc:Dataset`)
             RETURN root, m, relationships(path) AS rels
         """
-        result = await self._session.run(
-            query, relationshipId=str(relationship_id), forbiddenEdges=self.FORBIDDEN_EDGES)
+        result = await self._session.run(query, relationshipId=str(relationship_id))
         rows = [record async for record in result]
         if not rows:
             return None
@@ -153,7 +171,11 @@ class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRe
             if m:
                 mid = m["id"]
                 if mid not in nodes:
-                    nodes[mid] = self._deserialize_node(m)
+                    node = self._deserialize_node(m)
+                    # NOTE: We don't return the properties of dataset references
+                    if self._DATASET_LABEL in node["labels"]:
+                        node["properties"] = {}
+                    nodes[mid] = node
             for rel in rels:
                 key = (rel.start_node["id"], rel.end_node["id"], rel.type)
                 if key not in edges:
@@ -165,7 +187,8 @@ class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRe
         ]
 
         node_objects = [
-            Node.model_construct(id=UUID(n["id"]), labels=n["labels"], properties=n["properties"])
+            Node.model_construct(
+                id=UUID(n["id"]), labels=n["labels"], properties=n["properties"])
             for n in nodes.values()
         ]
         edge_objects: Optional[List[Edge]] = (

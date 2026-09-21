@@ -10,12 +10,14 @@ from moma_management.services.dataset_relationship import DatasetRelationshipSer
 
 async def create_relationship(
     candidate: DatasetRelationship,
-    svc: DatasetRelationshipService = Depends(get_dataset_relationship_service),
+    svc: DatasetRelationshipService = Depends(
+        get_dataset_relationship_service),
     _auth: Never = Depends(require_admin()),
 ) -> dict:
     """
     Create a new DatasetRelationship ("dataset linking" subgraph) in the
-    MoMa graph repository.
+    MoMa graph repository, linking two dataset refrences. Referencing a dataset that does not
+    exist returns ``422``.
 
     The relationship's root ``BasicDLElement`` must directly reference,
     via ``HAS_TARGET`` edges, exactly two existing ``sc:Dataset`` nodes.

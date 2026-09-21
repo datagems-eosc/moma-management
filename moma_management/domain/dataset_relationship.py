@@ -28,19 +28,19 @@ class DatasetRelationship(MomaEntity):
         return next(n for n in self.nodes if self.__class__._root_label in n.labels)
 
     @property
-    def target_dataset_ids(self) -> tuple[str, str]:
-        """Return the ids of the two ``sc:Dataset`` nodes this relationship links.
+    def target_dataset_ids(self) -> tuple[str, ...]:
+        """
+        Return the ids of the ``sc:Dataset`` nodes this relationship links.
+        Return an empty tuple if the relationship is invalid (e.g. root has no targets, or more than two).
 
-        Only considers the root's own direct ``HAS_TARGET`` edges — the root
-        is always directly linked to both datasets (see ``validate``).
+        Only considers the root's own direct ``HAS_TARGET`` edges.
         """
         root_id = str(self.root.id)
-        ids = sorted({
+        return tuple(sorted({
             str(e.to)
             for e in (self.edges or [])
             if EdgeLabel.has_target in e.labels and str(e.from_) == root_id
-        })
-        return ids[0], ids[1]
+        }))
 
     @model_validator(mode="after")
     def validate(self: Self) -> Self:

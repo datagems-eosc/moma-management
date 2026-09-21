@@ -234,6 +234,15 @@ def require_permission(
             #
             # Realm roles were already checked above, so call has_dataset_grant
             # directly to avoid a redundant HTTP round-trip.
+
+            # No dataset resolved => nothing to grant on. Guard explicitly:
+            # all([]) is True, which would otherwise grant access.
+            if not dataset_ids:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Forbidden: insufficient permissions or not a dataset id",
+                )
+
             check = all if require_all else any
             results = [await authorization.has_dataset_grant(token, action, ds_id)
                        for ds_id in dataset_ids]
