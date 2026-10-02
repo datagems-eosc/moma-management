@@ -1,3 +1,4 @@
+import re
 import time
 from logging import getLogger
 from typing import List, Optional
@@ -23,6 +24,8 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                                   "output", "perform_inference", "trained_on",
                                   "VIRTUAL_BELONGS_TO", "HAS_TARGET"]
 
+    _FULLTEXT_INDEX_NAME = "dataset_fulltext"
+
     _INDEX_STATEMENTS: list[str] = [
         "CREATE CONSTRAINT dataset_id_unique IF NOT EXISTS "
         "FOR (n:`sc:Dataset`) REQUIRE n.id IS UNIQUE",
@@ -32,6 +35,8 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
         "FOR (n:`sc:Dataset`) ON (n.datePublished)",
         "CREATE INDEX dataset_status IF NOT EXISTS "
         "FOR (n:`sc:Dataset`) ON (n.status)",
+        f"CREATE FULLTEXT INDEX {_FULLTEXT_INDEX_NAME} IF NOT EXISTS "
+        "FOR (n:`sc:Dataset`) ON EACH [n.name, n.headline, n.keywords, n.description]",
     ]
     _indexes_ensured: bool = False
 
@@ -262,10 +267,25 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                     return f"n.`datePublished` {order}"
                 return f"n.`{field.value}` {order}"
 
-            order_clause = (
-                ", ".join([_order_expr(k) for k in criteria.orderBy])
-                if criteria.orderBy else "n.id ASC"
-            )
+            like_query = Neo4jDatasetRepository.build_like_query(criteria.like)
+
+            if criteria.orderBy:
+                order_clause = ", ".join(
+                    [_order_expr(k) for k in criteria.orderBy])
+            elif like_query:
+                order_clause = "score DESC, n.id ASC"
+            else:
+                order_clause = "n.id ASC"
+
+            # A free-text search starts from the full-text index instead of
+            # scanning every dataset.
+            if like_query:
+                source = (
+                    f"CALL db.index.fulltext.queryNodes('{self._FULLTEXT_INDEX_NAME}', $like) "
+                    "YIELD node AS {alias}, score"
+                )
+            else:
+                source = "MATCH ({alias}:`sc:Dataset`)"
 
             node_labels = [t.value for t in criteria.types]
             mime_type_values = [mt.value for mt in criteria.mimeTypes]
@@ -278,6 +298,11 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             AND ($publishedDateFrom IS NULL OR {alias}.datePublished >= $publishedDateFrom)
             AND ($publishedDateTo IS NULL OR {alias}.datePublished <= $publishedDateTo)
             AND ($status IS NULL OR {alias}.status = $status)
+            AND ($license IS NULL OR toLower({alias}.license) CONTAINS $license)
+            AND (
+                $fieldsOfScience = []
+                OR ANY(f IN {alias}.fieldOfScience WHERE toLower(f) IN $fieldsOfScience)
+            )
             AND (
                 ($nodeLabels = [] AND $mimeTypeValues = [])
                 OR EXISTS {{
@@ -293,6 +318,9 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                 ) if criteria.publishedFrom else None,
                 publishedDateTo=criteria.publishedTo.isoformat() if criteria.publishedTo else None,
                 status=criteria.status.value if criteria.status is not None else None,
+                like=like_query,
+                license=(criteria.license or "").strip().lower() or None,
+                fieldsOfScience=[f.lower() for f in criteria.fieldsOfScience],
                 nodeLabels=node_labels,
                 mimeTypeValues=mime_type_values,
                 forbiddenEdges=self.FORBIDDEN_EDGES,
@@ -300,7 +328,7 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
 
             # ---------------- COUNT query ----------------
             count_query = f"""//cypher
-            MATCH (m:`sc:Dataset`)
+            {source.format(alias="m")}
             WHERE {filter_where.format(alias="m")}
             RETURN count(DISTINCT m) AS total
             """
@@ -321,25 +349,31 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
 
             # ---------------- PAGINATED IDs query ----------------
             ids_query = f"""//cypher
-            MATCH (n:`sc:Dataset`)
+            {source.format(alias="n")}
             WHERE {filter_where.format(alias="n")}
-            WITH n
+            WITH n{", score" if like_query else ""}
             ORDER BY {order_clause}
             SKIP $skip LIMIT $limit
-            RETURN n.id AS id
+            RETURN {{id: n.id, labels: labels(n), props: properties(n)}} AS root
             """
 
-            ids: list[str] = []
             ids_result = await self._session.run(
                 ids_query, **base_params, skip=skip, limit=limit
             )
-            async for record in ids_result:
-                ids.append(record["id"])
+            roots = [record["root"] async for record in ids_result]
 
             t2 = time.monotonic()
 
             # ---------------- FETCH SUBGRAPHS (SINGLE BATCH QUERY) ----------------
-            datasets = await self._get_batch(ids)
+            # Skipped when only root-node properties are asked for: the
+            # subgraphs would be dropped by the property filtering below.
+            prop_values = {p.value for p in criteria.properties}
+            include_subgraph = bool(
+                prop_values & {"distribution", "recordSet"})
+            if include_subgraph or not prop_values:
+                datasets = await self._get_batch([r["id"] for r in roots])
+            else:
+                datasets = [self._build_dataset_from_maps([r], []) for r in roots]
 
             t3 = time.monotonic()
 
@@ -348,12 +382,9 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                 t2 - t1, t3 - t2, len(datasets),
             )
 
-            # ---------------- PROPERTY FILTERING (UNCHANGED) ----------------
+            # ---------------- PROPERTY FILTERING ----------------
             if criteria.properties:
-                prop_values = {p.value for p in criteria.properties}
                 scalar_props = prop_values - {"distribution", "recordSet"}
-                include_subgraph = bool(
-                    prop_values & {"distribution", "recordSet"})
 
                 filtered = []
                 for ds in datasets:
@@ -409,3 +440,30 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
         except Exception as e:
             logger.error("Neo4j update failed: %s", e)
             return {"error": str(e), "updated": "0"}
+
+    @staticmethod
+    def build_like_query(like: str | None) -> str | None:
+        """
+        Turn a free-text search into a Lucene query for the dataset full-text index.
+
+        Every word must match. A word without wildcard matches as a prefix, exact
+        matches being ranked first. Returns ``None`` when there is nothing to
+        search for.
+        """
+        terms = []
+        # For every word in the search string, in lower case for case-insensitive matching.
+        for word in re.findall(r"[\w*?]+", (like or "").lower()):
+
+            # NOTE : Edge case: if the term is only wildcards, skip it.
+            # Matching * is basically match all so it is not useful and can lead to very slow queries.
+            if not word.strip("*?"):
+                continue
+
+            # If the term contains wildcards, use it as-is, Lucene can handle this.
+            if "*" in word or "?" in word:
+                terms.append(word)
+            # Default behavior: match exact words first, then prefix matches with a low score.
+            else:
+                terms.append(f"({word} OR {word}*^0.1)")
+
+        return " AND ".join(terms) or None

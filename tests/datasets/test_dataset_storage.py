@@ -17,6 +17,7 @@ from testcontainers.neo4j import Neo4jContainer
 from moma_management.domain.dataset import Dataset
 from moma_management.domain.filters import (
     DatasetFilter,
+    DatasetProperty,
     DatasetSortField,
     MimeType,
     NodeLabel,
@@ -465,6 +466,305 @@ class TestListMethod:
         # An empty mimeTypes list must not restrict results.
         result = await _list(populated_repository, mimeTypes=[])
         assert result["total"] == 3
+
+
+    # -- properties ----------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_scalar_properties_skip_subgraph_fetch(self, populated_repository, monkeypatch):
+        full = await _list(populated_repository,
+                           orderBy=[DatasetSortField.DATE_PUBLISHED],
+                           direction=SortDirection.DESC)
+
+        async def _fail(ids):
+            raise AssertionError("subgraphs must not be fetched")
+        monkeypatch.setattr(populated_repository, "_get_batch", _fail)
+
+        result = await _list(populated_repository,
+                             properties=[DatasetProperty("status")],
+                             orderBy=[DatasetSortField.DATE_PUBLISHED],
+                             direction=SortDirection.DESC)
+
+        assert result["total"] == 3
+        assert len(result["datasets"]) == 3
+        for light, ds in zip(result["datasets"], full["datasets"]):
+            root = next(n for n in ds.nodes if "sc:Dataset" in n.labels)
+            assert light.edges is None
+            assert len(light.nodes) == 1
+            assert light.nodes[0].id == root.id
+            assert light.nodes[0].labels == root.labels
+            assert light.nodes[0].properties == {
+                "status": root.properties["status"]}
+
+    @pytest.mark.asyncio
+    async def test_subgraph_property_still_returns_connected_nodes(self, populated_repository):
+        result = await _list(populated_repository,
+                             properties=[DatasetProperty("status"),
+                                         DatasetProperty("distribution")])
+        for ds in result["datasets"]:
+            assert len(ds.nodes) == 2
+            assert len(ds.edges) == 1
+
+
+# ---------------------------------------------------------------------------
+# Metadata search: like / license / fieldsOfScience
+# --------------
+# ds-alpha  name="Climate Observations"  headline="Daily weather stations"
+#           keywords=[meteorology, temperature]  license=CC-BY-4.0
+#           fieldOfScience=[Earth sciences]  datePublished=2024-01-15
+#           description mentions "Europe"
+# ds-beta   name="Genome Atlas"  headline="Human genomics reference"
+#           keywords=[biology, dna]  license=MIT
+#           fieldOfScience=[Biological sciences, Health sciences]
+#           datePublished=2024-06-01
+#           description mentions "climate" and "C++"
+# ds-gamma  name="Ocean Climatology"  (no headline, keywords, license nor
+#           fieldOfScience)  datePublished=2025-03-01
+#           description mentions "climates"
+# ---------------------------------------------------------------------------
+
+@pytest_asyncio.fixture(scope="class")
+async def search_repository(
+    neo4j_container_class: Neo4jContainer,
+) -> AsyncGenerator[Neo4jDatasetRepository, None]:
+    from moma_management.domain.generated.nodes.node_schema import Node
+
+    def _make_dataset(ds_id: str, **properties) -> Dataset:
+        return Dataset(
+            nodes=[Node(id=ds_id, labels=["sc:Dataset"],
+                        properties=properties)],
+            edges=[],
+        )
+
+    uri = neo4j_container_class.get_connection_url()
+    auth = (neo4j_container_class.username, neo4j_container_class.password)
+    driver = AsyncGraphDatabase.driver(uri, auth=auth)
+    async with driver.session() as session:
+        # Not create_with_indexes(): its once-per-process guard would skip
+        # index creation on this fresh container.
+        for stmt in Neo4jDatasetRepository._INDEX_STATEMENTS:
+            await session.run(stmt)
+        repo = Neo4jDatasetRepository(session)
+        for ds in [
+            _make_dataset(
+                DS_ALPHA_ID,
+                name="Climate Observations",
+                headline="Daily weather stations",
+                description="Surface measurements collected across Europe.",
+                keywords=["meteorology", "temperature"],
+                license="CC-BY-4.0",
+                fieldOfScience=["Earth sciences"],
+                datePublished="2024-01-15",
+                status="ready",
+            ),
+            _make_dataset(
+                DS_BETA_ID,
+                name="Genome Atlas",
+                headline="Human genomics reference",
+                description="Unrelated to climate. Processed with a C++ pipeline (2024).",
+                keywords=["biology", "dna"],
+                license="MIT",
+                fieldOfScience=["Biological sciences", "Health sciences"],
+                datePublished="2024-06-01",
+                status="ready",
+            ),
+            _make_dataset(
+                DS_GAMMA_ID,
+                name="Ocean Climatology",
+                description="Long-term record of regional climates.",
+                datePublished="2025-03-01",
+                status="ready",
+            ),
+        ]:
+            await repo.create(ds)
+        await session.run("CALL db.awaitIndexes()")
+        yield repo
+    await driver.close()
+
+
+@pytest.mark.parametrize("like, expected", [
+    ("climate", "(climate OR climate*^0.1)"),
+    ("Climate DATA", "(climate OR climate*^0.1) AND (data OR data*^0.1)"),
+    ("geno*", "geno*"),
+    ("*ology gen?me", "*ology AND gen?me"),
+    ("C++ (2024)", "(c OR c*^0.1) AND (2024 OR 2024*^0.1)"),
+    ("name:x~2 OR y", "(name OR name*^0.1) AND (x OR x*^0.1) AND (2 OR 2*^0.1) "
+                      "AND (or OR or*^0.1) AND (y OR y*^0.1)"),
+    ("été", "(été OR été*^0.1)"),
+    ("* ?? data", "(data OR data*^0.1)"),
+    ("", None),
+    ("  ", None),
+    ("*", None),
+    ("+-&&", None),
+    (None, None),
+])
+def test_build_like_query(like, expected):
+    assert Neo4jDatasetRepository.build_like_query(like) == expected
+
+
+class TestMetadataSearch:
+
+    def _ids(self, result: dict) -> list[str]:
+        return [
+            str(next(n for n in ds.nodes if "sc:Dataset" in n.labels).id)
+            for ds in result["datasets"]
+        ]
+
+    # -- like ----------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_like_matches_name(self, search_repository):
+        result = await _list(search_repository, like="genome")
+        assert self._ids(result) == [DS_BETA_ID]
+        assert result["total"] == 1
+
+    @pytest.mark.asyncio
+    async def test_like_matches_headline(self, search_repository):
+        result = await _list(search_repository, like="weather")
+        assert self._ids(result) == [DS_ALPHA_ID]
+
+    @pytest.mark.asyncio
+    async def test_like_matches_keywords(self, search_repository):
+        result = await _list(search_repository, like="dna")
+        assert self._ids(result) == [DS_BETA_ID]
+
+    @pytest.mark.asyncio
+    async def test_like_matches_description(self, search_repository):
+        result = await _list(search_repository, like="europe")
+        assert self._ids(result) == [DS_ALPHA_ID]
+
+    @pytest.mark.asyncio
+    async def test_like_is_case_insensitive(self, search_repository):
+        result = await _list(search_repository, like="GENOME")
+        assert self._ids(result) == [DS_BETA_ID]
+
+    @pytest.mark.asyncio
+    async def test_like_matches_word_prefix(self, search_repository):
+        # "Climate" (alpha, beta) and "Climatology" (gamma)
+        result = await _list(search_repository, like="clim")
+        assert result["total"] == 3
+
+    @pytest.mark.asyncio
+    async def test_like_requires_all_words(self, search_repository):
+        result = await _list(search_repository, like="climate observations")
+        assert self._ids(result) == [DS_ALPHA_ID]
+
+    @pytest.mark.asyncio
+    async def test_like_trailing_wildcard(self, search_repository):
+        result = await _list(search_repository, like="geno*")
+        assert self._ids(result) == [DS_BETA_ID]
+
+    @pytest.mark.asyncio
+    async def test_like_leading_wildcard(self, search_repository):
+        result = await _list(search_repository, like="*ology")
+        assert set(self._ids(result)) == {
+            DS_ALPHA_ID, DS_BETA_ID, DS_GAMMA_ID}
+        result = await _list(search_repository, like="*atology")
+        assert self._ids(result) == [DS_GAMMA_ID]
+
+    @pytest.mark.asyncio
+    async def test_like_single_character_wildcard(self, search_repository):
+        result = await _list(search_repository, like="gen?me")
+        assert self._ids(result) == [DS_BETA_ID]
+
+    @pytest.mark.asyncio
+    async def test_like_without_match_returns_empty(self, search_repository):
+        result = await _list(search_repository, like="astronomy")
+        assert result["total"] == 0
+        assert result["datasets"] == []
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("like", ["C++ pipeline", "(2024)", 'pipeline"', "genome~ atlas:"])
+    async def test_like_special_characters_are_literal(self, search_repository, like):
+        result = await _list(search_repository, like=like)
+        assert self._ids(result) == [DS_BETA_ID]
+
+    @pytest.mark.asyncio
+    async def test_like_operators_are_plain_words(self, search_repository):
+        # Would match alpha and gamma if NOT were read as a negation.
+        result = await _list(search_repository, like="NOT genome")
+        assert result["total"] == 0
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("like", ["", "   ", "*", "+-"])
+    async def test_like_without_words_is_ignored(self, search_repository, like):
+        result = await _list(search_repository, like=like)
+        assert result["total"] == 3
+
+    @pytest.mark.asyncio
+    async def test_like_orders_exact_word_before_prefix(self, search_repository):
+        # gamma only matches through the "climates" prefix
+        result = await _list(search_repository, like="climate")
+        assert result["total"] == 3
+        assert self._ids(result)[-1] == DS_GAMMA_ID
+
+    @pytest.mark.asyncio
+    async def test_like_explicit_order_wins(self, search_repository):
+        result = await _list(
+            search_repository, like="clim",
+            orderBy=[DatasetSortField.DATE_PUBLISHED],
+            direction=SortDirection.DESC,
+        )
+        assert self._ids(result) == [DS_GAMMA_ID, DS_BETA_ID, DS_ALPHA_ID]
+
+    @pytest.mark.asyncio
+    async def test_like_combined_with_date(self, search_repository):
+        result = await _list(search_repository, like="clim",
+                             publishedFrom=date(2024, 6, 1))
+        assert set(self._ids(result)) == {DS_BETA_ID, DS_GAMMA_ID}
+
+    @pytest.mark.asyncio
+    async def test_like_combined_with_node_ids(self, search_repository):
+        result = await _list(search_repository, like="clim",
+                             nodeIds=[DS_GAMMA_ID])
+        assert self._ids(result) == [DS_GAMMA_ID]
+
+    @pytest.mark.asyncio
+    async def test_like_pagination(self, search_repository):
+        seen = []
+        for page in (1, 2, 3):
+            result = await _list(search_repository, like="clim",
+                                 page=page, pageSize=1)
+            assert result["total"] == 3
+            seen += self._ids(result)
+        assert set(seen) == {DS_ALPHA_ID, DS_BETA_ID, DS_GAMMA_ID}
+
+    # -- license -------------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_license_substring_case_insensitive(self, search_repository):
+        result = await _list(search_repository, license="cc-by")
+        assert self._ids(result) == [DS_ALPHA_ID]
+
+    @pytest.mark.asyncio
+    async def test_license_without_match(self, search_repository):
+        result = await _list(search_repository, license="apache")
+        assert result["total"] == 0
+
+    # -- fieldsOfScience -----------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_field_of_science_single(self, search_repository):
+        result = await _list(search_repository,
+                             fieldsOfScience=["health sciences"])
+        assert self._ids(result) == [DS_BETA_ID]
+
+    @pytest.mark.asyncio
+    async def test_field_of_science_any_of(self, search_repository):
+        result = await _list(search_repository,
+                             fieldsOfScience=["Earth sciences", "Health sciences"])
+        assert set(self._ids(result)) == {DS_ALPHA_ID, DS_BETA_ID}
+
+    @pytest.mark.asyncio
+    async def test_field_of_science_is_not_a_substring_match(self, search_repository):
+        result = await _list(search_repository, fieldsOfScience=["sciences"])
+        assert result["total"] == 0
+
+    @pytest.mark.asyncio
+    async def test_all_metadata_filters_combined(self, search_repository):
+        result = await _list(search_repository, like="clim", license="mit",
+                             fieldsOfScience=["Biological sciences"])
+        assert self._ids(result) == [DS_BETA_ID]
 
 
 # ---------------------------------------------------------------------------

@@ -323,8 +323,21 @@ Note: when `PROFILING=true`, the profiling middleware replaces the normal respon
 | `publishedFrom` | `date`               | —       | Published date lower bound   |
 | `publishedTo`   | `date`               | —       | Published date upper bound   |
 | `status`        | `Status`             | —       | Filter by dataset status     |
+| `like`          | `string`             | —       | Free-text search (see below) |
+| `license`       | `string`             | —       | License contains this text   |
+| `fieldsOfScience` | `string[]`         | `[]`    | Has any of these fields of science |
 | `page`          | `int ≥ 1`            | `1`     | Page number                  |
 | `pageSize`      | `1–100`              | `25`    | Items per page               |
+
+`like` searches the dataset `name`, `headline`, `keywords` and `description`, ignoring case:
+
+- Every word must be found: `climate europe` returns datasets holding both.
+- A word matches the start of a word: `clim` finds `Climate` and `Climatology`.
+- `*` stands for any characters and `?` for exactly one: `*ology`, `gen?me`.
+- Punctuation separates words and has no other meaning: `C++` searches for `c`.
+- Results are ordered by relevance, exact words first, unless `orderBy` is set.
+
+`license` is a case-insensitive substring match (`cc-by` finds `CC-BY-4.0`). `fieldsOfScience` is a case-insensitive match on the whole value of any entry of the dataset's `fieldOfScience`.
 
 ### Dataset Relationships (`/datasets/relationships`, `/datasets/{id}/relationships`)
 
