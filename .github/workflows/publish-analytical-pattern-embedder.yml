@@ -1,0 +1,64 @@
+name: Publish analytical pattern embedder to Hugging Face
+
+# The adapter is trained on a developer's machine (it needs a GPU) and attached to a
+# GitHub release as analytical_pattern_embedder.tar.gz. This merges it into the base model and
+# publishes the result. See packages/analytical-pattern-embedder/README.md.
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    if: startsWith(github.event.release.tag_name, 'analytical-pattern-embedder-v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read   # download the release asset
+    env:
+      TAG: ${{ github.event.release.tag_name }}
+      MODELS: packages/analytical-pattern-embedder/models
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v2
+        with:
+          enable-cache: true
+
+      - name: Download the adapter from the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$TAG" --pattern analytical_pattern_embedder.tar.gz
+          mkdir -p "$MODELS/analytical_pattern_embedder"
+          tar -xzf analytical_pattern_embedder.tar.gz -C "$MODELS/analytical_pattern_embedder"
+
+      # In the service's own environment: what merges and loads here loads there.
+      # merge.py stops if the merged model does not give what the adapter gave.
+      - name: Merge the adapter into the base model
+        run: |
+          uv sync --frozen --no-dev
+          uv run --no-sync python packages/analytical-pattern-embedder/merge.py
+
+      - name: Upload to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          # Set as a repository variable or as a secret.
+          HF_MODEL_REPO: ${{ vars.HF_MODEL_REPO || secrets.HF_MODEL_REPO }}
+        run: |
+          uv run --no-sync python - <<'EOF'
+          import os
+
+          from huggingface_hub import HfApi
+
+          api = HfApi()  # reads HF_TOKEN
+          repo = os.environ["HF_MODEL_REPO"] or exit("HF_MODEL_REPO is not set in the repository.")
+          tag = os.environ["TAG"].removeprefix("analytical-pattern-embedder-")
+          api.create_repo(repo, exist_ok=True)
+          api.upload_folder(
+              repo_id=repo,
+              folder_path=os.environ["MODELS"] + "/analytical_pattern_embedder_merged",
+              commit_message=f"Release {tag}",
+          )
+          # The tag is what the service pins: `main` moves with every release.
+          api.create_tag(repo, tag=tag, exist_ok=True)
+          EOF

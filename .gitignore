@@ -146,3 +146,13 @@ assets/backups
 
 #Slop
 .claude
+
+# Analytical pattern embedder: LoRA adapters, benchmark reports, cached LLM answers, Unsloth build cache
+packages/analytical-pattern-embedder/models/
+.benchmarks
+# `generated` is ignored above; the dataset is versioned, the cached LLM answers are not.
+!packages/analytical-pattern-embedder/dataset/generated
+packages/analytical-pattern-embedder/dataset/generated/llm_cache/
+# The APs as PG-JSON, which nothing in this repository reads.
+packages/analytical-pattern-embedder/dataset/generated/evaluation/aps/
+unsloth_compiled_cache/

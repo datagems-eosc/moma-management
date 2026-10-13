@@ -1,0 +1,31 @@
+[project]
+name = "analytical-pattern-embedder"
+version = "0.0.0"
+description = "EmbeddingGemma 2 fine-tuned to match tasks to Analytical Patterns: dataset, training, benchmark"
+requires-python = ">=3.14,<4.0"
+dependencies = [
+    # dataset generation
+    "moma-domain",
+    "requests",
+    "pydantic>=2.0",
+    # training and benchmark
+    "unsloth>=2026.10.3",
+    "sentence-transformers>=6.1.0",
+    "datasets",
+]
+
+[dependency-groups]
+dev = ["pytest"]
+
+[tool.uv]
+# Scripts, not a library: nothing to build or install.
+package = false
+# EmbeddingGemma 2 first shipped in transformers 5.19.0. Unsloth 2026.10.3 declares
+# transformers<=5.17.0, so the bound has to be overridden; drop this once Unsloth allows it.
+override-dependencies = ["transformers>=5.19.0"]
+
+[tool.uv.sources]
+moma-domain = { path = "../moma-domain" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

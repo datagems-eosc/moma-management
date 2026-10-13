@@ -236,6 +236,8 @@ And run the project :
 uv run python moma_management/main.py
 ```
 
+In VS Code, open `moma-management.code-workspace` (File > Open Workspace from File) rather than the folder, so that `packages/analytical-pattern-embedder`, which has its own environment, gets its own interpreter and import root.
+
 Once launched, the API is available here
 **Interactive docs:** http://localhost:5000/docs
 
@@ -275,7 +277,8 @@ Configuration is managed entirely through environment variables:
 | `JWKS_TTL_SECONDS`        | no       | `300`                                | How long to cache the JWKS from the OIDC issuer (seconds)                |
 | `PROFILING`               | no       | `false`                              | Set to `true` to enable the request profiling middleware                  |
 | `PERMISSIONS_GATEWAY_URL` | no       | *(empty)*                            | External gateway URL for dataset-level authorization (disabled if unset) |
-| `EMBEDDER_MODEL`          | no       | `all-MiniLM-L6-v2`                  | Sentence-transformers model for AP semantic search (set empty to disable) |
+| `EMBEDDER_MODEL`          | no       | `all-MiniLM-L6-v2`                  | Sentence-transformers model for AP semantic search (set empty to disable). `org/model:v1` pins a tag, branch or commit of a Hugging Face model |
+| `EMBEDDER_LORA_PATH`      | no       | *(empty)*                            | Folder of a LoRA adapter to load on top of `EMBEDDER_MODEL`              |
 | `APP_PORT`                | no       | `5000`                               | TCP port the Uvicorn server listens on                                    |
 | `APP_CONCURRENCY`         | no       | `1`                                  | Number of Uvicorn worker processes                                        |
 | `OTEL_SERVICE_NAME`       | no       | `moma-management`                    | Service name reported to the OTel backend                                |
@@ -468,6 +471,14 @@ moma_management/
 └── legacy/
     └── converters.py          # Deprecated converters (kept for reference)
 ```
+
+## Analytical pattern embedder
+
+`GET /aps` with a search query finds the Analytical Pattern that answers a user's task by comparing the embedding of the query with the one of each AP, computed from the description its operators give it (`AnalyticalPattern.describe()`). A general-purpose model does this poorly: people describe what they want to know, while an AP describes how data is processed. On the real questions collected so far (MathE and weather, mostly), `all-MiniLM-L6-v2` ranks the right AP first for 5% of them.
+
+`packages/analytical-pattern-embedder` holds what fixes this: EmbeddingGemma 2 with a LoRA adapter fine-tuned to match tasks to APs, which ranks the right AP first for 56% of the same questions. The folder contains the dataset, the training and benchmark scripts, and the way to retrain when new APs or questions come in. It is a set of scripts with its own environment; nothing in it is installed by the service, which only loads the published model through `EMBEDDER_MODEL`.
+
+See [packages/analytical-pattern-embedder/README.md](packages/analytical-pattern-embedder/README.md).
 
 ## Testing
 

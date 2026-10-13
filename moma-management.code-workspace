@@ -1,0 +1,12 @@
+{
+    "folders": [
+        {
+            "name": "moma-management",
+            "path": "."
+        },
+        {
+            "name": "analytical-pattern-embedder",
+            "path": "packages/analytical-pattern-embedder"
+        }
+    ]
+}

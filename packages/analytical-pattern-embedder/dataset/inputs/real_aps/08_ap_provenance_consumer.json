@@ -1,0 +1,55 @@
+{
+    "$schema": "https://raw.githubusercontent.com/datagems-eosc/moma-management/refs/tags/v2.3.0/moma_management/domain/schema/moma.schema.json",
+    "nodes": [
+        {
+            "id": "a8a80000-0000-4000-8000-000000000001",
+            "labels": [
+                "Analytical_Pattern"
+            ],
+            "properties": {
+                "name": "Provenance Report AP",
+                "description": "Takes provenance information and produces a structured report.",
+                "process": "report",
+                "publishedDate": "2026-06-15"
+            }
+        },
+        {
+            "id": "a8a80000-0000-4000-8000-000000000002",
+            "labels": [
+                "Provenance_Report_Operator",
+                "Operator"
+            ],
+            "properties": {
+                "name": "Provenance Report",
+                "description": "Formats raw provenance text into a structured report.",
+                "version": "1.0.0",
+                "step": 1,
+                "inputs": [
+                    {
+                        "name": "provenance",
+                        "type": "string",
+                        "required": true,
+                        "default": ""
+                    }
+                ],
+                "outputs": [
+                    {
+                        "name": "report",
+                        "type": "string",
+                        "required": true,
+                        "default": ""
+                    }
+                ]
+            }
+        }
+    ],
+    "edges": [
+        {
+            "from": "a8a80000-0000-4000-8000-000000000001",
+            "to": "a8a80000-0000-4000-8000-000000000002",
+            "labels": [
+                "consist_of"
+            ]
+        }
+    ]
+}

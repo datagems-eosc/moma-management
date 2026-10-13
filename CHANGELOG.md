@@ -5,6 +5,7 @@
 
 ### New Features
 
+- AP search: using a custom embedder, EmbeddingGemma 2 fine-tuned to match tasks to Analytical Patterns (`packages/analytical-pattern-embedder`).
 
 ### Bug Fixes
 
