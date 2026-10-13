@@ -10,7 +10,7 @@ class MappingStep(ValidationStep):
         return _validate_mappings(raw) + self._chain(data)
 
 
-def _extract_bracket_value(expr: str, prefix: str) -> str | None:
+def extract_bracket_value(expr: str, prefix: str) -> str | None:
     """Extract the first bracket key from notation ``prefix['key']``."""
     marker = f"{prefix}['"
     if not expr.startswith(marker):
@@ -135,7 +135,7 @@ def _validate_mappings(data: dict) -> list[SchemaError]:
                 input_is_result_type = "ResultType" in from_labels
                 input_is_dataset = "sc:Dataset" in from_labels
 
-                param_name = _extract_bracket_value(key, "to['inputs']")
+                param_name = extract_bracket_value(key, "to['inputs']")
                 if param_name is not None:
                     declared = to_props.get("inputs") or []
                     known = {p["name"] for p in declared if isinstance(
@@ -154,7 +154,7 @@ def _validate_mappings(data: dict) -> list[SchemaError]:
                         ))
 
                 # value: from['<prop>'] — source node property
-                prop_name = _extract_bracket_value(value, "from")
+                prop_name = extract_bracket_value(value, "from")
                 if prop_name is not None and not input_is_dataset:
                     _check_node_prop(prop_name, from_props,
                                      from_labels, f"{path_prefix}/{key}")
@@ -185,13 +185,13 @@ def _validate_mappings(data: dict) -> list[SchemaError]:
 
             elif edge_label == "output":
                 # key: to['<prop>'] — target node property
-                prop_name = _extract_bracket_value(key, "to")
+                prop_name = extract_bracket_value(key, "to")
                 if prop_name is not None and not is_dataset:
                     _check_node_prop(prop_name, to_props,
                                      to_labels, f"{path_prefix}/{key}")
 
                 # value: from['outputs']['<param>'] — operator output param
-                param_name = _extract_bracket_value(value, "from['outputs']")
+                param_name = extract_bracket_value(value, "from['outputs']")
                 if param_name is not None:
                     declared = from_props.get("outputs") or []
                     known = {p["name"] for p in declared if isinstance(

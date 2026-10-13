@@ -13,17 +13,17 @@ class ValidationStep(ABC):
     """Abstract base for a single step in the graph validation chain."""
 
     def __init__(self) -> None:
-        self._next: Self | None = None
+        self._next: ValidationStep | None = None
 
-    def set_next(self, step: Self) -> Self:
+    def set_next(self, step: ValidationStep) -> ValidationStep:
         self._next = step
         return step
 
-    def __and__(self, other: Self) -> Self:
+    def __and__(self, other: ValidationStep) -> Self:
         if not isinstance(other, ValidationStep):
             raise TypeError(f"Cannot chain {type(other)}")
         # Traverse to the current tail and attach, then return self (the head)
-        tail = self
+        tail: ValidationStep = self
         while tail._next is not None:
             tail = tail._next
         tail._next = other
