@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from fastapi import APIRouter
 
 from .create import create_relationship
@@ -5,6 +8,16 @@ from .delete import delete_relationship
 from .get import get_relationship
 
 router = APIRouter(tags=["dataset relationships"])
+
+# Shown as the POST request body in the API docs.
+#
+# Note the two sc:Dataset nodes: they are *references* to datasets that already
+# exist in MoMa. They have to be listed so the graph is self-contained and its
+# HAS_TARGET edges resolve, but only their id is read — "properties" is
+# required by the node schema yet ignored here, so send it empty.
+_CREATE_EXAMPLE = json.loads(
+    (Path(__file__).parents[5] / "assets/dataset_relationships/dl_minimal.json").read_text()
+)
 
 router.add_api_route(
     "/",
@@ -19,6 +32,11 @@ router.add_api_route(
         409: {"description": "A relationship already exists for this dataset pair"},
         422: {"description": "Validation error (e.g. target dataset not found)"},
         500: {"description": "Internal server error"},
+    },
+    openapi_extra={
+        "requestBody": {
+            "content": {"application/json": {"example": _CREATE_EXAMPLE}},
+        },
     },
 )
 router.add_api_route(

@@ -5,6 +5,7 @@
 
 ### New Features
 
+- Datasets: `GET /datasets` accepts three new metadata filters (datagems-eosc/data-model-management#7). `like` is a free-text search over `name`, `headline`, `keywords` and `description`, backed by a new Neo4j full-text index (`dataset_fulltext`, created at startup): all words must match, each as a case-insensitive prefix, with `*` and `?` wildcards, and results are ordered by relevance unless `orderBy` is set. `license` keeps datasets whose license contains the given text. `fieldsOfScience` keeps datasets having at least one of the given fields of science.
 - AP search: using a custom embedder, EmbeddingGemma 2 fine-tuned to match tasks to Analytical Patterns (`packages/analytical-pattern-embedder`).
 
 ### Bug Fixes
