@@ -85,10 +85,11 @@ class AnalyticalPatternService:
         return str(ap.root.id)
 
     def _embed_ap(self, ap: AnalyticalPattern) -> Optional[List[float]]:
-        """Extract description text and embed it, or return ``None`` if no embedder."""
+        """Embed what the AP does, or return ``None`` if no embedder."""
         if self._embedder is None:
             return None
-        text = ap.root.properties.get(
+        # The description forged from the operators; the root's own for an AP without any.
+        text = ap.describe() or ap.root.properties.get(
             "description") or ap.root.properties.get("name", "")
         if not text:
             return None
@@ -142,7 +143,7 @@ class AnalyticalPatternService:
             if self._embedder is None:
                 raise ValidationError(
                     "Semantic search is not available: no embedder configured.")
-            query_vector = self._embedder.embed(filter.search.q)
+            query_vector = self._embedder.embed_query(filter.search.q)
 
         repo_result = await self._repo.list(filter, accessible_dataset_ids=accessible_dataset_ids, query_vector=query_vector)
 

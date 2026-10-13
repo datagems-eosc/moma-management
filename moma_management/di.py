@@ -3,6 +3,7 @@ import os
 from contextlib import asynccontextmanager
 from functools import lru_cache
 from pathlib import Path
+from sys import exit
 from typing import AsyncGenerator, Generator, Optional
 
 from fastapi import Depends, FastAPI
@@ -13,13 +14,13 @@ from moma_management.repository.analytical_pattern import (
     AnalyticalPatternRepository,
     Neo4jAnalyticalPatternRepository,
 )
-from moma_management.repository.ml_model import (
-    MlModelRepository,
-    Neo4jMlModelRepository,
-)
 from moma_management.repository.dataset_relationship import (
     DatasetRelationshipRepository,
     Neo4jDatasetRelationshipRepository,
+)
+from moma_management.repository.ml_model import (
+    MlModelRepository,
+    Neo4jMlModelRepository,
 )
 from moma_management.repository.node import Neo4jNodeRepository, NodeRepository
 from moma_management.repository.task import Neo4jTaskRepository, TaskRepository
@@ -63,7 +64,18 @@ async def container_lifespan(_: FastAPI):
 
     embedder_model = os.getenv("EMBEDDER_MODEL", _DEFAULT_EMBEDDER_MODEL)
     if embedder_model:
-        _embedder = LocalEmbedder(model_name=embedder_model)
+        # Optional: a LoRA adapter to load on top of the model.
+        lora_path = os.getenv("EMBEDDER_LORA_PATH") or None
+        if lora_path is not None and not Path(lora_path).exists():
+            logger.fatal("LoRA path does not exist: %s", lora_path)
+            exit(1)
+        # "org/model:v1" pins a tag, branch or commit of a Hugging Face model.
+        model_name, _, revision = embedder_model.partition(":")
+        _embedder = LocalEmbedder(
+            model_name=model_name,
+            revision=revision or None,
+            lora_path_or_hf_id=lora_path and str(Path(lora_path).resolve()),
+        )
         logger.info("Embedder loaded: %s (%d dimensions)",
                     embedder_model, _embedder.dimensions)
 
@@ -95,14 +107,16 @@ async def get_dataset_relationship_repo(session: AsyncSession = Depends(get_db_s
 def get_dataset_service(
     repo: DatasetRepository = Depends(get_dataset_repo),
     mapping_file: Path = Depends(get_mapping_file),
-    relationship_repo: DatasetRelationshipRepository = Depends(get_dataset_relationship_repo),
+    relationship_repo: DatasetRelationshipRepository = Depends(
+        get_dataset_relationship_repo),
 ) -> DatasetService:
     """Return the service for Dataset operations."""
     return DatasetService(repo, mapping_file, relationship_repo)
 
 
 def get_dataset_relationship_service(
-    repo: DatasetRelationshipRepository = Depends(get_dataset_relationship_repo),
+    repo: DatasetRelationshipRepository = Depends(
+        get_dataset_relationship_repo),
     dataset_svc: DatasetService = Depends(get_dataset_service),
 ) -> DatasetRelationshipService:
     """Return the service for DatasetRelationship operations."""

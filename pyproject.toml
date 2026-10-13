@@ -28,11 +28,15 @@ dependencies = [
     "structlog>=24.0",
     "sentence-transformers>=3.0.0",
     "uvicorn[standard]>=0.41.0",
-    "torch>=2.10.0",
+    "torch>=2.14.1",
     "opentelemetry-distro==0.64b0",
     "opentelemetry-exporter-otlp==1.43.0",
     "opentelemetry-instrumentation-fastapi==0.64b0",
     "opentelemetry-instrumentation-requests==0.64b0",
+    "transformers>=5.19.0",
+    "pillow>=12.3.0",
+    "torchvision>=0.29.1",
+    "peft>=0.21.2",
 ]
 
 [dependency-groups]

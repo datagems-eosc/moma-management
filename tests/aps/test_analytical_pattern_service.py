@@ -179,11 +179,11 @@ async def test_list_passes_accessible_ids_to_repo():
 
 @pytest.mark.asyncio
 async def test_create_embeds_description_when_embedder_set():
-    """create() calls embedder.embed() and passes the vector to repo."""
+    """create() embeds the description forged from the operators, not the root's own."""
     data_id = str(uuid4())
     ap = _make_ap_with_input(data_id)
-    # Add a description to the root node
     ap.root.properties["description"] = "weather data analysis"
+    assert ap.describe() and ap.describe() != "weather data analysis"
 
     repo = AsyncMock()
     dataset_svc = AsyncMock()
@@ -199,8 +199,21 @@ async def test_create_embeds_description_when_embedder_set():
     svc = AnalyticalPatternService(repo, dataset_svc, embedder=embedder)
     await svc.create(ap)
 
-    embedder.embed.assert_called_once_with("weather data analysis")
+    embedder.embed.assert_called_once_with(ap.describe())
     repo.create.assert_called_once_with(ap, embedding=[0.1, 0.2, 0.3])
+
+
+@pytest.mark.asyncio
+async def test_create_embeds_root_description_when_ap_has_no_operator():
+    """An AP without operators has nothing to forge a description from."""
+    ap = AnalyticalPattern(nodes=[Node(id=str(uuid4()), labels=["Analytical_Pattern"], properties={
+        "name": "ap", "description": "weather data analysis"})], edges=[])
+    embedder = MagicMock()
+    embedder.embed.return_value = [0.1, 0.2, 0.3]
+
+    await AnalyticalPatternService(AsyncMock(), AsyncMock(), embedder=embedder).create(ap)
+
+    embedder.embed.assert_called_once_with("weather data analysis")
 
 
 @pytest.mark.asyncio
@@ -241,7 +254,7 @@ async def test_list_with_filter_search_embeds_and_calls_repo_list():
     embedding = [0.1, 0.2, 0.3]
 
     embedder = MagicMock()
-    embedder.embed.return_value = embedding
+    embedder.embed_query.return_value = embedding
 
     repo = AsyncMock()
     repo.list.return_value = {"aps": [ap], "total": 1}
@@ -251,7 +264,7 @@ async def test_list_with_filter_search_embeds_and_calls_repo_list():
         q="some query", top_k=10, threshold=0.0))
     result = await svc.list(f)
 
-    embedder.embed.assert_called_once_with("some query")
+    embedder.embed_query.assert_called_once_with("some query")
     repo.list.assert_called_once_with(
         f, accessible_dataset_ids=None, query_vector=embedding)
     assert result["total"] == 1
@@ -267,7 +280,7 @@ async def test_list_with_filter_search_passes_accessible_ids():
     ds_ids = ["ds-1"]
 
     embedder = MagicMock()
-    embedder.embed.return_value = embedding
+    embedder.embed_query.return_value = embedding
 
     repo = AsyncMock()
     repo.list.return_value = {"aps": [ap], "total": 1}

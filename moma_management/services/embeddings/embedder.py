@@ -11,5 +11,9 @@ class Embedder(Protocol):
         ...
 
     def embed(self, text: str) -> List[float]:
-        """Return the embedding vector for *text*."""
+        """Return the embedding vector for *text*, a document to be searched for."""
+        ...
+
+    def embed_query(self, text: str) -> List[float]:
+        """Return the embedding vector for *text*, a search query."""
         ...
