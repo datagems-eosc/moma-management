@@ -18,7 +18,10 @@ def write_files(
     evaluation: Dataset,
     real_tasks: list[dict],
     rng: random.Random,
+    more_train_tasks: dict[str, list[Task]] | None = None,
 ) -> None:
+    """`more_train_tasks`, by AP id, are trained on only: the dev and evaluation files
+    are the same with or without them."""
     aps = evaluation.aps
     by_chain = {ap.chain: ap for ap in aps}
     train_aps = [ap for ap in training.aps if ap.split == "train"]
@@ -36,17 +39,25 @@ def write_files(
         }
 
     train_tasks, dev_tasks, test_tasks = [], [], []
+
+    def add_train_task(task: Task, ap: AP) -> None:
+        # Training only ever involves training APs, as positives and as negatives.
+        negatives = ap.hard_negatives(train_aps, rng)
+        if len(negatives) == HARD_NEGATIVES:
+            train_tasks.append({**task_line(task, ap, train_aps),
+                                "negatives": [negative.id for negative in negatives]})
+
     for ap in sorted(training.aps, key=lambda ap: ap.id):
         for task in training.tasks[ap.id]:
             if task.use == "dev":
                 # Ranked among the train and dev APs.
                 dev_tasks.append(task_line(task, ap, training.aps))
             else:
-                # Training only ever involves training APs, as positives and as negatives.
-                negatives = ap.hard_negatives(train_aps, rng)
-                if len(negatives) == HARD_NEGATIVES:
-                    train_tasks.append({**task_line(task, ap, train_aps),
-                                        "negatives": [negative.id for negative in negatives]})
+                add_train_task(task, ap)
+    # After every other task, so that the lines above are drawn the same negatives.
+    for ap in sorted(train_aps, key=lambda ap: ap.id):
+        for task in (more_train_tasks or {}).get(ap.id, []):
+            add_train_task(task, ap)
     for ap in sorted(aps, key=lambda ap: ap.id):
         for task in evaluation.tasks[ap.id]:
             test_tasks.append(task_line(task, ap, aps))

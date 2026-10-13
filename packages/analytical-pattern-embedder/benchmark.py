@@ -37,7 +37,9 @@ BASE_MODEL = "unsloth/embeddinggemma-2"
 # The commit of BASE_MODEL that is trained on, benchmarked and merged into. An adapter
 # only means something on the exact weights it was trained on, and `main` can move.
 BASE_REVISION = "c8f89cc7ecb4ba5122cd15fdd487422b2b487daf"
-MAX_SEQ_LENGTH = 256
+# Tokens kept of a text. A step of an AP takes about 60, so this fits about 15 steps; the
+# longest description of the dataset is 316. Beyond it a description loses its last steps.
+MAX_SEQ_LENGTH = 1024
 # moma-management's default `top_k`: what the Matchmaker gets to see.
 TOP_K = 10
 # Where --serve listens; AP Management's end-to-end test looks there by default.

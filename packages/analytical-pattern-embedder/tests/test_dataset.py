@@ -9,6 +9,7 @@ from generate_dataset.schemas.ap import AP, Task
 from generate_dataset.schemas.operator import Operator, Port
 from generate_dataset.step1_operators import _list_operator_in_aps
 from generate_dataset.step2_aps import generate_operator_chains
+from generate_dataset.step3_tasks import QUESTION_KIND, Questions, generate_questions
 from generate_dataset.step4_splits import _split_aps_and_tasks
 
 TASK = ("text_to_sql", "run_sql", "explain")
@@ -146,3 +147,23 @@ def test_chains_are_one_per_operator_plus_count_composed_ones():
     assert generate_operator_chains(operators, 5, [chains[-1]], random.Random(0)) == chains
     missing = next(chain for chain in itertools.permutations("ABC", 2) if chain not in chains)
     assert generate_operator_chains(operators, 5, [missing], random.Random(0)) == chains[:3] + [missing] + chains[3:]
+
+
+def test_more_questions_are_written_for_the_aps_that_start_from_one():
+    question = Port(name="nl", type="string", kind=QUESTION_KIND)
+    sql = Port(name="sql", type="string", kind="sql_query")
+    operator = lambda label, input_: Operator(label=label, name=label, description="", inputs=[input_], outputs=[sql])
+    to_sql, run = operator("to_sql", question), operator("run", sql)
+    aps = [AP(id=id_, operators=operators, graph=None, description=id_)
+           for id_, operators in (("ask", [to_sql]), ("ask and run", [to_sql, run]), ("run", [run]))]
+
+    class FakeLLM:
+        def ask(self, instructions, description, answer_type):
+            return Questions(questions=["Rain in  Zurich?", "Sales per month", f"Only for {description}", "Already  taken!"])
+
+    questions = generate_questions(FakeLLM(), aps, taken={"already taken"})
+    # Not for "run", which starts from an SQL query. A question written for two APs
+    # cannot be labelled with either, and one the dataset already has is not written twice.
+    assert {id_: [task.text for task in tasks] for id_, tasks in questions.items()} == {
+        "ask": ["Only for ask"], "ask and run": ["Only for ask and run"]}
+    assert all(task.style == "user" for tasks in questions.values() for task in tasks)

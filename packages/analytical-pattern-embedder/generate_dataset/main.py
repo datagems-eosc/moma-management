@@ -8,10 +8,11 @@ from generate_dataset.config import DOMAINS, HERE, REAL_APS_DIR, REAL_TASKS_FILE
 from generate_dataset.schemas.operator import OperatorChain
 from generate_dataset.step1_operators import generate_operators
 from generate_dataset.step2_aps import generate_aps
-from generate_dataset.step3_tasks import generate_tasks
+from generate_dataset.step3_tasks import generate_questions, generate_tasks
 from generate_dataset.step4_splits import split_dataset
 from generate_dataset.step5_files import write_files, write_graphs
 from generate_dataset.util.llm import LLM
+from generate_dataset.util.string import normalize
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
@@ -79,9 +80,17 @@ def main() -> None:
     training_ds, evaluation_ds = split_dataset(
         operators, aps, tasks_by_ap_id, SEED + 1)
 
+    # More questions for the training APs that start from one. Asked once the split is
+    # known, and kept apart from the other tasks, so that nothing else moves.
+    taken = {normalize(task.text) for tasks in tasks_by_ap_id.values() for task in tasks}
+    taken |= {normalize(task["text"]) for task in real_tasks}
+    questions = generate_questions(
+        llm, [ap for ap in training_ds.aps if ap.split == "train"], taken)
+    print(f"{sum(map(len, questions.values()))} more questions for {len(questions)} APs")
+
     # Step 5: Write the files.
     write_files(args.out, training_ds, evaluation_ds,
-                real_tasks, random.Random(SEED + 3))
+                real_tasks, random.Random(SEED + 3), questions)
     write_graphs(args.out, evaluation_ds.aps)
     print(f"Dataset written to {args.out}")
 

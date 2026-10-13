@@ -476,7 +476,7 @@ moma_management/
 
 `GET /aps` with a search query finds the Analytical Pattern that answers a user's task by comparing the embedding of the query with the one of each AP, computed from the description its operators give it (`AnalyticalPattern.describe()`). A general-purpose model does this poorly: people describe what they want to know, while an AP describes how data is processed. On the real questions collected so far (MathE and weather, mostly), `all-MiniLM-L6-v2` ranks the right AP first for 5% of them.
 
-`packages/analytical-pattern-embedder` holds what fixes this: EmbeddingGemma 2 with a LoRA adapter fine-tuned to match tasks to APs, which ranks the right AP first for 56% of the same questions. The folder contains the dataset, the training and benchmark scripts, and the way to retrain when new APs or questions come in. It is a set of scripts with its own environment; nothing in it is installed by the service, which only loads the published model through `EMBEDDER_MODEL`.
+`packages/analytical-pattern-embedder` holds what fixes this: EmbeddingGemma 2 with a LoRA adapter fine-tuned to match tasks to APs, which ranks the right AP first for 88% of the same questions. The folder contains the dataset, the training and benchmark scripts, and the way to retrain when new APs or questions come in. It is a set of scripts with its own environment; nothing in it is installed by the service, which only loads the published model through `EMBEDDER_MODEL`.
 
 See [packages/analytical-pattern-embedder/README.md](packages/analytical-pattern-embedder/README.md).
 

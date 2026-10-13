@@ -2,7 +2,7 @@
 
 Builds the dataset the analytical pattern embedder is trained and benchmarked on: a catalogue of Analytical Patterns (APs) and, for each AP, the tasks people would type to find it.
 
-Only a few real APs exist, so an LLM invents a catalogue around them. **This uses a lot of LLM tokens:** about 630 calls for a full run.
+Only a few real APs exist, so an LLM invents a catalogue around them. **This uses a lot of LLM tokens:** about 660 calls for a full run.
 
 ## Run
 
@@ -36,7 +36,7 @@ dataset/
 |---|---|
 | `step1_operators.py` | Reads the operators of the real APs, then has the LLM write 8 more for each of 22 domains. |
 | `step2_aps.py` | Builds one AP per operator, plus chains of 2 to 4 operators that fit together. |
-| `step3_tasks.py` | Has the LLM write 8 tasks per AP, returned by AP id. |
+| `step3_tasks.py` | Has the LLM write 8 tasks per AP, returned by AP id. For the training APs that start from a question in plain language, it writes 16 more questions on varied subjects, which are trained on only. |
 | `step4_splits.py` | Decides which operators the model trains on and which it is only tested on, and returns the training and the evaluation dataset. |
 | `step5_files.py` | Writes the files. |
 
@@ -53,4 +53,4 @@ The steps are in [the package README](../README.md#retrain-with-new-aps-or-tasks
 
 ## Settings
 
-They are constants at the top of the files: `SEED` and `COMPOSED_APS` in `main.py`, `DOMAINS` in `config.py`, `OPERATORS_PER_DOMAIN` in step 1, `MAX_CHAIN_LENGTH` in step 2, `HARD_NEGATIVES` in `schemas/ap.py`, `TASKS_PER_AP` in step 3, `HELD_OUT_OPERATOR_SHARE` in step 4.
+They are constants at the top of the files: `SEED` and `COMPOSED_APS` in `main.py`, `DOMAINS` in `config.py`, `OPERATORS_PER_DOMAIN` in step 1, `MAX_CHAIN_LENGTH` in step 2, `HARD_NEGATIVES` in `schemas/ap.py`, `TASKS_PER_AP` and `QUESTIONS_PER_AP` in step 3, `HELD_OUT_OPERATOR_SHARE` in step 4.

@@ -31,7 +31,7 @@ The adapter (the LoRA layer) is the only thing training changes; the base model 
 
 When to do it:
 
-- **A real AP with new operators joins the platform.** Not strictly needed: the model still ranks APs made of operators it never saw (nDCG@10 0.73, against 0.85 for operators it trained on). Retraining closes that gap.
+- **A real AP with new operators joins the platform.** Not strictly needed: the model still ranks APs made of operators it never saw (nDCG@10 0.74, against 0.85 for operators it trained on). Retraining closes that gap.
 - **New real questions were collected.** They are only ever evaluated on, never trained on, so they tell you how good the model is; they do not change it. The exception is a question answered by a chain of operators the catalogue does not have yet: that chain becomes an AP, and the model trains on it.
 - **The wording of `AnalyticalPattern.describe()` changed.** Then retraining is required.
 
@@ -47,9 +47,9 @@ Steps, from this folder:
    |---|---|
    | A question on a chain the catalogue already has | none |
    | A question on a new chain of existing operators | 1 |
-   | An AP with a new operator | nearly all of them again, about 630 |
+   | An AP with a new operator | nearly all of them again, about 660 |
 3. **Check it.** `uv run --group dev pytest`, then `git diff --stat dataset/generated` to see what changed.
-4. **Train.** `uv run train.py` needs a CUDA GPU with 8 GB of memory and takes about 17 minutes on a laptop RTX. It prints the dev nDCG@10 before and after (0.55 to 0.78 on the current dataset) and leaves the best adapter in `models/analytical_pattern_embedder`. `uv run train.py --smoke` checks the setup in a minute without replacing the adapter.
+4. **Train.** `uv run train.py` needs a CUDA GPU with 8 GB of memory and takes about 26 minutes on a laptop RTX. It prints the dev nDCG@10 before and after (0.55 to 0.78 on the current dataset) and leaves the best adapter in `models/analytical_pattern_embedder`. `uv run train.py --smoke` checks the setup in a minute without replacing the adapter.
 5. **Benchmark.** `uv run benchmark.py` writes `.benchmarks/analytical_pattern_embedder_<date>.md`. Compare it with the previous report: the fine-tuned rows move by about 0.01 between two trainings on the same data, so only a larger change means something.
 6. **Commit** `dataset/inputs` and `dataset/generated/training` and `evaluation`. The adapter is not versioned: release the model (below).
 
