@@ -73,7 +73,7 @@ class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRe
 
     async def delete(self, relationship_id: str) -> None:
         """Delete the relationship and its connected subgraph; leaves dataset nodes intact."""
-        await self._session.run(
+        result = await self._session.run(
             """//cypher
             MATCH (root:BasicDLElement {id: $relationshipId})
             OPTIONAL MATCH path=(root)-[*1..4]-(m)
@@ -85,6 +85,7 @@ class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRe
             relationshipId=str(relationship_id),
             forbiddenEdges=self.FORBIDDEN_EDGES,
         )
+        await result.consume()
 
     async def delete_referencing(self, dataset_id: str) -> None:
         """Delete every relationship subgraph that targets *dataset_id* (cascade on dataset deletion).
@@ -94,7 +95,7 @@ class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRe
         relationship linking dataset A and dataset B is fully removed when A
         is deleted, without ever touching B.
         """
-        await self._session.run(
+        result = await self._session.run(
             """//cypher
             MATCH (target:`sc:Dataset` {id: $datasetId})<-[:HAS_TARGET]-(seed)
             WHERE NOT seed:`sc:Dataset`
@@ -108,6 +109,7 @@ class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRe
             """,
             datasetId=str(dataset_id),
         )
+        await result.consume()
 
     # ------------------------------------------------------------------
     # Read
