@@ -81,6 +81,13 @@ async def container_lifespan(_: FastAPI):
         async with driver.session() as session:
             await Neo4jAnalyticalPatternRepository.ensure_vector_index(session, _embedder.dimensions)
 
+    # Every constraint and index, before the first request: requests creating them at
+    # the same time race, and the losers fail.
+    async with driver.session() as session:
+        for repository in (Neo4jDatasetRepository, Neo4jDatasetRelationshipRepository,
+                           Neo4jAnalyticalPatternRepository, Neo4jTaskRepository, Neo4jMlModelRepository):
+            await repository.create_with_indexes(session)
+
     yield
     await driver.close()
 

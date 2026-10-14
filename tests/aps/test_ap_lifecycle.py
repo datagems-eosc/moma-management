@@ -201,3 +201,32 @@ async def test_concurrent_creates_all_get_their_embedding(neo4j_container_module
         for ap in aps:
             await repo.delete(str(ap.root.id))
     await driver.close()
+
+
+@pytest.mark.asyncio
+async def test_concurrent_creates_sharing_operators_store_one(neo4j_container_module: Neo4jContainer) -> None:
+    """Checked one at a time: otherwise each would find the shared ids still free."""
+    driver = AsyncGraphDatabase.driver(
+        neo4j_container_module.get_connection_url(),
+        auth=(neo4j_container_module.username, neo4j_container_module.password))
+    async with driver.session() as session:
+        # What create_with_indexes runs once per process, for this test's database.
+        for statement in Neo4jAnalyticalPatternRepository._INDEX_STATEMENTS:
+            await session.run(statement)
+    first = _load_rereid(_TWO_OPERATORS)
+    aps = [first] + [_with_new_root(first) for _ in range(7)]
+
+    async def create(ap: AnalyticalPattern) -> bool:
+        async with driver.session() as session:
+            try:
+                await Neo4jAnalyticalPatternRepository(session).create(ap)
+                return True
+            except ConflictError:
+                return False
+
+    assert sum(await asyncio.gather(*map(create, aps))) == 1
+    async with driver.session() as session:
+        repo = Neo4jAnalyticalPatternRepository(session)
+        for ap in aps:
+            await repo.delete(str(ap.root.id))
+    await driver.close()

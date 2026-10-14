@@ -46,6 +46,9 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
         "FOR (n:Evaluation) REQUIRE n.id IS UNIQUE",
         "CREATE INDEX evaluation_ap_id IF NOT EXISTS "
         "FOR (n:Evaluation) ON (n.ap_id)",
+        # Without it, transactions merging the same lock at once each create their own.
+        "CREATE CONSTRAINT lock_name_unique IF NOT EXISTS "
+        "FOR (n:_Lock) REQUIRE n.name IS UNIQUE",
     ]
     _indexes_ensured: bool = False
     # When deserializing nodes, ignore these properties
@@ -91,6 +94,10 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
 
     async def _create(self, tx: AsyncManagedTransaction, ap: AnalyticalPattern,
                       embedding: Optional[List[float]]) -> None:
+        # One AP stored at a time: two transactions checking the same new ids at once would
+        # both find them free. The lock is held until this transaction ends.
+        # shortcut: serializes every AP creation; fine while APs are registered, not bulk-loaded.
+        await tx.run("MERGE (lock:_Lock {name: 'analytical_pattern_create'}) SET lock.taken = timestamp()")
         owned = [str(n.id) for n in ap.nodes
                  if "Operator" in n.labels or ("ResultType" in n.labels and "Data" not in n.labels)]
         result = await tx.run(
@@ -123,7 +130,7 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
         """Delete what the AP owns: its root, its evaluations, its operators and their
         internal ResultType nodes. Data nodes, and operators another AP also consists of
         (stored before ids were checked), are left in place."""
-        await self._session.run(
+        result = await self._session.run(
             """//cypher
             MATCH (root:Analytical_Pattern {id: $ap_id})
             OPTIONAL MATCH (root)-[:consist_of]->(op:Operator)
@@ -136,6 +143,9 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             """,
             ap_id=str(ap_id),
         )
+        # Wait for the deletion: an unconsumed result can still be running when the
+        # request returns, and a read then finds a half-deleted AP.
+        await result.consume()
 
     # ------------------------------------------------------------------
     # Vector index

@@ -14,7 +14,9 @@
 ### Bug Fixes
 
 - Analytical patterns: deleting an AP deleted every AP sharing a node with it, and every AP those shared one with, up to ten edges away. It now deletes only what the AP owns: its root, its evaluations, its operators and their internal `ResultType` nodes, which were never deleted before. Reading an AP no longer walks past another AP's root.
-- Analytical patterns: the vector index is created at startup. It was created by the first request storing an embedding, and requests doing so at the same time failed with a 500 after storing their AP without its embedding.
+- Startup creates every constraint and index, the AP vector index included. They were created by the first requests, and requests doing so at the same time failed with a 500, some after storing an AP without its embedding.
+- Analytical patterns: APs are stored one at a time, so that two requests reusing the same node ids cannot both pass the ownership check.
+- Analytical patterns: `DELETE /aps/{id}` returns once the AP is deleted. It could return while the deletion was still running, and a read in between failed on a half-deleted AP.
 - Analytical patterns: an AP and its embedding are stored in one transaction, so an interrupted request can no longer leave an AP that search never finds.
 - Dataset relationships: `GET /datasets/relationships/{id}` and `GET /datasets/{id}/relationships` no longer fail with `list index out of range` / a `HAS_TARGET` validation error. The repository stripped `HAS_TARGET` edges and the linked `sc:Dataset` nodes from the graph it returned, producing a relationship that could not survive its own model validation. Reads now stop *at* the dataset nodes instead of forbidding the edge, so the datasets come back as reference stubs (id + labels) along with every `HAS_TARGET` edge, and a full subgraph now round-trips without losing edges.
 - Dataset relationships: creating a relationship no longer writes the `sc:Dataset` nodes carried in the request body. They are references to existing datasets, so properties or extra labels sent on them are ignored instead of overwriting the stored dataset.
