@@ -4,10 +4,11 @@ from logging import getLogger
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
-from neo4j import AsyncSession
+from neo4j import AsyncManagedTransaction, AsyncSession
 
 from moma_management.domain import EDGE_CONSTRAINTS_PATH
 from moma_management.domain.analytical_pattern import AnalyticalPattern
+from moma_management.domain.exceptions import ConflictError
 from moma_management.domain.filters import AnalyticalPatternFilter
 from moma_management.domain.generated.edges.edge_schema import Edge
 from moma_management.domain.generated.nodes.node_schema import Node
@@ -47,7 +48,6 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
         "FOR (n:Evaluation) ON (n.ap_id)",
     ]
     _indexes_ensured: bool = False
-    _vector_index_ensured: bool = False
     # When deserializing nodes, ignore these properties
     _NODE_IGNORE_PROPS: frozenset[str] = frozenset({"description_embedding"})
 
@@ -80,11 +80,37 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
     # ------------------------------------------------------------------
 
     async def create(self, ap: AnalyticalPattern, embedding: Optional[List[float]] = None) -> None:
-        """Store the full AP subgraph using the mixin's MERGE/SET helpers."""
-        await self._session.execute_write(self.create_pgson, ap)
+        """Store the full AP subgraph and its embedding, in one transaction.
+
+        Raises:
+            ConflictError: if one of its operators, or one of their internal ResultType
+                nodes, already belongs to another AP. Nodes are stored by id, so the two
+                APs would share it, and deleting one would delete part of the other.
+        """
+        await self._session.execute_write(self._create, ap, embedding)
+
+    async def _create(self, tx: AsyncManagedTransaction, ap: AnalyticalPattern,
+                      embedding: Optional[List[float]]) -> None:
+        owned = [str(n.id) for n in ap.nodes
+                 if "Operator" in n.labels or ("ResultType" in n.labels and "Data" not in n.labels)]
+        result = await tx.run(
+            """//cypher
+            MATCH (n) WHERE (n:Operator OR (n:ResultType AND NOT n:Data)) AND n.id IN $owned
+            MATCH (n)-[:input|output*0..1]-(:Operator)<-[:consist_of]-(other:Analytical_Pattern)
+            WHERE other.id <> $root_id
+            RETURN DISTINCT n.id AS id, other.id AS other_id
+            """,
+            root_id=str(ap.root.id), owned=owned,
+        )
+        clashes = [(record["id"], record["other_id"]) async for record in result]
+        if clashes:
+            raise ConflictError(
+                "These nodes already belong to another analytical pattern; give them new ids: "
+                + ", ".join(f"{id_} (in {other})" for id_, other in clashes))
+
+        await self.create_pgson(tx, ap)
         if embedding is not None:
-            await self._ensure_index(len(embedding))
-            await self._session.run(
+            await tx.run(
                 """//cypher
                 MATCH (n:Analytical_Pattern {id: $id})
                 CALL db.create.setNodeVectorProperty(n, 'description_embedding', $embedding)
@@ -94,45 +120,36 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             )
 
     async def delete(self, ap_id: str) -> None:
-        """Delete the AP and its connected subgraph; leaves data nodes intact.
-
-        ResultType nodes are internal to the AP subgraph (connected via
-        input/output edges which are in FORBIDDEN_EDGES).  A second query
-        explicitly deletes them so no orphaned ResultType nodes remain.
-        """
+        """Delete what the AP owns: its root, its evaluations, its operators and their
+        internal ResultType nodes. Data nodes, and operators another AP also consists of
+        (stored before ids were checked), are left in place."""
         await self._session.run(
             """//cypher
             MATCH (root:Analytical_Pattern {id: $ap_id})
-            OPTIONAL MATCH path=(root)-[*1..10]-(m)
-            WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
-            WITH root, collect(DISTINCT m) AS related
-            FOREACH (n IN related | DETACH DELETE n)
+            OPTIONAL MATCH (root)-[:consist_of]->(op:Operator)
+            WHERE NOT EXISTS { MATCH (op)<-[:consist_of]-(other:Analytical_Pattern) WHERE other <> root }
+            OPTIONAL MATCH (op)-[:input|output]-(rt:ResultType) WHERE NOT rt:Data
+            OPTIONAL MATCH (root)-[:is_measured_by]->(evaluation:Evaluation)
+            WITH root, collect(DISTINCT op) + collect(DISTINCT rt) + collect(DISTINCT evaluation) AS owned
+            FOREACH (n IN owned | DETACH DELETE n)
             DETACH DELETE root
             """,
             ap_id=str(ap_id),
-            forbiddenEdges=self.FORBIDDEN_EDGES,
-        )
-        # Remove internal ResultType nodes attached to Operators in this AP.
-        # Data nodes (which are also ResultType) are persistent and must NOT be deleted.
-        await self._session.run(
-            """//cypher
-            MATCH (root:Analytical_Pattern {id: $ap_id})
-            OPTIONAL MATCH (root)-[:consist_of]->(:Operator)-[:input|output]-(rt:ResultType)
-            WHERE NOT rt:Data
-            DETACH DELETE rt
-            """,
-            ap_id=str(ap_id),
         )
 
     # ------------------------------------------------------------------
-    # Vector index (lazy)
+    # Vector index
     # ------------------------------------------------------------------
 
-    async def _ensure_index(self, dimensions: int) -> None:
-        """Create the vector index on first use (idempotent, class-level flag)."""
-        if Neo4jAnalyticalPatternRepository._vector_index_ensured:
-            return
-        await self._session.run(
+    @staticmethod
+    async def ensure_vector_index(session: AsyncSession, dimensions: int) -> None:
+        """Create the vector index AP search uses, for vectors of `dimensions`.
+
+        Called once at startup: requests creating it concurrently race, and the loser
+        fails. Raises when an existing index holds vectors of another size, which is what
+        is left after the embedder changes and the stored APs were not re-embedded.
+        """
+        await session.run(
             f"CREATE VECTOR INDEX `{_VECTOR_INDEX_NAME}` IF NOT EXISTS "
             "FOR (n:Analytical_Pattern) ON (n.description_embedding) "
             "OPTIONS {indexConfig: {"
@@ -140,7 +157,17 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             "  `vector.similarity_function`: 'cosine'"
             "}}",
         )
-        Neo4jAnalyticalPatternRepository._vector_index_ensured = True
+        result = await session.run(
+            "SHOW VECTOR INDEXES YIELD name, options WHERE name = $name RETURN options",
+            name=_VECTOR_INDEX_NAME,
+        )
+        record = await result.single()
+        existing = record["options"]["indexConfig"]["vector.dimensions"]
+        if existing != dimensions:
+            raise RuntimeError(
+                f"The vector index '{_VECTOR_INDEX_NAME}' holds {existing}-dimension vectors, "
+                f"but the embedder makes {dimensions}-dimension ones. Drop the index and "
+                "re-embed the stored analytical patterns before changing the embedder.")
         logger.info("Vector index '%s' ensured (%d dimensions)",
                     _VECTOR_INDEX_NAME, dimensions)
 
@@ -163,6 +190,8 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             MATCH (root:Analytical_Pattern {id: $ap_id})
             OPTIONAL MATCH path=(root)-[*1..4]-(m)
             WHERE NONE(r IN relationships(path) WHERE type(r) IN $forbiddenEdges)
+              // Another AP's root ends the walk: what lies past it is that AP's.
+              AND NONE(n IN nodes(path)[1..] WHERE n:Analytical_Pattern)
             RETURN root, m, relationships(path) AS rels
         """
         result = await self._session.run(
@@ -289,7 +318,6 @@ class Neo4jAnalyticalPatternRepository(Neo4jPgJsonMixin, AnalyticalPatternReposi
             search = filter.search
             top_k = search.top_k if search else 10
             threshold = search.threshold if search else 0.0
-            await self._ensure_index(len(query_vector))
 
             access_clause_clean = access_clause.strip().removeprefix("WHERE").strip()
             access_and = f"AND ({access_clause_clean})" if access_clause_clean else ""

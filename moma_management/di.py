@@ -78,6 +78,8 @@ async def container_lifespan(_: FastAPI):
         )
         logger.info("Embedder loaded: %s (%d dimensions)",
                     embedder_model, _embedder.dimensions)
+        async with driver.session() as session:
+            await Neo4jAnalyticalPatternRepository.ensure_vector_index(session, _embedder.dimensions)
 
     yield
     await driver.close()

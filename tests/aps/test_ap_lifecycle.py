@@ -11,6 +11,7 @@ For each JSON file at the top level of assets/aps/ the test:
 All tests share a single module-scoped Neo4j container.
 """
 
+import asyncio
 import json
 from pathlib import Path
 from typing import AsyncGenerator, Generator
@@ -22,6 +23,7 @@ from neo4j import AsyncGraphDatabase
 from testcontainers.neo4j import Neo4jContainer
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
+from moma_management.domain.exceptions import ConflictError
 from moma_management.repository.analytical_pattern import (
     Neo4jAnalyticalPatternRepository,
 )
@@ -101,3 +103,101 @@ async def test_ap_fixture_lifecycle(
 
     deleted = await ap_repository.get(root_id)
     assert deleted is None, f"AP from {ap_path.name} still exists after deletion"
+
+
+# ---------------------------------------------------------------------------
+# Nodes owned by one AP
+# ---------------------------------------------------------------------------
+
+_TWO_OPERATORS = _APS_DIR / "ap_sql_typed.json"
+
+
+def _with_new_root(ap: AnalyticalPattern) -> AnalyticalPattern:
+    """`ap` under another root id: a second AP made of the same operator nodes."""
+    raw = ap.model_dump(by_alias=True, mode="json")
+    old, new = str(ap.root.id), str(uuid4())
+    for node in raw["nodes"]:
+        if node["id"] == old:
+            node["id"] = new
+    for edge in raw["edges"]:
+        edge["from"] = new if edge["from"] == old else edge["from"]
+        edge["to"] = new if edge["to"] == old else edge["to"]
+    return AnalyticalPattern.model_validate(raw)
+
+
+def _ids(ap: AnalyticalPattern, keep) -> list[str]:
+    return [str(n.id) for n in ap.nodes if keep(n.labels)]
+
+
+async def _existing(repo: Neo4jAnalyticalPatternRepository, ids: list[str]) -> int:
+    result = await repo._session.run("MATCH (n) WHERE n.id IN $ids RETURN count(n) AS n", ids=ids)
+    return (await result.single())["n"]
+
+
+@pytest.mark.asyncio
+async def test_create_rejects_operators_of_another_ap(ap_repository: Neo4jAnalyticalPatternRepository) -> None:
+    ap = _load_rereid(_TWO_OPERATORS)
+    await ap_repository.create(ap)
+    await ap_repository.create(ap)  # the same AP again is fine
+
+    with pytest.raises(ConflictError, match=str(ap.root.id)):
+        await ap_repository.create(_with_new_root(ap))
+    await ap_repository.delete(str(ap.root.id))
+
+
+@pytest.mark.asyncio
+async def test_delete_leaves_an_ap_sharing_its_operators(ap_repository: Neo4jAnalyticalPatternRepository) -> None:
+    """APs stored before ids were checked may share operator nodes."""
+    first = _load_rereid(_TWO_OPERATORS)
+    second = _with_new_root(first)
+    await ap_repository.create(first)
+    await ap_repository._session.execute_write(ap_repository.create_pgson, second)
+
+    read = await ap_repository.get(str(first.root.id))
+    assert [str(n.id) for n in read.nodes if "Analytical_Pattern" in n.labels] == [str(first.root.id)]
+
+    await ap_repository.delete(str(first.root.id))
+    assert await ap_repository.get(str(first.root.id)) is None
+    kept = await ap_repository.get(str(second.root.id))
+    assert len([n for n in kept.nodes if "Operator" in n.labels]) == 2
+    await ap_repository.delete(str(second.root.id))
+
+
+@pytest.mark.asyncio
+async def test_delete_removes_internal_result_nodes_only(ap_repository: Neo4jAnalyticalPatternRepository) -> None:
+    ap = _load_rereid(_TWO_OPERATORS)
+    internal = _ids(ap, lambda labels: "ResultType" in labels and "Data" not in labels)
+    data = _ids(ap, lambda labels: "Data" in labels)
+    assert internal and data
+    await ap_repository.create(ap)
+
+    await ap_repository.delete(str(ap.root.id))
+    assert await _existing(ap_repository, internal) == 0
+    assert await _existing(ap_repository, data) == len(data)
+
+
+@pytest.mark.asyncio
+async def test_concurrent_creates_all_get_their_embedding(neo4j_container_module: Neo4jContainer) -> None:
+    driver = AsyncGraphDatabase.driver(
+        neo4j_container_module.get_connection_url(),
+        auth=(neo4j_container_module.username, neo4j_container_module.password))
+    aps = [_load_rereid(_TWO_OPERATORS) for _ in range(10)]
+
+    async def create(ap: AnalyticalPattern) -> None:
+        async with driver.session() as session:
+            await Neo4jAnalyticalPatternRepository(session).create(ap, embedding=[0.1, 0.2, 0.3])
+
+    async with driver.session() as session:
+        await Neo4jAnalyticalPatternRepository.ensure_vector_index(session, 3)
+        await asyncio.gather(*map(create, aps))
+        result = await session.run(
+            "MATCH (n:Analytical_Pattern) WHERE n.id IN $ids AND n.description_embedding IS NOT NULL "
+            "RETURN count(n) AS n", ids=[str(ap.root.id) for ap in aps])
+        assert (await result.single())["n"] == len(aps)
+
+        with pytest.raises(RuntimeError, match="3-dimension"):
+            await Neo4jAnalyticalPatternRepository.ensure_vector_index(session, 4)
+        repo = Neo4jAnalyticalPatternRepository(session)
+        for ap in aps:
+            await repo.delete(str(ap.root.id))
+    await driver.close()

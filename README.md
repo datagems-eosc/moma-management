@@ -279,6 +279,7 @@ Configuration is managed entirely through environment variables:
 | `PERMISSIONS_GATEWAY_URL` | no       | *(empty)*                            | External gateway URL for dataset-level authorization (disabled if unset) |
 | `EMBEDDER_MODEL`          | no       | `all-MiniLM-L6-v2`                  | Sentence-transformers model for AP semantic search (set empty to disable). `org/model:v1` pins a tag, branch or commit of a Hugging Face model |
 | `EMBEDDER_LORA_PATH`      | no       | *(empty)*                            | Folder of a LoRA adapter to load on top of `EMBEDDER_MODEL`              |
+| `OMP_NUM_THREADS`         | no       | number of host cores                 | Threads the embedder uses on CPU. Set it to the container's CPU limit: by default PyTorch takes one thread per core of the host, and on a busy or CPU-limited machine an embedding then takes seconds instead of milliseconds |
 | `APP_PORT`                | no       | `5000`                               | TCP port the Uvicorn server listens on                                    |
 | `APP_CONCURRENCY`         | no       | `1`                                  | Number of Uvicorn worker processes                                        |
 | `OTEL_SERVICE_NAME`       | no       | `moma-management`                    | Service name reported to the OTel backend                                |
