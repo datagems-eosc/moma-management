@@ -116,6 +116,10 @@ class AP:
         """
         chain = tuple(op.label for op in operators)
         root_id = str(uuid5(NAMESPACE, "ap:" + ">".join(chain)))
+        # Every node id belongs to this AP alone: MoMa stores nodes by id, so two APs
+        # sharing an operator id would share the node.
+        node_id = {op.label: str(uuid5(NAMESPACE, f"operator:{'>'.join(chain)}:{op.label}"))
+                   for op in operators}
         nodes = [{
             "id": root_id,
             "labels": ["Analytical_Pattern"],
@@ -141,17 +145,17 @@ class AP:
                 nodes.append({"id": result_id, "labels": ["ResultType", output.type],
                               "properties": {"name": output.name}})
                 edges += [
-                    {"from": producer.id, "to": result_id, "labels": ["output"],
+                    {"from": node_id[producer.label], "to": result_id, "labels": ["output"],
                      "properties": {"mapping": {f"to['{output.name}']": f"from['outputs']['{output.name}']"}}},
-                    {"from": result_id, "to": consumer.id, "labels": ["input"],
+                    {"from": result_id, "to": node_id[consumer.label], "labels": ["input"],
                      "properties": {"mapping": {f"to['inputs']['{input_name}']": f"from['{output.name}']"}}},
                 ]
-            for producer_id in dict.fromkeys(producer.id for producer, _ in wiring.values()):
-                edges.append({"from": consumer.id, "to": producer_id,
+            for producer_id in dict.fromkeys(node_id[producer.label] for producer, _ in wiring.values()):
+                edges.append({"from": node_id[consumer.label], "to": producer_id,
                              "labels": ["follows"], "properties": {}})
 
             nodes.append({
-                "id": consumer.id,
+                "id": node_id[consumer.label],
                 "labels": [consumer.label, "Operator"],
                 "properties": {
                     "name": consumer.name,
@@ -162,7 +166,7 @@ class AP:
                     "outputs": [port.to_property() for port in consumer.outputs],
                 },
             })
-            edges.append({"from": root_id, "to": consumer.id,
+            edges.append({"from": root_id, "to": node_id[consumer.label],
                          "labels": ["consist_of"]})
         graph = AnalyticalPattern.model_validate(
             {"nodes": nodes, "edges": edges})

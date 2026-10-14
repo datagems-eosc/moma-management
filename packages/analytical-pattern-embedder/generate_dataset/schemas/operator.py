@@ -1,6 +1,6 @@
 """The operator, the building block of every AP, and its ports."""
 
-from uuid import UUID, uuid5
+from uuid import UUID
 
 from pydantic import BaseModel
 from pydantic.json_schema import SkipJsonSchema
@@ -87,10 +87,6 @@ class Operator(BaseModel):
     @property
     def ports(self) -> list[Port]:
         return [*self.inputs, *self.outputs]
-
-    @property
-    def id(self) -> str:
-        return str(uuid5(NAMESPACE, f"operator:{self.label}"))
 
     def pascal_label(self) -> str:
         """The label as Pascal_Case_With_Underscores, ending in _Operator."""

@@ -126,7 +126,10 @@ def test_operators_are_wired_by_kind_and_type_not_by_name():
     assert to_sql.feeds(geocode) == []
 
     ap = AP.build([to_sql, run])
-    assert ap.graph.wiring == [(to_sql.id, "query", run.id, "sql")]
+    ids = {op.labels[0]: str(op.id) for op in ap.graph.operators}
+    assert ap.graph.wiring == [(ids[to_sql.label], "query", ids[run.label], "sql")]
+    # Node ids are the AP's own: the same operator in another AP is another node.
+    assert not {str(n.id) for n in ap.graph.nodes} & {str(n.id) for n in AP.build([to_sql]).graph.nodes}
     assert "takes sql (string) from step 1 and is_safe (boolean) as input" in ap.description
     # The kinds stay in the generator; `required` and `default` reach the graph.
     ports = next(op for op in ap.graph.operators if run.label in op.labels).properties["inputs"]
