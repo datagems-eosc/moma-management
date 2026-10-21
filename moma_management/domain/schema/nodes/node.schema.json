@@ -289,6 +289,24 @@
                 "properties": {
                     "labels": {
                         "contains": {
+                            "const": "JSONField"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset/jsonField.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
                             "const": "Text"
                         }
                     }

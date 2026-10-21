@@ -1,0 +1,28 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "nodes/dataset/jsonField.schema.json",
+    "title": "JSONField",
+    "$defs": {
+        "pgProperties": {
+            "allOf": [
+                {
+                    "$ref": "column.schema.json#/$defs/pgProperties"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "jsonPath": {
+                            "type": "string",
+                            "description": "Absolute JSONPath of the field in the source file, e.g. $.stations[*].location.lat"
+                        },
+                        "repeated": {
+                            "type": "boolean",
+                            "description": "True when the path goes through an array, so the field holds several values per record"
+                        }
+                    }
+                }
+            ],
+            "unevaluatedProperties": true
+        }
+    }
+}

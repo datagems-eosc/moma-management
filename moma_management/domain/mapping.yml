@@ -62,12 +62,11 @@ Distribution:
     - case: "encodingFormat == 'application/vnd.ms-excel' && @type == 'cr:FileObject'"
       value: [ "EXCEL", "Data", "@type" ]
       # TODO: add mapping for application/vnd.openxmlformats-officedocument.presentationml.presentation (PPTX)
-      # JSON
-    - case: "encodingFormat == 'application/json' && @type == 'cr:FileSet'"
+      # JSON and JSON Lines (application/json, application/jsonl, application/jsonlines)
+    - case: "encodingFormat ^= 'application/json' && @type == 'cr:FileSet'"
       value: [ "JSONSet", "Data", "@type" ]
-    - case: "encodingFormat == 'application/json' && @type == 'cr:FileObject'"
+    - case: "encodingFormat ^= 'application/json' && @type == 'cr:FileObject'"
       value: [ "JSON", "Data", "@type" ]
-      # TODO: add mapping for application/jsonl (JSONL)
       # TODO: add mapping for application/x-ipynb+json (Jupyter notebooks)
       # XML
     - case: "encodingFormat == 'application/xml' && @type == 'cr:FileSet'"
@@ -172,6 +171,21 @@ RecordSet:
         numParagraphs: numParagraphs
         fleschKincaidGrade: fleschKincaidGrade
 
+    # A RecordSet read from a JSON or JSON Lines file
+    - when: "_source.encodingFormat ^= 'application/json'"
+      labels: [ "cr:RecordSet" ]
+      map:
+        name: name
+        description: description
+        examples: examples
+        summary: summary
+        keywords: keywords
+        recordPath: recordPath
+        jsonShape: jsonShape
+        recordCount: recordCount
+        maxDepth: maxDepth
+        schemaConsistencyPercentage: schemaConsistencyPercentage
+
 Field:
   id: "@id"
   match: "@type == 'cr:Field'"
@@ -205,6 +219,31 @@ Field:
           to: source.fileObject.@id
           label: source/fileObject
 
+    # JSONField: source is a JSON or JSON Lines file. Keeps the Column label so
+    # existing Column queries and the statistics edge work unchanged.
+    # shortcut: fields read from a FileSet (jsonShape file_per_record) get no source edge; add a source/fileSet edge and its constraint when a profile needs it.
+    - when: "_source.encodingFormat ^= 'application/json'"
+      type: JSONField
+      labels: [ "Column", "JSONField", "@type" ]
+      map:
+        type: "@type"
+        name: name
+        description: description
+        dataType: dataType
+        semanticType: semanticType
+        sample: sample
+        jsonPath: source.extract.jsonPath
+        repeated: repeated
+
+      edges:
+        - from: parent
+          to: self
+          label: field
+
+        - from: self
+          to: source.fileObject.@id
+          label: source/fileObject
+
 # Statistics for a field. 
 # This is a child of a Field, but it doesn't have to be because not all datasets have statistics. 
 Statistics:
@@ -222,6 +261,8 @@ Statistics:
     missingCount: missingCount
     missingPercentage: missingPercentage
     histogram: histogram
+    topValues: topValues
+    jsonTypes: jsonTypes
     uniqueCount: uniqueCount
     variance: variance
     range: range

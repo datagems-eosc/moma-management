@@ -21,6 +21,7 @@ The diagram below shows all MoMa node types and their relationships. Solid arrow
 | `TextSet`, `PDFSet`, `VideoSet`, `ImageSet` | Unstructured data container types |
 | `Table`, `CSV`, `JSON`, `XML`, `Text`, `PDF`, `Video`, `Image` | Leaf-level data items |
 | `ColumnTable`, `ColumnCSV`, `Column` | Column-level descriptors within relational or CSV data |
+| `JSONField` | A `Column` read from a JSON or JSON Lines file, located by its `jsonPath` |
 | `Statistics` | Column statistics node |
 | `IntervalColumnStatistics` | Column statistics computed over a specific time window (streaming datasets) |
 | `cr:RecordSet` | Croissant record-set node |
@@ -89,6 +90,7 @@ graph LR
   ColumnTable["Column Table"]:::dataLeaf
   ColumnCSV["Column CSV"]:::dataLeaf
   Column:::dataLeaf
+  JSONField:::dataLeaf
   Statistics:::dataLeaf
   IntervalColumnStatistics["Interval Column Statistics"]:::dataLeaf
   RecordSet["cr:RecordSet"]:::record
@@ -119,6 +121,7 @@ graph LR
   ColumnTable -- containedIn --> Table
   ColumnCSV -- containedIn --> CSV
   RecordSet -- field --> Column
+  JSONField -. "is-a" .-> Column
   Column -- "source/fileObject" --> Data
   Column -- statistics --> Statistics
   Column -- intervalStatistics --> IntervalColumnStatistics

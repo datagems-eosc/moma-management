@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from moma_management.domain.dataset import Dataset
 from moma_management.domain.generated.moma_schema import MoMaGraphModel
 from moma_management.domain.mapping_engine import croissant_to_pgjson
 from moma_management.legacy.converters import Croissant2PGjson
@@ -408,3 +409,117 @@ def test_column_describes_itself(mapping_file: Path):
     assert props.get("description") == "the first column"
     assert props.get("dataType") == "sc:Integer"
     assert props.get("type") == "cr:Field"
+
+
+def _json_stations_graph(mapping_file: Path) -> dict:
+    profile = json.load((PROFILES_DIR / "heavy" / "json_stations_heavy.json").open("r"))
+    return croissant_to_pgjson(profile, yaml.safe_load(mapping_file.open("r")))
+
+
+def test_json_recordset_attributes(mapping_file: Path):
+    """
+    A cr:RecordSet read from a JSON file has no source of its own (only its
+    fields do), so it must take its fields' file to get the JSON variant.
+    """
+    result = _json_stations_graph(mapping_file)
+
+    props = next(n for n in result["nodes"]
+                 if "cr:RecordSet" in n["labels"])["properties"]
+
+    assert props["recordPath"] == "$.stations[*]"
+    assert props["jsonShape"] == "wrapped_records"
+    assert props["recordCount"] == 412
+    assert props["schemaConsistencyPercentage"] == 93.0
+
+
+def test_json_fields_are_mapped(mapping_file: Path):
+    """
+    Fields of a JSON file become JSONField nodes, linked like CSV columns, with
+    their JSON statistics. Before JSONField they had no labels, and the whole
+    dataset failed validation.
+    """
+    result = _json_stations_graph(mapping_file)
+    by_id = {n["id"]: n for n in result["nodes"]}
+    edges = {(e["from"], e["labels"][0], e["to"]) for e in result["edges"]}
+
+    rs = next(n for n in result["nodes"] if "cr:RecordSet" in n["labels"])
+    file = next(n for n in result["nodes"] if "JSON" in n["labels"])
+    fields = [n for n in result["nodes"] if "JSONField" in n["labels"]]
+
+    assert len(fields) == 11
+    for f in fields:
+        assert set(f["labels"]) == {"Column", "JSONField", "cr:Field"}
+        assert (rs["id"], "field", f["id"]) in edges
+        assert (f["id"], "source/fileObject", file["id"]) in edges
+
+    operator = next(f for f in fields if f["properties"]["name"] == "operator")
+    assert operator["properties"]["jsonPath"] == "$.stations[*].operator"
+    assert operator["properties"]["repeated"] is False
+
+    stats_id = next(to for frm, label, to in edges
+                    if frm == operator["id"] and label == "statistics")
+    stats = by_id[stats_id]["properties"]
+    assert stats["missingCount"] == 173
+    assert json.loads(stats["jsonTypes"]) == {"string": 239}
+    assert json.loads(stats["topValues"])[0] == {"value": "NOA", "count": 182}
+
+    Dataset.model_validate(result)
+
+
+@pytest.mark.parametrize("encoding_format", ["application/json", "application/jsonl", "application/jsonlines"])
+def test_json_files_labelled(mapping_file: Path, encoding_format: str):
+    """JSON and JSON Lines files get the JSON labels, and a file set contains its files."""
+    mapping = yaml.safe_load(mapping_file.open("r"))
+
+    profile = {
+        "@id": "ds-1",
+        "@type": "sc:Dataset",
+        "name": "test",
+        "distribution": [
+            {"@type": "cr:FileSet", "@id": "fs-1", "name": "readings",
+             "encodingFormat": encoding_format},
+            {"@type": "cr:FileObject", "@id": "fo-1", "name": "part-1",
+             "encodingFormat": encoding_format, "containedIn": {"@id": "fs-1"}},
+        ],
+    }
+
+    result = croissant_to_pgjson(profile, mapping)
+    labels = {n["id"]: n["labels"] for n in result["nodes"]}
+
+    assert "JSONSet" in labels["fs-1"]
+    assert "JSON" in labels["fo-1"]
+    assert {"from": "fo-1", "to": "fs-1", "labels": ["containedIn"], "properties": {}} in result["edges"]
+
+
+def test_recordset_reading_several_files_gets_no_variant(mapping_file: Path):
+    """A RecordSet whose fields read different files has no single source, so it keeps the generic mapping."""
+    mapping = yaml.safe_load(mapping_file.open("r"))
+
+    profile = {
+        "@id": "ds-1",
+        "@type": "sc:Dataset",
+        "name": "test",
+        "distribution": [
+            {"@type": "cr:FileObject", "@id": "fo-1", "name": "a.json", "encodingFormat": "application/json"},
+            {"@type": "cr:FileObject", "@id": "fo-2", "name": "b.json", "encodingFormat": "application/json"},
+        ],
+        "recordSet": [
+            {
+                "@type": "cr:RecordSet",
+                "@id": "rs-1",
+                "name": "joined",
+                "recordPath": "$[*]",
+                "field": [
+                    {"@type": "cr:Field", "@id": "f-1", "name": "a",
+                     "source": {"fileObject": {"@id": "fo-1"}, "extract": {"jsonPath": "$[*].a"}}},
+                    {"@type": "cr:Field", "@id": "f-2", "name": "b",
+                     "source": {"fileObject": {"@id": "fo-2"}, "extract": {"jsonPath": "$[*].b"}}},
+                ],
+            }
+        ],
+    }
+
+    result = croissant_to_pgjson(profile, mapping)
+    props = next(n for n in result["nodes"] if n["id"] == "rs-1")["properties"]
+
+    assert props == {"name": "joined"}

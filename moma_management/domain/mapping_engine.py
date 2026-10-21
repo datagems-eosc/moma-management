@@ -133,11 +133,15 @@ def build_schema_registry() -> SchemaRegistry:
     from moma_management.domain.generated.nodes.dataset.dataset_schema import (
         PgProperties as DatasetProps,
     )
+    from moma_management.domain.generated.nodes.dataset.jsonField_schema import (
+        PgProperties as JSONFieldProps,
+    )
 
     return {
         "Dataset": get_model_fields(DatasetProps),
         "Distribution": get_model_fields(DataProps),
         "Column": get_model_fields(ColumnProps),
+        "JSONField": get_model_fields(JSONFieldProps),
         "Statistics": get_model_fields(ColumnStatisticsProps),
     }
 
@@ -381,7 +385,9 @@ def _enrich_field_sources(data: dict) -> None:
 
     Also injects ``_source`` into each RecordSet itself by resolving the
     ``source.@id`` (direct FileObject ref used in PDF profiles), as well as
-    ``source.fileObject.@id`` / ``source.fileSet.@id``.
+    ``source.fileObject.@id`` / ``source.fileSet.@id``. A RecordSet without a
+    source of its own (the Croissant layout) gets its fields' source, when they
+    all read the same distribution.
     """
     dist_index: dict[str, dict] = {}
     for dist in data.get("distribution", []):
@@ -415,6 +421,12 @@ def _enrich_field_sources(data: dict) -> None:
                     if ref_id and ref_id in dist_index:
                         field["_source"] = dist_index[ref_id]
                         break
+
+        if "_source" not in rs:
+            source_ids = {f["_source"]["@id"]
+                          for f in rs.get("field", []) if "_source" in f}
+            if len(source_ids) == 1:
+                rs["_source"] = dist_index[source_ids.pop()]
 
 
 def croissant_to_pgjson(

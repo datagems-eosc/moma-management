@@ -47,6 +47,14 @@
                     "type": ["string", "null"],
                     "description": "JSON-encoded histogram of value distribution"
                 },
+                "topValues": {
+                    "type": ["string", "null"],
+                    "description": "JSON-encoded list of the most frequent values and their counts, e.g. [{\"value\": \"NOA\", \"count\": 182}]"
+                },
+                "jsonTypes": {
+                    "type": ["string", "null"],
+                    "description": "JSON-encoded count of non-null values per JSON type, e.g. {\"integer\": 400, \"string\": 12}; counts add up to rowCount (JSON sources only)"
+                },
                 "uniqueCount": {
                     "type": ["integer", "null"],
                     "description": "Number of distinct values in the column"
