@@ -115,6 +115,7 @@ class DatasetFilter(BaseModel):
     status:        Optional[Status] = None
     like:    Optional[str] = None
     license: Optional[str] = None
+    uploadedBy: Optional[str] = None
     fieldsOfScience: List[str] = Field(default_factory=list)
     page:     int = Field(default=1,  ge=1)
     pageSize: int = Field(default=10, ge=1, le=100)

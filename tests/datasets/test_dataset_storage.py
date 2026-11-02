@@ -507,19 +507,20 @@ class TestListMethod:
 
 
 # ---------------------------------------------------------------------------
-# Metadata search: like / license / fieldsOfScience
+# Metadata search: like / license / uploadedBy / fieldsOfScience
 # --------------
 # ds-alpha  name="Climate Observations"  headline="Daily weather stations"
 #           keywords=[meteorology, temperature]  license=CC-BY-4.0
+#           uploadedBy=user-1
 #           fieldOfScience=[Earth sciences]  datePublished=2024-01-15
 #           description mentions "Europe"
 # ds-beta   name="Genome Atlas"  headline="Human genomics reference"
-#           keywords=[biology, dna]  license=MIT
+#           keywords=[biology, dna]  license=MIT  uploadedBy=user-2
 #           fieldOfScience=[Biological sciences, Health sciences]
 #           datePublished=2024-06-01
 #           description mentions "climate" and "C++"
-# ds-gamma  name="Ocean Climatology"  (no headline, keywords, license nor
-#           fieldOfScience)  datePublished=2025-03-01
+# ds-gamma  name="Ocean Climatology"  (no headline, keywords, license,
+#           uploadedBy nor fieldOfScience)  datePublished=2025-03-01
 #           description mentions "climates"
 # ---------------------------------------------------------------------------
 
@@ -553,6 +554,7 @@ async def search_repository(
                 description="Surface measurements collected across Europe.",
                 keywords=["meteorology", "temperature"],
                 license="CC-BY-4.0",
+                uploadedBy="user-1",
                 fieldOfScience=["Earth sciences"],
                 datePublished="2024-01-15",
                 status="ready",
@@ -564,6 +566,7 @@ async def search_repository(
                 description="Unrelated to climate. Processed with a C++ pipeline (2024).",
                 keywords=["biology", "dna"],
                 license="MIT",
+                uploadedBy="user-2",
                 fieldOfScience=["Biological sciences", "Health sciences"],
                 datePublished="2024-06-01",
                 status="ready",
@@ -739,6 +742,28 @@ class TestMetadataSearch:
     @pytest.mark.asyncio
     async def test_license_without_match(self, search_repository):
         result = await _list(search_repository, license="apache")
+        assert result["total"] == 0
+
+    # -- uploadedBy ----------------------------------------------------------
+
+    @pytest.mark.asyncio
+    async def test_uploaded_by_exact_match(self, search_repository):
+        result = await _list(search_repository, uploadedBy="user-1")
+        assert self._ids(result) == [DS_ALPHA_ID]
+
+    @pytest.mark.asyncio
+    async def test_uploaded_by_is_not_a_substring_match(self, search_repository):
+        result = await _list(search_repository, uploadedBy="user")
+        assert result["total"] == 0
+
+    @pytest.mark.asyncio
+    async def test_uploaded_by_unknown_user(self, search_repository):
+        result = await _list(search_repository, uploadedBy="user-3")
+        assert result["total"] == 0
+
+    @pytest.mark.asyncio
+    async def test_uploaded_by_combined_with_another_filter(self, search_repository):
+        result = await _list(search_repository, uploadedBy="user-2", license="cc-by")
         assert result["total"] == 0
 
     # -- fieldsOfScience -----------------------------------------------------

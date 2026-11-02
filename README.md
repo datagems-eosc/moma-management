@@ -332,6 +332,7 @@ Note: when `PROFILING=true`, the profiling middleware replaces the normal respon
 | `status`        | `Status`             | —       | Filter by dataset status     |
 | `like`          | `string`             | —       | Free-text search (see below) |
 | `license`       | `string`             | —       | License contains this text   |
+| `uploadedBy`    | `string`             | —       | Uploaded by this user id     |
 | `fieldsOfScience` | `string[]`         | `[]`    | Has any of these fields of science |
 | `page`          | `int ≥ 1`            | `1`     | Page number                  |
 | `pageSize`      | `1–100`              | `25`    | Items per page               |

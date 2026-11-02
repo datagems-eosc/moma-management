@@ -299,6 +299,7 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
             AND ($publishedDateTo IS NULL OR {alias}.datePublished <= $publishedDateTo)
             AND ($status IS NULL OR {alias}.status = $status)
             AND ($license IS NULL OR toLower({alias}.license) CONTAINS $license)
+            AND ($uploadedBy IS NULL OR {alias}.uploadedBy = $uploadedBy)
             AND (
                 $fieldsOfScience = []
                 OR ANY(f IN {alias}.fieldOfScience WHERE toLower(f) IN $fieldsOfScience)
@@ -320,6 +321,7 @@ class Neo4jDatasetRepository(Neo4jPgJsonMixin):
                 status=criteria.status.value if criteria.status is not None else None,
                 like=like_query,
                 license=(criteria.license or "").strip().lower() or None,
+                uploadedBy=criteria.uploadedBy,
                 fieldsOfScience=[f.lower() for f in criteria.fieldsOfScience],
                 nodeLabels=node_labels,
                 mimeTypeValues=mime_type_values,

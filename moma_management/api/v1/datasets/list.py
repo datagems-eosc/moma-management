@@ -41,6 +41,8 @@ def _dataset_filters(
         default=None, description="Free-text search over `name`, `headline`, `keywords` and `description`. All words must match, each as a case-insensitive prefix (`clim` matches `Climate`). `*` and `?` are wildcards. Results are ordered by relevance unless `orderBy` is set."),
     license: str = Query(
         default=None, description="Filter datasets whose `license` contains this text (case-insensitive)."),
+    uploadedBy: str = Query(
+        default=None, description="Filter datasets uploaded by this user id (exact match)."),
     fieldsOfScience: List[str] = Query(
         default=[], description="Filter datasets having at least one of these fields of science (case-insensitive)."),
     page: int = Query(default=1, ge=1, description="Page number (1-indexed)."),
@@ -59,6 +61,7 @@ def _dataset_filters(
         status=status,
         like=like,
         license=license,
+        uploadedBy=uploadedBy,
         fieldsOfScience=fieldsOfScience,
         page=page,
         pageSize=pageSize,

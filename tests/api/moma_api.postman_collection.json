@@ -228,6 +228,38 @@
           ]
         },
         {
+          "name": "List Datasets Of Unknown Uploader",
+          "description": "The uploadedBy query parameter must reach the filter: an unknown user id returns nothing.",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/datasets?uploadedBy=unknown-user"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Total is 0', () => {",
+                  "  pm.expect(pm.response.json().total).to.equal(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "_pytest_assert": [
+            {
+              "key": "total",
+              "op": "equals",
+              "value": 0
+            }
+          ]
+        },
+        {
           "name": "Get Dataset",
           "description": "Retrieve the ingested dataset by its root ID.",
           "request": {
