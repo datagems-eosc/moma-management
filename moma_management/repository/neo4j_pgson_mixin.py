@@ -391,7 +391,7 @@ class Neo4jPgJsonMixin:
             nid = m["id"]
             if nid not in nodes_dict:
                 properties = {
-                    k.replace("__", ":"): v
+                    k.replace("__", ":"): _maybe_decode_json(v)
                     for k, v in (m.get("props") or {}).items()
                     if v is not None and k != "id"
                 }
@@ -411,7 +411,7 @@ class Neo4jPgJsonMixin:
             if e["from"] in nodes_dict and e["to"] in nodes_dict:
                 label = e["type"].replace("___", "/")
                 properties = {
-                    k.replace("__", ":"): v
+                    k.replace("__", ":"): _maybe_decode_json(v)
                     for k, v in (e.get("props") or {}).items()
                     if v is not None
                 }

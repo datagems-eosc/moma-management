@@ -7,6 +7,7 @@ import copy
 from datetime import date
 from pathlib import Path
 from typing import AsyncGenerator
+from uuid import uuid4
 
 import pytest
 import pytest_asyncio
@@ -23,7 +24,9 @@ from moma_management.domain.filters import (
     NodeLabel,
     SortDirection,
 )
+from moma_management.domain.generated.edges.edge_schema import Edge
 from moma_management.domain.generated.nodes.dataset.dataset_schema import Status
+from moma_management.domain.generated.nodes.node_schema import Node
 from moma_management.repository.dataset import Neo4jDatasetRepository
 from moma_management.repository.neo4j_pgson_mixin import _DATE_PROPS, _to_iso_date
 from tests.utils import (
@@ -136,6 +139,48 @@ async def test_round_trip(
     assert stored == expected, (
         f"Round-trip mismatch for {dataset_file.name!r}"
     )
+
+
+@pytest.mark.asyncio
+async def test_json_encoded_properties_round_trip(
+    dataset_repository: Neo4jDatasetRepository,
+):
+    """
+    Lists holding dicts or nulls are stored as ``__json__:`` strings, since
+    Neo4j arrays cannot hold either. get() and list() must decode them back,
+    or the API returns a string where its schema expects an array (HTTP 500).
+    """
+    examples = [{"value": "-3", "row": 4}, {"value": None, "row": 9}]
+    sample = ["FR", None, "DE"]
+    rs, col, dq, dqe = (str(uuid4()) for _ in range(4))
+    original = Dataset(
+        nodes=[
+            Node(id=DS_ALPHA_ID, labels=["sc:Dataset"], properties={}),
+            Node(id=rs, labels=["cr:RecordSet"], properties={}),
+            Node(id=col, labels=["Column"], properties={"sample": sample}),
+            Node(id=dq, labels=["DataQuality"],
+                 properties={"type": "dg:DataQuality", "summary": "1 issue"}),
+            Node(id=dqe, labels=["DataQualityError"],
+                 properties={"examples": examples}),
+        ],
+        edges=[
+            Edge(**{"from": DS_ALPHA_ID, "to": rs, "labels": ["recordSet"]}),
+            Edge(**{"from": rs, "to": col, "labels": ["field"]}),
+            Edge(**{"from": rs, "to": dq, "labels": ["HAS_DATA_QUALITY"]}),
+            Edge(**{"from": dq, "to": dqe, "labels": ["HAS_ERROR"]}),
+        ],
+    )
+    await dataset_repository.create(original)
+
+    stored = await dataset_repository.get(DS_ALPHA_ID)
+    props = {str(n.id): n.properties for n in stored.nodes}
+    assert props[dqe]["examples"] == examples
+    assert props[col]["sample"] == sample
+
+    listed = await _list(dataset_repository)
+    props = {str(n.id): n.properties for n in listed["datasets"][0].nodes}
+    assert props[dqe]["examples"] == examples
+    assert props[col]["sample"] == sample
 
 
 @pytest.mark.asyncio
