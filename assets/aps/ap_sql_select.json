@@ -77,7 +77,7 @@
                 "cr:FileObject",
                 "RelationalDatabase"
             ],
-            "properties": {}
+            "properties": {"name": "arg1"}
         },
         {
             "id": "c5a06fbd-887f-4562-8121-55dfe5a658c7",
@@ -85,7 +85,7 @@
                 "cr:FileObject",
                 "RelationalDatabase"
             ],
-            "properties": {}
+            "properties": {"name": "arg2"}
         }
     ]
 }

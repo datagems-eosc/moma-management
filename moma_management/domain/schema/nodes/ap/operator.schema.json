@@ -1,7 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/ap/operator.schema.json",
-    "title": "Operator",
     "description": "An Operator node represents a single processing step within an AnalyticalPattern. Specialisations (e.g. SQL_Operator) add further properties.",
     "$defs": {
         "parameterItem": {
@@ -27,6 +26,8 @@
             ]
         },
         "pgProperties": {
+            "customBasePath": "moma_management.domain.node_properties.NodeProperties",
+            "title": "Operator",
             "type": "object",
             "properties": {
                 "type": {

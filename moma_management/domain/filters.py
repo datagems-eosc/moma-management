@@ -9,7 +9,7 @@ from moma_management.domain.generated.nodes.dataset.dataset_schema import (
     Status,
 )
 from moma_management.domain.generated.nodes.dataset.dataset_schema import (
-    PgProperties as DatasetPgProperties,
+    Dataset as DatasetPgProperties,
 )
 
 

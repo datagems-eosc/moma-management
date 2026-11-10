@@ -1,9 +1,9 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "XML",
     "$defs": {
         "pgProperties": {
-            "$ref": "data.schema.json#/$defs/pgProperties",
+            "title": "XML",
+            "allOf": [{"$ref": "data.schema.json#/$defs/pgProperties"}],
             "unevaluatedProperties": true
         }
     },

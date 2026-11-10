@@ -1,10 +1,10 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/result_type/objectResult.schema.json",
-    "title": "Object Result",
     "description": "A non-persistent structured object value exchanged between Operators.",
     "$defs": {
         "pgProperties": {
+            "title": "ObjectResult",
             "allOf": [
                 { "$ref": "resultType.schema.json#/$defs/pgProperties" }
             ],

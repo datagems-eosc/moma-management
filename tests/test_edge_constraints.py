@@ -28,7 +28,7 @@ def _make_dataset(edge_label: str, from_labels: list[str], to_labels: list[str])
     return Dataset(
         nodes=[
             Node(id=root_id, labels=["sc:Dataset"], properties={}),
-            Node(id=child_id, labels=to_labels, properties={}),
+            Node(id=child_id, labels=to_labels, properties={"name": "test"}),
         ],
         edges=[
             Edge(**{"from": root_id, "to": child_id, "labels": [edge_label]}),
@@ -260,7 +260,7 @@ def test_ap_valid_operator_input_data_node():
             Node(id=root_id, labels=[
                  "Analytical_Pattern"], properties={"name": "test"}),
             Node(id=op_id, labels=["Operator"], properties={"name": "test"}),
-            Node(id=data_id, labels=["Data"], properties={}),
+            Node(id=data_id, labels=["Data"], properties={"name": "test"}),
         ],
         edges=[
             Edge(**{"from": root_id, "to": op_id, "labels": ["consist_of"]}),
@@ -280,7 +280,7 @@ def test_ap_valid_operator_output_data_node():
             Node(id=root_id, labels=[
                  "Analytical_Pattern"], properties={"name": "test"}),
             Node(id=op_id, labels=["Operator"], properties={"name": "test"}),
-            Node(id=data_id, labels=["Data"], properties={}),
+            Node(id=data_id, labels=["Data"], properties={"name": "test"}),
         ],
         edges=[
             Edge(**{"from": root_id, "to": op_id, "labels": ["consist_of"]}),
@@ -311,7 +311,7 @@ def _make_dataset_with_interval_stats(
     return Dataset(
         nodes=[
             Node(id=root_id, labels=["sc:Dataset"], properties={}),
-            Node(id=data_id, labels=["Data"], properties={}),
+            Node(id=data_id, labels=["Data"], properties={"name": "test"}),
             Node(id=col_id, labels=from_labels, properties={}),
             Node(id=stats_id, labels=to_labels,
                  properties=stats_properties or {}),

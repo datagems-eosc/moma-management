@@ -161,13 +161,13 @@ class AnalyticalPatternService:
             NotFoundError: if the AP does not exist.
         """
         from moma_management.domain.generated.nodes.ap.evaluation_schema import (
-            PgProperties as EvaluationProperties,
+            Evaluation,
         )
         from moma_management.domain.generated.nodes.node_schema import Node as GraphNode
 
         eval_id = uuidv4()
         # Validate properties against the Evaluation schema before building the node.
-        props = EvaluationProperties.model_validate({
+        props = Evaluation.model_validate({
             "executionId": str(execution_id or uuidv4()),
             "evaluation": eval,
             "type": type.value,

@@ -1,10 +1,11 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/dataset/dataQuality.schema.json",
-    "title": "DataQuality",
     "description": "Overall data quality detection result for a RecordSet, produced by an external profiler pipeline.",
     "$defs": {
         "pgProperties": {
+            "customBasePath": "moma_management.domain.node_properties.NodeProperties",
+            "title": "DataQuality",
             "type": "object",
             "properties": {
                 "type": {

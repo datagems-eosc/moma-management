@@ -1079,7 +1079,7 @@ class TestEncodingFormatFilter:
                         id=DS_JSON_FILE_ID,
                         # Only cr:FileObject — no "JSON" label
                         labels=["cr:FileObject", "Data"],
-                        properties={"encodingFormat": "application/json"},
+                        properties={"name": "data.json", "encodingFormat": "application/json"},
                     ),
                 ],
                 edges=[

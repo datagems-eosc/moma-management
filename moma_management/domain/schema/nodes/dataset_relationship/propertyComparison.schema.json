@@ -1,10 +1,11 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/dataset_relationship/propertyComparison.schema.json",
-    "title": "PropertyComparison",
     "description": "Compares one specific property (e.g. keywords, description) between the two datasets of a Dataset Relationship.",
     "$defs": {
         "pgProperties": {
+            "customBasePath": "moma_management.domain.node_properties.NodeProperties",
+            "title": "PropertyComparison",
             "type": "object",
             "properties": {
                 "targetProperty": {

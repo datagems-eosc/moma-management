@@ -1,9 +1,10 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/dataset/column.schema.json",
-    "title": "Column",
     "$defs": {
         "pgProperties": {
+            "customBasePath": "moma_management.domain.node_properties.NodeProperties",
+            "title": "Column",
             "type": "object",
             "properties": {
                 "name": {

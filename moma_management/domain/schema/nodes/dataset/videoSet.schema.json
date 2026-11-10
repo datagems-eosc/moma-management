@@ -1,8 +1,8 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "VideoSet",
     "$defs": {
         "pgProperties": {
+            "title": "VideoSet",
             "allOf": [
                 {
                     "$ref": "unstructuredData.schema.json#/$defs/pgProperties"

@@ -1,11 +1,11 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/ap/systemEvaluation.schema.json",
-    "title": "System Evaluation",
     "description": "An immutable snapshot of quality metrics collected for one execution of an AnalyticalPattern",
     "$defs": {
         "pgProperties": {
-            "$ref": "evaluation.schema.json#/$defs/pgProperties",
+            "title": "SystemEvaluation",
+            "allOf": [{"$ref": "evaluation.schema.json#/$defs/pgProperties"}],
             "unevaluatedProperties": true
         }
     }

@@ -1,10 +1,11 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/ap/user.schema.json",
-    "title": "User",
     "description": "A User node embedded inside an AnalyticalPattern subgraph to record which user triggered or configured a specific Operator.",
     "$defs": {
         "pgProperties": {
+            "customBasePath": "moma_management.domain.node_properties.NodeProperties",
+            "title": "User",
             "type": "object",
             "properties": {
                 "name": {

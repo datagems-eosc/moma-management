@@ -1,13 +1,47 @@
 from collections import defaultdict
-from typing import TYPE_CHECKING, ClassVar, Iterator, Optional, Self, Set, Tuple, cast
+from collections.abc import Iterable
+from functools import cache
+from importlib import import_module
+from json import loads
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, ClassVar, Iterator, Optional, Self, Set, Tuple, cast
 
 from deepdiff import DeepDiff
 from pydantic import model_validator
 
+from moma_management.domain.generated.edges.edge_schema import EdgeLabel
 from moma_management.domain.generated.moma_schema import MoMaGraphModel
+from moma_management.domain.generated.nodes.node_schema import Node
+from moma_management.domain.node_properties import NodeProperties
 
 if TYPE_CHECKING:
     from .validation import ValidationStep
+
+
+@cache
+def _rules() -> list[tuple[frozenset[str], type[NodeProperties]]]:
+    """(the labels a node carries, the class of its type), read from the rules of
+    node.schema.json the validation applies."""
+    nodes = Path(__file__).parent / "schema" / "nodes"
+    rules: list[tuple[frozenset[str], type[NodeProperties]]] = []
+    for rule in loads((nodes / "node.schema.json").read_text())["allOf"]:
+        labels = rule["if"]["properties"]["labels"]
+        ref = rule["then"]["properties"]["properties"]["$ref"].split("#")[0]
+        title = loads((nodes / ref).read_text())["$defs"]["pgProperties"]["title"]
+        module = import_module(
+            "moma_management.domain.generated.nodes." + ref.removesuffix(".schema.json").replace("/", ".") + "_schema")
+        rules.append((frozenset(c["contains"]["const"] for c in labels.get("allOf", [labels])), getattr(module, title)))
+    return rules
+
+
+def node_type(labels: Iterable[str]) -> type[NodeProperties] | None:
+    """The class of a node with *labels*: the most specific one its labels select
+    (["CsvSet", "Data"] -> CsvSet). None when no rule applies."""
+    found = [model for required, model in _rules() if required <= set(labels)]
+    specific = [m for m in found if not any(o is not m and issubclass(o, m) for o in found)]
+    if len(specific) > 1:
+        raise ValueError(f"Labels {sorted(labels)} select unrelated models: {[m.__name__ for m in specific]}")
+    return specific[0] if specific else None
 
 
 class MomaEntity(MoMaGraphModel):
@@ -59,6 +93,28 @@ class MomaEntity(MoMaGraphModel):
             for neighbor in adj[node]:
                 if neighbor != parent:
                     stack.append((neighbor, node))
+
+    def nodes_of[N: NodeProperties](self, kind: type[N], among: Iterable[Node] | None = None) -> list[N]:
+        """The nodes that are a *kind*, a subtype included: ``nodes_of(Data)`` also returns
+        the CsvSet nodes, as ``CsvSet``. A read-only view: the graph keeps its PG-JSON nodes."""
+        typed: list[N] = []
+        for node in self.nodes if among is None else among:
+            cls = node_type(node.labels)
+            if cls is not None and issubclass(cls, kind):
+                read = cls.model_validate(cast(dict[str, Any], node.properties))  # pyright: ignore[reportUnknownMemberType]
+                assert isinstance(read, kind)
+                read._id, read._labels = node.id, list(node.labels)  # pyright: ignore[reportPrivateUsage]
+                typed.append(read)
+        return typed
+
+    def neighbors[N: NodeProperties](
+        self, node: NodeProperties | Node, edge: EdgeLabel, kind: type[N], *, incoming: bool = False
+    ) -> list[N]:
+        """The *kind* nodes *node* reaches through its *edge* edges, or that reach it
+        through theirs when *incoming*."""
+        ends = {str(e.from_ if incoming else e.to) for e in self.edges or []
+                if edge in e.labels and str(e.to if incoming else e.from_) == str(node.id)}
+        return self.nodes_of(kind, [n for n in self.nodes if str(n.id) in ends])
 
     def normalize(self) -> Self:
         """

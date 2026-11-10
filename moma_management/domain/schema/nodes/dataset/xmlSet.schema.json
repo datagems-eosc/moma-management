@@ -1,9 +1,9 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "XMLSet",
     "$defs": {
         "pgProperties": {
-            "$ref": "structuredData.schema.json#/$defs/pgProperties",
+            "title": "XMLSet",
+            "allOf": [{"$ref": "structuredData.schema.json#/$defs/pgProperties"}],
             "unevaluatedProperties": true
         }
     },

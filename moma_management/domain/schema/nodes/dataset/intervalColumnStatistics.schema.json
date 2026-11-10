@@ -1,10 +1,11 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/dataset/intervalColumnStatistics.schema.json",
-    "title": "IntervalColumnStatistics",
     "description": "Statistics computed over a specific time window for a streaming dataset column.",
     "$defs": {
         "pgProperties": {
+            "customBasePath": "moma_management.domain.node_properties.NodeProperties",
+            "title": "IntervalColumnStatistics",
             "type": "object",
             "properties": {
                 "windowStart": {

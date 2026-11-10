@@ -1,9 +1,9 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/dataset/jsonField.schema.json",
-    "title": "JSONField",
     "$defs": {
         "pgProperties": {
+            "title": "JSONField",
             "allOf": [
                 {
                     "$ref": "column.schema.json#/$defs/pgProperties"

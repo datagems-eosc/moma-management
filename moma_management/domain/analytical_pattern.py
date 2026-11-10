@@ -5,6 +5,7 @@ from pydantic import model_validator
 
 from moma_management.domain.generated.edges.edge_schema import Edge, EdgeLabel
 from moma_management.domain.generated.nodes import node_schema
+from moma_management.domain.generated.nodes.ap.operator_schema import Operator
 from moma_management.domain.pg_json_graph import MomaEntity
 
 from .validation import MappingStep, SchemaStep, StructureStep
@@ -84,7 +85,7 @@ class AnalyticalPattern(MomaEntity):
         return wires
 
     @property
-    def operators(self) -> List[node_schema.Node]:
+    def operators(self) -> List[Operator]:
         """The Operator nodes in execution order: every producer before its consumers.
 
         The order follows the dataflow (``wiring``), not the ``follows`` edges: the
@@ -103,7 +104,7 @@ class AnalyticalPattern(MomaEntity):
                 left[0])
             left.remove(ready)
             ordered.append(ready)
-        return ordered
+        return self.nodes_of(Operator, ordered)
 
     def ports(self) -> List[Port]:
         """Every input and output the operators declare, in execution order, each one
@@ -114,11 +115,9 @@ class AnalyticalPattern(MomaEntity):
         ports: List[Port] = []
         for operator in self.operators:
             id_ = str(operator.id)
-            for is_input, key in ((True, "inputs"), (False, "outputs")):
-                declared: List[Dict[str, Any]] = self._properties(operator).get(key) or []
-                for port in declared:
-                    name = port["name"]
-                    ports.append(Port(id_, name, port["type"], is_input, (id_, is_input, name) in wired))
+            for is_input, declared in ((True, operator.inputs), (False, operator.outputs)):
+                for port in declared or []:
+                    ports.append(Port(id_, port.name, port.type, is_input, (id_, is_input, port.name) in wired))
         return ports
 
     def describe(self) -> str:
@@ -141,7 +140,7 @@ class AnalyticalPattern(MomaEntity):
 
         clauses: List[str] = []
         for operator in operators:
-            id_, properties = str(operator.id), self._properties(operator)
+            id_ = str(operator.id)
             inputs = [port for port in ports if port.operator_id == id_ and port.is_input]
             outputs = [str(port) for port in ports if port.operator_id == id_ and not port.is_input]
 
@@ -159,7 +158,7 @@ class AnalyticalPattern(MomaEntity):
                 if kinds:
                     io.append(f"{verb} {self._join(kinds)}")
 
-            action = str(properties.get("description") or properties.get("name") or "").strip().rstrip(".").strip()
+            action = (operator.description or operator.name).strip().rstrip(".").strip()
             # Lower the leading capital so the clause reads on after "Step 1:", except
             # for acronyms ("SQL ...").
             if len(action) > 1 and action[0].isupper() and action[1].islower():

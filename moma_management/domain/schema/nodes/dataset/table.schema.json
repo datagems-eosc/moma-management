@@ -1,9 +1,9 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/dataset/table.schema.json",
-    "title": "Table",
     "$defs": {
         "pgProperties": {
+            "title": "Table",
             "allOf": [
                 {
                     "$ref": "data.schema.json#/$defs/pgProperties"

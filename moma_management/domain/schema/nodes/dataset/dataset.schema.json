@@ -1,8 +1,9 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "Dataset",
     "$defs": {
         "pgProperties": {
+            "customBasePath": "moma_management.domain.node_properties.NodeProperties",
+            "title": "Dataset",
             "type": "object",
             "properties": {
                 "type": {
@@ -32,7 +33,7 @@
                 },
                 "url": {
                     "type": "string",
-                    "format": "uri",
+                    "format": "uri-reference",
                     "description": "Canonical URL of the dataset"
                 },
                 "inLanguage": {

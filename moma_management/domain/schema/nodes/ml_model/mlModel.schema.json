@@ -1,10 +1,11 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/ml_model/mlModel.schema.json",
-    "title": "ML_Model",
     "description": "An ML_Model node represents a machine-learning model that can be used by Operators for inference.",
     "$defs": {
         "pgProperties": {
+            "customBasePath": "moma_management.domain.node_properties.NodeProperties",
+            "title": "MLModel",
             "type": "object",
             "properties": {
                 "name": {

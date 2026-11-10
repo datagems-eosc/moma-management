@@ -1,10 +1,11 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/dataset/columnStatistics.schema.json",
-    "title": "ColumnStatistics",
     "description": "Descriptive statistics for a single column in a dataset.",
     "$defs": {
         "pgProperties": {
+            "customBasePath": "moma_management.domain.node_properties.NodeProperties",
+            "title": "Statistics",
             "type": "object",
             "properties": {
                 "type": {

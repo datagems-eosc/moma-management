@@ -1,8 +1,8 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "TextSet",
     "$defs": {
         "pgProperties": {
+            "title": "TextSet",
             "allOf": [
                 {
                     "$ref": "unstructuredData.schema.json#/$defs/pgProperties"

@@ -1,9 +1,9 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "ColumnTable",
     "$defs": {
         "pgProperties": {
-            "$ref": "column.schema.json#/$defs/pgProperties",
+            "title": "ColumnTable",
+            "allOf": [{"$ref": "column.schema.json#/$defs/pgProperties"}],
             "unevaluatedProperties": true
         }
     },

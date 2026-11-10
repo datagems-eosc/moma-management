@@ -1,10 +1,11 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/dataset/dataQualityError.schema.json",
-    "title": "DataQualityError",
     "description": "An individual data quality error pattern detected within a column. Deliberately not linked to a Column node by edge: profiler-generated column names may not exactly match stored Column node names (e.g. LLM generation variations).",
     "$defs": {
         "pgProperties": {
+            "customBasePath": "moma_management.domain.node_properties.NodeProperties",
+            "title": "DataQualityError",
             "type": "object",
             "properties": {
                 "type": {

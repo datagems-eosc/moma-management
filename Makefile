@@ -11,7 +11,8 @@ gen:
 	  --output-model-type pydantic_v2.BaseModel \
 	  --use-standard-collections \
 	  --use-field-description \
-	  --snake-case-field
+	  --snake-case-field \
+	  --use-annotated
 
 # Hand the trained adapter to the publish-analytical-pattern-embedder workflow, which merges
 # it and publishes the model on Hugging Face:

@@ -1,10 +1,11 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/ap/task.schema.json",
-    "title": "Task",
     "description": "A Task node represents a user-defined analytical goal. It is linked to one or more AnalyticalPatterns that accomplish it. Tasks live outside the AP subgraph and are never stored inside it.",
     "$defs": {
         "pgProperties": {
+            "customBasePath": "moma_management.domain.node_properties.NodeProperties",
+            "title": "Task",
             "type": "object",
             "properties": {
                 "name": {

@@ -191,8 +191,8 @@ async def populated_repository(
                     id=file_id,
                     # cr:FileObject → matches allowedLabels in list()
                     labels=["cr:FileObject", "Data"] + file_node_extra_labels,
-                    properties={
-                        "encodingFormat": encoding_format} if encoding_format else {},
+                    properties={"name": file_id, "encodingFormat": encoding_format}
+                    if encoding_format else {"name": file_id},
                 ),
             ],
             edges=[
@@ -270,7 +270,7 @@ async def mixed_date_repository(
                                 "status": "ready"},
                 ),
                 Node(id=file_id, labels=[
-                     "cr:FileObject", "Data"], properties={}),
+                     "cr:FileObject", "Data"], properties={"name": file_id}),
             ],
             edges=[Edge(**{"from": ds_id, "to": file_id,
                         "labels": ["distribution"]})],
@@ -334,7 +334,7 @@ async def mixed_types_repository(
         ]
         edges = []
         for fid, extra_labels, encoding_format in file_specs:
-            props = {"encodingFormat": encoding_format} if encoding_format else {}
+            props = {"name": fid, "encodingFormat": encoding_format} if encoding_format else {"name": fid}
             nodes.append(
                 Node(id=fid, labels=["cr:FileObject", "Data"] + extra_labels, properties=props))
             edges.append(

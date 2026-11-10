@@ -1,9 +1,9 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "ColumnCSV",
     "$defs": {
         "pgProperties": {
-            "$ref": "column.schema.json#/$defs/pgProperties",
+            "title": "ColumnCSV",
+            "allOf": [{"$ref": "column.schema.json#/$defs/pgProperties"}],
             "unevaluatedProperties": true
         }
     },

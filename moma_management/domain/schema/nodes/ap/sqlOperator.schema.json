@@ -1,10 +1,10 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/ap/sqlOperator.schema.json",
-    "title": "SQL_Operator",
     "description": "An Operator that executes a SQL statement. Carries the SQL query and metadata about the query type.",
     "$defs": {
         "pgProperties": {
+            "title": "SQLOperator",
             "allOf": [
                 {
                     "$ref": "operator.schema.json#/$defs/pgProperties"

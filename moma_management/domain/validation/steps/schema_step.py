@@ -191,7 +191,8 @@ class SchemaStep(ValidationStep):
         for schema_file in dataset_schema_dir.glob("*.schema.json"):
             try:
                 data = loads(schema_file.read_text())
-                title = data.get("title")
+                # The properties carry the node type's name
+                title = data.get("$defs", {}).get("pgProperties", {}).get("title")
                 if title:
                     title_by_file[schema_file.name] = title
                     schema_data[schema_file.name] = data

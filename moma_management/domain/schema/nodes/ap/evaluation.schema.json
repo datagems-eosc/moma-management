@@ -1,10 +1,11 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/ap/evaluation.schema.json",
-    "title": "Evaluation",
     "description": "An immutable snapshot of quality metrics collected for one execution of an AnalyticalPattern",
     "$defs": {
         "pgProperties": {
+            "customBasePath": "moma_management.domain.node_properties.NodeProperties",
+            "title": "Evaluation",
             "type": "object",
             "properties": {
                 "type": {

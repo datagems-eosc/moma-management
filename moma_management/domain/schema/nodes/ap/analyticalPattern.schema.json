@@ -1,10 +1,11 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "nodes/ap/analyticalPattern.schema.json",
-    "title": "Analytical_Pattern",
     "description": "Root node of an AnalyticalPattern subgraph. Identifies a reusable analytical workflow composed of Operators.",
     "$defs": {
         "pgProperties": {
+            "customBasePath": "moma_management.domain.node_properties.NodeProperties",
+            "title": "AnalyticalPattern",
             "type": "object",
             "properties": {
                 "name": {

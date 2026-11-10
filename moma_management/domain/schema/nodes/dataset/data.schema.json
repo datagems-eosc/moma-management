@@ -1,8 +1,9 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "Data",
     "$defs": {
         "pgProperties": {
+            "allOf": [{"$ref": "../result_type/resultType.schema.json#/$defs/pgProperties"}],
+            "title": "Data",
             "type": "object",
             "properties": {
                 "type": {
@@ -19,7 +20,7 @@
                 },
                 "contentUrl": {
                     "type": "string",
-                    "format": "uri",
+                    "format": "uri-reference",
                     "description": "URL where the data can be accessed"
                 },
                 "contentSize": {
