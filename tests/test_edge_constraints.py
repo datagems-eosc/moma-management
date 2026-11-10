@@ -622,3 +622,42 @@ def test_relationship_rejects_has_target_to_wrong_target():
     """HAS_TARGET from BasicDLElement to Operator (not sc:Dataset) must be rejected."""
     with pytest.raises(ValidationError, match="Edges violate graph constraints"):
         _make_relationship("HAS_TARGET", ["BasicDLElement"], ["Operator"])
+
+
+# ---------------------------------------------------------------------------
+# containedIn runs from the item to its container (README, mapping.yml)
+# ---------------------------------------------------------------------------
+
+
+def _dataset_with_contained(item: list[str], container: list[str], item_first: bool) -> Dataset:
+    """A Dataset whose *item* node and *container* node are linked by containedIn,
+    from the item to its container when *item_first*, the other way round otherwise."""
+    root_id, item_id, container_id = str(uuid4()), str(uuid4()), str(uuid4())
+    ends = (item_id, container_id) if item_first else (container_id, item_id)
+    return Dataset(
+        nodes=[
+            Node(id=root_id, labels=["sc:Dataset"], properties={}),
+            Node(id=container_id, labels=container, properties={"name": "container"}),
+            Node(id=item_id, labels=item, properties={"name": "item"}),
+        ],
+        edges=[
+            Edge(**{"from": root_id, "to": container_id, "labels": ["distribution"]}),
+            Edge(**{"from": ends[0], "to": ends[1], "labels": ["containedIn"]}),
+        ],
+    )
+
+
+@pytest.mark.parametrize("item, container", [
+    (["Table", "Data"], ["RelationalDatabase", "Data"]),
+    (["CSV", "Data"], ["CsvSet", "Data"]),
+    (["ColumnTable", "Column"], ["Table", "Data"]),
+    (["ColumnCSV", "Column"], ["CSV", "Data"]),
+])
+def test_dataset_valid_contained_in_from_item_to_container(item, container):
+    _dataset_with_contained(item, container, item_first=True)
+
+
+def test_dataset_rejects_contained_in_from_table_to_its_column():
+    # Two Data nodes match the generic Data -> Data rule either way; a column is not Data
+    with pytest.raises(ValidationError, match="containedIn"):
+        _dataset_with_contained(["ColumnTable", "Column"], ["Table", "Data"], item_first=False)

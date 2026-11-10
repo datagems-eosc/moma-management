@@ -179,7 +179,7 @@ async def test_get_excludes_deep_dataset_nodes(
         ],
         edges=[
             Edge(**{"from": ds_id, "to": data_id, "labels": ["distribution"]}),
-            Edge(**{"from": data_id, "to": deep_table_id,
+            Edge(**{"from": deep_table_id, "to": data_id,
                  "labels": ["containedIn"]}),
         ],
     ))
@@ -347,7 +347,7 @@ async def test_shallow_retrieval_does_not_include_deep_dataset_nodes(
         ],
         edges=[
             Edge(**{"from": ds_id, "to": data_id, "labels": ["distribution"]}),
-            Edge(**{"from": data_id, "to": deep_table_id,
+            Edge(**{"from": deep_table_id, "to": data_id,
                  "labels": ["containedIn"]}),
         ],
     )

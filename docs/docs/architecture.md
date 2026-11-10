@@ -179,8 +179,8 @@ graph LR
   UnstructuredData -. "is-a" .-> VideoSet
   UnstructuredData -. "is-a" .-> ImageSet
   Data -- containedIn --> Data
-  RelDB -- containedIn --> Table
-  CsvSet -- containedIn --> CSV
+  Table -- containedIn --> RelDB
+  CSV -- containedIn --> CsvSet
   RecordSet -- field --> Column
   RecordSet -- field --> PDF
   Column -- "source/fileObject" --> Data
