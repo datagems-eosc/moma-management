@@ -14,9 +14,9 @@ class DatasetRelationshipRepository(Protocol):
     async def get(self, relationship_id: str) -> Optional[DatasetRelationship]:
         """Retrieve a DatasetRelationship by its root node ID.
 
-        Returns the root node and its Property_Comparison/TextEvidence
-        subgraph (shallow retrieval — does NOT include the referenced
-        sc:Dataset nodes). Returns ``None`` if not found.
+        Returns the relationship subgraph (shallow retrieval): the linked
+        sc:Dataset / cr:FileObject nodes as id-and-label stubs, plus the stored
+        ``distribution`` edge of each linked file. Returns ``None`` if not found.
         """
         ...
 

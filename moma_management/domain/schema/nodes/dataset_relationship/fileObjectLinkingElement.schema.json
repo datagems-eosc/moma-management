@@ -1,0 +1,27 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "nodes/dataset_relationship/fileObjectLinkingElement.schema.json",
+    "description": "Groups the file-level comparisons of a Dataset Relationship: links similar cr:FileObject nodes of the two linked datasets (through FileObjectComparison).",
+    "$defs": {
+        "pgProperties": {
+            "customBasePath": "moma_management.domain.node_properties.NodeProperties",
+            "title": "FileObjectLinkingElement",
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Date the file object linking element was produced"
+                },
+                "similarityScore": {
+                    "type": "number",
+                    "description": "Similarity value computed between the concerned file objects"
+                },
+                "usesMetrics": {
+                    "type": "string",
+                    "description": "Metric used to compute the similarity score"
+                }
+            }
+        }
+    }
+}

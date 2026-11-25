@@ -1,0 +1,22 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "nodes/dataset_relationship/fileObjectComparison.schema.json",
+    "description": "Compares one specific part (e.g. filename, keywords) of cr:FileObject nodes from the two datasets of a Dataset Relationship.",
+    "$defs": {
+        "pgProperties": {
+            "customBasePath": "moma_management.domain.node_properties.NodeProperties",
+            "title": "FileObjectComparison",
+            "type": "object",
+            "properties": {
+                "targetProperty": {
+                    "type": "string",
+                    "description": "Which part of the file objects is compared (e.g. filename, keywords, description)"
+                },
+                "similarityScore": {
+                    "type": "number",
+                    "description": "Similarity value computed between the concerned file objects"
+                }
+            }
+        }
+    }
+}

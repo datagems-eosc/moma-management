@@ -18,9 +18,12 @@ async def get_relationship(
     """
     Retrieve a DatasetRelationship (shallow) by its root node ID.
 
-    Only the root ``BasicDLElement`` node and its internal
-    ``PropertyComparison``/``TextEvidence`` subgraph are returned; the
-    referenced ``sc:Dataset`` nodes are not recursed into.
+    Returns the relationship subgraph (``BasicDLElement`` with its
+    ``PropertyComparison``/``TextEvidence`` and ``FileObjectLinkingElement``/
+    ``FileObjectComparison`` nodes). The linked ``sc:Dataset`` and
+    ``cr:FileObject`` nodes are stubs (id and label only, never recursed into),
+    plus the stored ``distribution`` edge of each linked file, telling which
+    of the two datasets it belongs to.
 
     **Required permission:** ``dg_ds-browse`` on **both** datasets linked by
     the relationship, or realm role ``dg_admin`` / ``dg_dataset-curator``.

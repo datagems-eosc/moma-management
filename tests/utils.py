@@ -1,6 +1,11 @@
 from json import dumps
 from pathlib import Path
 from typing import Any, Dict
+from uuid import uuid4
+
+from moma_management.domain.dataset_relationship import DatasetRelationship
+from moma_management.domain.generated.edges.edge_schema import Edge
+from moma_management.domain.generated.nodes.node_schema import Node
 
 # ---------------------------------------------------------------------------
 # Fixed UUIDs for test fixtures
@@ -90,3 +95,40 @@ def save(pg_json: dict, output_path: Path):
     output_path.parent.mkdir(exist_ok=True, parents=True)
     normalized = normalize(pg_json)
     output_path.write_text(dumps(normalized, indent=2, sort_keys=True))
+
+
+def make_file_object_relationship(
+    ds_a: str, ds_b: str, file_a: str, file_b: str, with_distribution: bool = False,
+) -> DatasetRelationship:
+    """Build the dataset-linking FileObject shape (issue #30):
+
+    BasicDLElement -HAS_TARGET-> both datasets,
+    BasicDLElement -HAS_DETAIL-> FileObjectLinkingElement
+    -HAS_COMPARISON-> FileObjectComparison -HAS_TARGET-> both files,
+    and optionally ds_a -distribution-> file_a, ds_b -distribution-> file_b.
+    """
+    root_id, fole_id, foc_id = str(uuid4()), str(uuid4()), str(uuid4())
+    return DatasetRelationship(
+        nodes=[
+            Node(id=root_id, labels=["BasicDLElement"], properties={"similarityScore": 85.07}),
+            Node(id=ds_a, labels=["sc:Dataset"], properties={}),
+            Node(id=ds_b, labels=["sc:Dataset"], properties={}),
+            Node(id=fole_id, labels=["FileObjectLinkingElement"],
+                 properties={"date": "2026-05-16", "similarityScore": 100.0, "usesMetrics": "avg"}),
+            Node(id=foc_id, labels=["FileObjectComparison"],
+                 properties={"targetProperty": "filename", "similarityScore": 100.0}),
+            Node(id=file_a, labels=["cr:FileObject"], properties={}),
+            Node(id=file_b, labels=["cr:FileObject"], properties={}),
+        ],
+        edges=[
+            Edge(**{"from": root_id, "to": ds_a, "labels": ["HAS_TARGET"]}),
+            Edge(**{"from": root_id, "to": ds_b, "labels": ["HAS_TARGET"]}),
+            Edge(**{"from": root_id, "to": fole_id, "labels": ["HAS_DETAIL"]}),
+            Edge(**{"from": fole_id, "to": foc_id, "labels": ["HAS_COMPARISON"]}),
+            Edge(**{"from": foc_id, "to": file_a, "labels": ["HAS_TARGET"]}),
+            Edge(**{"from": foc_id, "to": file_b, "labels": ["HAS_TARGET"]}),
+        ] + ([
+            Edge(**{"from": ds_a, "to": file_a, "labels": ["distribution"]}),
+            Edge(**{"from": ds_b, "to": file_b, "labels": ["distribution"]}),
+        ] if with_distribution else []),
+    )

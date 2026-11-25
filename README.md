@@ -46,8 +46,10 @@ The diagram below shows all MoMa node types and their relationships. Solid arrow
 | `BasicDLElement` | Root node of a Dataset Relationship: links exactly two `sc:Dataset` nodes found similar by an external dataset-linking pipeline |
 | `PropertyComparison` | Compares one specific property (e.g. keywords, description) between the two linked datasets |
 | `TextEvidence` | Backs a `PropertyComparison` with a specific piece of textual evidence (e.g. a matching chunk) |
+| `FileObjectLinkingElement` | Groups the file-level comparisons of a Dataset Relationship |
+| `FileObjectComparison` | Compares one part (e.g. filename) of similar `cr:FileObject` nodes of the two linked datasets |
 
-> **What is a Dataset Relationship?** A **Dataset Relationship** (a.k.a. "dataset linking") is a small subgraph produced by an external comparison pipeline — not by users — that records *why* two datasets were found to be similar. Its root `BasicDLElement` node links exactly two `sc:Dataset` nodes; optional `PropertyComparison` children break the similarity down by dataset property (keywords, description, …), each optionally backed by `TextEvidence` (the specific text chunk that was compared). A relationship is a **weak reference**: only admins can create or delete one, browsing it requires `BROWSE` access on *both* linked datasets, at most one relationship may exist per dataset pair, and deleting either dataset automatically deletes the relationship. See the "Dataset Relationships" API section below.
+> **What is a Dataset Relationship?** A **Dataset Relationship** (a.k.a. "dataset linking") is a small subgraph produced by an external comparison pipeline — not by users — that records *why* two datasets were found to be similar. Its root `BasicDLElement` node links exactly two `sc:Dataset` nodes; optional `PropertyComparison` children break the similarity down by dataset property (keywords, description, …), each optionally backed by `TextEvidence` (the specific text chunk that was compared). An optional `FileObjectLinkingElement` (`HAS_DETAIL`) does the same at file level: its `FileObjectComparison` children each compare files of *both* linked datasets (`cr:FileObject` nodes, which must belong to those datasets). Linked datasets and files are references: send them as `{id, labels}` stubs; MoMa neither writes nor returns their content. The only edges allowed to start from them are optional `distribution` edges stating which linked dataset a file belongs to: they must match what MoMa stores and are never written. Reads always include them, from MoMa's own data. A relationship is a **weak reference**: only admins can create or delete one, browsing it requires `BROWSE` access on *both* linked datasets, at most one relationship may exist per dataset pair, and deleting either dataset automatically deletes the relationship. See the "Dataset Relationships" API section below.
 
 ```mermaid
 graph LR
@@ -180,12 +182,17 @@ graph LR
   BasicDLElement:::relationship
   PropertyComparison:::relationship
   TextEvidence:::relationship
+  FileObjectLinkingElement:::relationship
+  FileObjectComparison:::relationship
 
   BasicDLElement -- HAS_TARGET --> Dataset
   BasicDLElement -- HAS_COMPARISON --> PropertyComparison
   PropertyComparison -- HAS_TARGET --> Dataset
   PropertyComparison -- HAS_EVIDENCE --> TextEvidence
   TextEvidence -- HAS_TARGET --> Dataset
+  BasicDLElement -- HAS_DETAIL --> FileObjectLinkingElement
+  FileObjectLinkingElement -- HAS_COMPARISON --> FileObjectComparison
+  FileObjectComparison -- "HAS_TARGET (cr:FileObject)" --> Data
 ```
 
 | Colour | Domain |
@@ -200,7 +207,7 @@ graph LR
 
 | Edge | From | To | Description |
 |------|------|----|-------------|
-| `distribution` | `sc:Dataset` | `Data` | A dataset exposes a data distribution |
+| `distribution` | `sc:Dataset` | `Data` (or a `cr:FileObject` reference, in a Dataset Relationship) | A dataset exposes a data distribution |
 | `recordSet` | `sc:Dataset` | `cr:RecordSet` | A dataset exposes a Croissant record set |
 | `linkTo` | `Data` | `Data` | A data node references another data node |
 | `containedIn` | `Data` / sub-types | `Data` / sub-types | Child points to its container (e.g. `CSV → CsvSet`, `ColumnTable → Table`) |
@@ -219,9 +226,10 @@ graph LR
 | `perform_inference` | `Operator` | `ML_Model` | Operator runs inference against an ML model |
 | `is_accomplished_by` | `Task` | `Analytical_Pattern` | Task is fulfilled by an AP |
 | `is_measured_by` | `Analytical_Pattern` | `Evaluation` | AP links to its evaluation record(s) |
-| `HAS_COMPARISON` | `BasicDLElement` | `PropertyComparison` | Dataset Relationship root → a per-property similarity breakdown (`weight` edge property) |
+| `HAS_COMPARISON` | `BasicDLElement` or `FileObjectLinkingElement` | `PropertyComparison` or `FileObjectComparison` (respectively) | Dataset Relationship root → a per-property similarity breakdown, or file linking → a file comparison (`weight` edge property) |
+| `HAS_DETAIL` | `BasicDLElement` | `FileObjectLinkingElement` | Dataset Relationship root → its file-level comparisons |
 | `HAS_EVIDENCE` | `PropertyComparison` | `TextEvidence` | Property comparison → supporting text evidence (`rank` edge property) |
-| `HAS_TARGET` | `BasicDLElement`, `PropertyComparison`, or `TextEvidence` | `sc:Dataset` | Links a Dataset Relationship node to one of the two datasets it concerns (`chunk`/`similarityScore` edge properties) |
+| `HAS_TARGET` | `BasicDLElement`, `PropertyComparison`, or `TextEvidence` / `FileObjectComparison` | `sc:Dataset` / `cr:FileObject` | Links a Dataset Relationship node to one of the two datasets it concerns (`chunk`/`similarityScore` edge properties), or a file comparison to one of the compared files |
 
 ## Quick Start
 

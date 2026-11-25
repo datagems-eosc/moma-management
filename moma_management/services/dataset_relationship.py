@@ -31,21 +31,64 @@ class DatasetRelationshipService:
         Returns the relationship root node ID.
 
         Raises:
-            ValidationError: if either target dataset does not exist.
+            ValidationError: if either target dataset does not exist, a
+                referenced cr:FileObject is not part of one of them, a
+                ``distribution`` edge contradicts what MoMa stores, or a
+                FileObjectComparison does not compare files of both datasets.
             ConflictError: if a relationship already exists for this dataset pair.
         """
         target_ids = list(relationship.target_dataset_ids)
         result = await self._dataset_service.list(DatasetFilter(nodeIds=target_ids))
         found_ids: set[str] = set()
+        file_owner: dict[str, str] = {}  # stored file id -> id of the dataset it belongs to
         for ds in result.get("datasets", []):
+            # list() also returns a dataset when one of its *children* matches
+            # an id: only the dataset nodes themselves prove a target exists.
+            ds_id = next((str(n.id) for n in ds.nodes if "sc:Dataset" in n.labels), None)
+            if ds_id is None:
+                continue
+            found_ids.add(ds_id)
             for node in ds.nodes:
-                found_ids.add(str(node.id))
+                if "cr:FileObject" in node.labels:
+                    file_owner[str(node.id)] = ds_id
 
         missing = [nid for nid in target_ids if nid not in found_ids]
         if missing:
             raise ValidationError(
                 f"DatasetRelationship references dataset(s) that do not exist: "
                 f"{', '.join(missing)}"
+            )
+
+        # Linking a file from any other dataset would leak it into this relationship.
+        foreign_files = sorted(relationship.file_object_ids - file_owner.keys())
+        if foreign_files:
+            raise ValidationError(
+                f"DatasetRelationship references file object(s) that are not "
+                f"part of the two linked datasets: {', '.join(foreign_files)}"
+            )
+
+        # Optional distribution edges are never written: they must match what MoMa stores.
+        wrong_memberships = sorted(
+            f"{f} is in {file_owner[f]}, not {d}"
+            for d, f in relationship.file_memberships if file_owner[f] != d
+        )
+        if wrong_memberships:
+            raise ValidationError(
+                f"DatasetRelationship distribution edge(s) contradict MoMa: "
+                f"{'; '.join(wrong_memberships)}"
+            )
+
+        # A comparison is *between* the two datasets: it needs a file from each.
+        compared: dict[str, set[str]] = {}
+        comparison_ids = {str(n.id) for n in relationship.nodes if "FileObjectComparison" in n.labels}
+        for e in relationship.edges or []:
+            if str(e.from_) in comparison_ids and str(e.to) in file_owner:
+                compared.setdefault(str(e.from_), set()).add(file_owner[str(e.to)])
+        one_sided = sorted(c for c in comparison_ids if len(compared.get(c, ())) < 2)
+        if one_sided:
+            raise ValidationError(
+                f"FileObjectComparison(s) must compare files from both linked "
+                f"datasets, but these do not: {', '.join(one_sided)}"
             )
 
         existing_id = await self._repo.find_id_for_dataset_pair(*relationship.target_dataset_ids)

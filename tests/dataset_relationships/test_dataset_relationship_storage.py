@@ -19,6 +19,7 @@ from moma_management.domain.generated.nodes.node_schema import Node
 from moma_management.repository.dataset_relationship import (
     Neo4jDatasetRelationshipRepository,
 )
+from tests.utils import make_file_object_relationship
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -297,3 +298,101 @@ async def test_list_for_dataset_returns_only_matching_relationships(
     await relationship_repository.delete(str(rel_ab.root.id))
     await relationship_repository.delete(str(rel_ac.root.id))
     await relationship_repository.delete(str(rel_bc.root.id))
+
+
+# ---------------------------------------------------------------------------
+# FileObject linking (issue #30)
+# ---------------------------------------------------------------------------
+
+async def _persist_with_files(
+    repo: Neo4jDatasetRelationshipRepository,
+    rel: DatasetRelationship,
+    owners: dict[str, str],
+) -> None:
+    """Stand up the datasets with their stored PDF files (*owners*: file id ->
+    dataset id), plus an unlinked file per dataset and a Column on each file, so
+    a read that walks past a file or returns unlinked files would show. Then
+    create the relationship."""
+    stored = dict(owners) | {str(uuid4()): ds for ds in set(owners.values())}
+    for f, ds in stored.items():
+        await repo._session.run(
+            "MERGE (d:`sc:Dataset` {id: $ds}) "
+            "MERGE (d)-[:distribution]->(f:PDF:Data:`cr:FileObject` {id: $f, name: 'real'}) "
+            "MERGE (:Column {id: $col})-[:`source___fileObject`]->(f)",
+            ds=ds, f=f, col=str(uuid4()),
+        )
+    await repo.create(rel)
+
+
+async def _count_stored(repo: Neo4jDatasetRelationshipRepository, rel: DatasetRelationship) -> int:
+    """Count the relationship's own nodes (not its references) still in the database."""
+    ids = [str(n.id) for n in rel.nodes if not rel.REFERENCE_LABELS & set(n.labels)]
+    result = await repo._session.run(
+        "MATCH (n) WHERE n.id IN $ids RETURN count(n) AS c", ids=ids)
+    return (await result.single())["c"]
+
+
+@pytest.mark.asyncio
+async def test_file_object_link_round_trip(
+    relationship_repository: Neo4jDatasetRelationshipRepository,
+):
+    """Files are references: create() never overwrites them, and get() returns
+    them as cr:FileObject stubs without walking into the dataset behind them,
+    plus the stored distribution edges of the linked files (and only those)."""
+    ds_a, ds_b, file_a, file_b = (str(uuid4()) for _ in range(4))
+    rel = make_file_object_relationship(ds_a, ds_b, file_a, file_b)
+    next(n for n in rel.nodes if str(n.id) == file_a).properties = {"name": "wrong"}
+
+    await _persist_with_files(relationship_repository, rel, {file_a: ds_a, file_b: ds_b})
+
+    result = await relationship_repository._session.run(
+        "MATCH (f {id: $id}) RETURN f.name AS name", id=file_a)
+    assert (await result.single())["name"] == "real"
+
+    retrieved = await relationship_repository.get(str(rel.root.id))
+    files = [n for n in retrieved.nodes if "cr:FileObject" in n.labels]
+    assert {str(n.id) for n in files} == {file_a, file_b}
+    assert all(n.labels == ["cr:FileObject"] and n.properties == {} for n in files)
+    assert not any("Column" in n.labels for n in retrieved.nodes)
+    assert retrieved.file_memberships == {(ds_a, file_a), (ds_b, file_b)}
+    DatasetRelationship.model_validate(retrieved.model_dump(by_alias=True, mode="json"))
+
+    await relationship_repository.delete(str(rel.root.id))
+    assert await _count_stored(relationship_repository, rel) == 0
+
+
+@pytest.mark.asyncio
+async def test_delete_referencing_removes_file_object_linking(
+    relationship_repository: Neo4jDatasetRelationshipRepository,
+):
+    """Deleting a dataset must not leave orphan FileObjectLinkingElement /
+    FileObjectComparison nodes behind (reached through HAS_DETAIL)."""
+    ds_a, ds_b, file_a, file_b = (str(uuid4()) for _ in range(4))
+    rel = make_file_object_relationship(ds_a, ds_b, file_a, file_b)
+    await _persist_with_files(relationship_repository, rel, {file_a: ds_a, file_b: ds_b})
+
+    await relationship_repository.delete_referencing(ds_a)
+
+    assert await _count_stored(relationship_repository, rel) == 0
+
+
+@pytest.mark.asyncio
+async def test_create_never_writes_distribution_edges(
+    relationship_repository: Neo4jDatasetRelationshipRepository,
+):
+    """distribution edges in the payload belong to the datasets: create() drops
+    them, so even a wrong one (which the service would reject) changes nothing."""
+    ds_a, ds_b, file_a, file_b = (str(uuid4()) for _ in range(4))
+    rel = make_file_object_relationship(ds_a, ds_b, file_a, file_b, with_distribution=True)
+    # Stored the other way round: the payload's ds_a -> file_a is wrong
+    await _persist_with_files(relationship_repository, rel, {file_a: ds_b, file_b: ds_a})
+
+    result = await relationship_repository._session.run(
+        "MATCH (:`sc:Dataset` {id: $ds})-[r:distribution]->(:`cr:FileObject` {id: $f}) RETURN count(r) AS c",
+        ds=ds_a, f=file_a)
+    assert (await result.single())["c"] == 0
+
+    retrieved = await relationship_repository.get(str(rel.root.id))
+    assert retrieved.file_memberships == {(ds_b, file_a), (ds_a, file_b)}
+
+    await relationship_repository.delete(str(rel.root.id))

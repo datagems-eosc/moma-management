@@ -30,7 +30,8 @@
                 "VIRTUAL_BELONGS_TO",
                 "HAS_COMPARISON",
                 "HAS_EVIDENCE",
-                "HAS_TARGET"
+                "HAS_TARGET",
+                "HAS_DETAIL"
             ]
         }
     },
@@ -69,7 +70,7 @@
                 },
                 "weight": {
                     "type": ["number", "null"],
-                    "description": "HAS_COMPARISON: weight of this PropertyComparison in the BasicDLElement's similarity computation"
+                    "description": "HAS_COMPARISON: weight of this comparison in its parent's (BasicDLElement or FileObjectLinkingElement) similarity computation"
                 },
                 "rank": {
                     "type": ["integer", "null"],

@@ -5,7 +5,7 @@ from uuid import UUID
 from neo4j import AsyncSession
 
 from moma_management.domain.dataset_relationship import DatasetRelationship
-from moma_management.domain.generated.edges.edge_schema import Edge
+from moma_management.domain.generated.edges.edge_schema import Edge, EdgeLabel
 from moma_management.domain.generated.nodes.node_schema import Node
 from moma_management.repository.dataset_relationship.dataset_relationship_repository import (
     DatasetRelationshipRepository,
@@ -18,13 +18,10 @@ logger = getLogger(__name__)
 class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRepository):
     """Neo4j-backed implementation of ``DatasetRelationshipRepository``."""
 
-    # HAS_TARGET links relationship nodes to external sc:Dataset nodes and must
-    # NOT be traversed when deleting a relationship subgraph in isolation.
-    # (Reads stop *at* the sc:Dataset nodes instead — see ``get``.)
+    # HAS_TARGET links relationship nodes to external sc:Dataset / cr:FileObject
+    # nodes and must NOT be traversed when deleting a relationship subgraph in
+    # isolation. (Reads stop *at* those nodes instead — see ``get``.)
     FORBIDDEN_EDGES: list[str] = ["HAS_TARGET"]
-
-    # Label of the external nodes a relationship references but never owns.
-    _DATASET_LABEL = "sc:Dataset"
 
     _INDEX_STATEMENTS: list[str] = [
         "CREATE CONSTRAINT basic_dl_element_id_unique IF NOT EXISTS "
@@ -35,6 +32,10 @@ class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRe
         "FOR (n:PropertyComparison) REQUIRE n.id IS UNIQUE",
         "CREATE CONSTRAINT text_evidence_id_unique IF NOT EXISTS "
         "FOR (n:TextEvidence) REQUIRE n.id IS UNIQUE",
+        "CREATE CONSTRAINT file_object_linking_element_id_unique IF NOT EXISTS "
+        "FOR (n:FileObjectLinkingElement) REQUIRE n.id IS UNIQUE",
+        "CREATE CONSTRAINT file_object_comparison_id_unique IF NOT EXISTS "
+        "FOR (n:FileObjectComparison) REQUIRE n.id IS UNIQUE",
     ]
     _indexes_ensured: bool = False
 
@@ -58,16 +59,21 @@ class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRe
     async def create(self, relationship: DatasetRelationship) -> None:
         """Store the DatasetRelationship subgraph using the mixin's MERGE/SET helpers.
 
-        The targeted ``sc:Dataset`` nodes are references, not payload: they are
-        dropped before writing so their stored properties and labels are never
-        overwritten by whatever the caller put in the request body. The service
-        has already checked both exist, and ``create_pgson_edge`` binds them
-        with ``MATCH``.
+        The targeted ``sc:Dataset`` and ``cr:FileObject`` nodes are references,
+        not payload: they are dropped before writing so their stored properties
+        and labels are never overwritten by whatever the caller put in the
+        request body. The service has already checked they exist, and
+        ``create_pgson_edge`` binds them with ``MATCH``. Edges starting from a
+        reference (the optional ``distribution`` edges) belong to the dataset:
+        the service checked they match what is stored, and they are dropped too.
         """
+        reference_labels = DatasetRelationship.REFERENCE_LABELS
+        reference_ids = {str(n.id) for n in relationship.nodes if reference_labels & set(n.labels)}
         await self._session.execute_write(
             self.create_pgson,
             relationship.model_copy(update={
-                "nodes": [n for n in relationship.nodes if self._DATASET_LABEL not in n.labels]
+                "nodes": [n for n in relationship.nodes if str(n.id) not in reference_ids],
+                "edges": [e for e in relationship.edges or [] if str(e.from_) not in reference_ids],
             }),
         )
 
@@ -91,7 +97,7 @@ class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRe
         """Delete every relationship subgraph that targets *dataset_id* (cascade on dataset deletion).
 
         Only follows the relationship's own internal edges (HAS_COMPARISON /
-        HAS_EVIDENCE) from the entry point(s) found via HAS_TARGET, so a
+        HAS_EVIDENCE / HAS_DETAIL) from the entry point(s) found via HAS_TARGET, so a
         relationship linking dataset A and dataset B is fully removed when A
         is deleted, without ever touching B.
         """
@@ -99,7 +105,7 @@ class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRe
             """//cypher
             MATCH (target:`sc:Dataset` {id: $datasetId})<-[:HAS_TARGET]-(seed)
             WHERE NOT seed:`sc:Dataset`
-            OPTIONAL MATCH path=(seed)-[:HAS_COMPARISON|HAS_EVIDENCE*0..10]-(m)
+            OPTIONAL MATCH path=(seed)-[:HAS_COMPARISON|HAS_EVIDENCE|HAS_DETAIL*0..10]-(m)
             WHERE NONE(x IN nodes(path) WHERE x:`sc:Dataset`)
             WITH collect(DISTINCT seed) + collect(DISTINCT m) AS toDelete
             UNWIND toDelete AS n
@@ -145,13 +151,16 @@ class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRe
 
     async def get(self, relationship_id: str) -> Optional[DatasetRelationship]:
         """
-        Shallow retrieval: Return relationship subgraph + ref to datasets
-        Dataset ref have labels and id, but no properties.
+        Shallow retrieval: Return relationship subgraph + refs to the datasets
+        and file objects it targets. A ref has its id and its reference label
+        (sc:Dataset / cr:FileObject) only: no properties, no other labels.
+        The stored ``distribution`` edges of the linked files are added, so a
+        reader knows which of the two datasets each file belongs to.
         """
         query = """//cypher
             MATCH (root:BasicDLElement {id: $relationshipId})
             OPTIONAL MATCH path=(root)-[*1..4]-(m)
-            WHERE NONE(n IN nodes(path)[0..-1] WHERE n:`sc:Dataset`)
+            WHERE NONE(n IN nodes(path)[0..-1] WHERE n:`sc:Dataset` OR n:`cr:FileObject`)
             RETURN root, m, relationships(path) AS rels
         """
         result = await self._session.run(query, relationshipId=str(relationship_id))
@@ -165,6 +174,7 @@ class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRe
         root = rows[0]["root"]
         if root is None:
             return None
+        reference_labels = DatasetRelationship.REFERENCE_LABELS
         nodes[root["id"]] = self._deserialize_node(root)
 
         for record in rows:
@@ -174,14 +184,35 @@ class Neo4jDatasetRelationshipRepository(Neo4jPgJsonMixin, DatasetRelationshipRe
                 mid = m["id"]
                 if mid not in nodes:
                     node = self._deserialize_node(m)
-                    # NOTE: We don't return the properties of dataset references
-                    if self._DATASET_LABEL in node["labels"]:
+                    # NOTE: References come back as stubs. A stored file object is
+                    # also e.g. PDF/Data, and a Data node without properties is invalid.
+                    if reference_labels & set(node["labels"]):
+                        node["labels"] = [l for l in node["labels"] if l in reference_labels]
                         node["properties"] = {}
                     nodes[mid] = node
             for rel in rels:
                 key = (rel.start_node["id"], rel.end_node["id"], rel.type)
                 if key not in edges:
                     edges[key] = self._deserialize_edge(rel)
+
+        # The traversal stops at references, so it never crosses a dataset's own
+        # `distribution` edge: fetch the ones of the linked files separately.
+        file_ids = [i for i, n in nodes.items() if "cr:FileObject" in n["labels"]]
+        if file_ids:
+            dataset_ids = [i for i, n in nodes.items() if "sc:Dataset" in n["labels"]]
+            membership = await self._session.run(
+                """//cypher
+                MATCH (d:`sc:Dataset`)-[:distribution]->(f:`cr:FileObject`)
+                WHERE d.id IN $datasetIds AND f.id IN $fileIds
+                RETURN d.id AS datasetId, f.id AS fileId
+                """,
+                datasetIds=dataset_ids, fileIds=file_ids,
+            )
+            async for record in membership:
+                edges[(record["datasetId"], record["fileId"], "distribution")] = {
+                    "from": record["datasetId"], "to": record["fileId"],
+                    "labels": [EdgeLabel.distribution], "properties": {},
+                }
 
         valid_edges = [
             e for e in edges.values()

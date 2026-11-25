@@ -35,6 +35,7 @@ from moma_management.repository.ml_model import Neo4jMlModelRepository
 from moma_management.services.analytical_pattern import AnalyticalPatternService
 from moma_management.services.dataset import DatasetService
 from moma_management.services.dataset_relationship import DatasetRelationshipService
+from tests.utils import make_file_object_relationship
 from moma_management.services.ml_model import MlModelService
 
 # ---------------------------------------------------------------------------
@@ -285,6 +286,10 @@ _MATHE_PROFILE_PATH = (
     Path(__file__).parent.parent / "assets" /
     "profiles" / "light" / "mathe_light.json"
 )
+_SINGLE_PDF_PROFILE_PATH = (
+    Path(__file__).parent.parent / "assets" /
+    "profiles" / "light" / "single_pdf.json"
+)
 
 
 def _load_relationship_fixture(
@@ -441,3 +446,44 @@ async def test_delete_dataset_cascades_relationship_deletion(
 
     # Clean up
     await ds_svc.delete(ds_id_b)
+
+
+def _first_file_object_id(dataset) -> str:
+    return next(str(n.id) for n in dataset.nodes if "cr:FileObject" in n.labels)
+
+
+@pytest.mark.asyncio
+async def test_file_object_linking_only_accepts_files_of_the_linked_datasets(
+    rel_services: tuple[DatasetService, DatasetRelationshipService],
+):
+    """A FileObject linking between two stored datasets is created when its
+    files belong to them (with matching optional distribution edges), and
+    rejected when one file comes from a third dataset or is claimed by the
+    wrong dataset. Reads return the true membership."""
+    ds_svc, rel_svc = rel_services
+
+    ds_a = await ds_svc.ingest(json.loads(_LIGHT_PROFILE_PATH.read_text()))
+    ds_b = await ds_svc.ingest(json.loads(_MATHE_PROFILE_PATH.read_text()))
+    ds_c = await ds_svc.ingest(json.loads(_SINGLE_PDF_PROFILE_PATH.read_text()))
+    ds_id_a, ds_id_b, ds_id_c = (
+        str(next(n.id for n in ds.nodes if "sc:Dataset" in n.labels)) for ds in (ds_a, ds_b, ds_c))
+
+    with pytest.raises(ValidationError, match="not part of the two linked datasets"):
+        await rel_svc.create(make_file_object_relationship(
+            ds_id_a, ds_id_b, _first_file_object_id(ds_a), _first_file_object_id(ds_c)))
+
+    file_a, file_b = _first_file_object_id(ds_a), _first_file_object_id(ds_b)
+    with pytest.raises(ValidationError, match="contradict MoMa"):
+        await rel_svc.create(make_file_object_relationship(
+            ds_id_b, ds_id_a, file_a, file_b, with_distribution=True))  # each file claimed by the wrong dataset
+
+    rel_id = await rel_svc.create(make_file_object_relationship(
+        ds_id_a, ds_id_b, file_a, file_b, with_distribution=True))
+    retrieved = await rel_svc.get(rel_id)
+    assert any("FileObjectComparison" in n.labels for n in retrieved.nodes)
+    assert retrieved.file_memberships == {(ds_id_a, file_a), (ds_id_b, file_b)}
+
+    # Clean up
+    await rel_svc.delete(rel_id)
+    for ds_id in (ds_id_a, ds_id_b, ds_id_c):
+        await ds_svc.delete(ds_id)

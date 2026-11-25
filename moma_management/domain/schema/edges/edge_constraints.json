@@ -7,6 +7,12 @@
     },
     {
         "fromLabel": "sc:Dataset",
+        "label": "distribution",
+        "toLabel": "cr:FileObject",
+        "description": "Dataset -> one of its files. Also lets a Dataset Relationship state which linked dataset a referenced file belongs to"
+    },
+    {
+        "fromLabel": "sc:Dataset",
         "label": "recordSet",
         "toLabel": "cr:RecordSet",
         "description": "Dataset → record set"
@@ -226,5 +232,23 @@
         "label": "HAS_TARGET",
         "toLabel": "sc:Dataset",
         "description": "TextEvidence -> the dataset it was extracted from"
+    },
+    {
+        "fromLabel": "BasicDLElement",
+        "label": "HAS_DETAIL",
+        "toLabel": "FileObjectLinkingElement",
+        "description": "Dataset Relationship root -> a FileObjectLinkingElement grouping the file-level comparisons"
+    },
+    {
+        "fromLabel": "FileObjectLinkingElement",
+        "label": "HAS_COMPARISON",
+        "toLabel": "FileObjectComparison",
+        "description": "FileObjectLinkingElement -> a FileObjectComparison between similar files of the two datasets"
+    },
+    {
+        "fromLabel": "FileObjectComparison",
+        "label": "HAS_TARGET",
+        "toLabel": "cr:FileObject",
+        "description": "FileObjectComparison -> one of the compared files (must belong to one of the two linked datasets)"
     }
 ]

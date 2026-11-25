@@ -210,12 +210,17 @@ graph LR
   BasicDLElement:::relationship
   PropertyComparison:::relationship
   TextEvidence:::relationship
+  FileObjectLinkingElement:::relationship
+  FileObjectComparison:::relationship
 
   BasicDLElement -- HAS_TARGET --> Dataset
   BasicDLElement -- HAS_COMPARISON --> PropertyComparison
   PropertyComparison -- HAS_TARGET --> Dataset
   PropertyComparison -- HAS_EVIDENCE --> TextEvidence
   TextEvidence -- HAS_TARGET --> Dataset
+  BasicDLElement -- HAS_DETAIL --> FileObjectLinkingElement
+  FileObjectLinkingElement -- HAS_COMPARISON --> FileObjectComparison
+  FileObjectComparison -- "HAS_TARGET (cr:FileObject)" --> Data
 ```
 
 | Colour | Domain |
@@ -226,7 +231,7 @@ graph LR
 | ⬜ Grey | Task & User |
 | 🟤 Brown | Dataset Relationship (dataset linking) |
 
-A **Dataset Relationship** ("dataset linking") is a small subgraph produced by an external comparison pipeline — never authored directly by end users — recording that two datasets were found similar. Its root `BasicDLElement` links exactly two `sc:Dataset` nodes; optional `PropertyComparison` children break the similarity down by dataset property (keywords, description, …), each optionally backed by `TextEvidence`. It is treated as a **weak reference**: only admins may create or delete one, reading it requires `BROWSE` on both linked datasets, at most one relationship may exist per dataset pair, and deleting either dataset cascades to delete the relationship.
+A **Dataset Relationship** ("dataset linking") is a small subgraph produced by an external comparison pipeline — never authored directly by end users — recording that two datasets were found similar. Its root `BasicDLElement` links exactly two `sc:Dataset` nodes; optional `PropertyComparison` children break the similarity down by dataset property (keywords, description, …), each optionally backed by `TextEvidence`. An optional `FileObjectLinkingElement` (`HAS_DETAIL`) does the same at file level, its `FileObjectComparison` children pointing at similar `cr:FileObject` nodes of the two datasets. It is treated as a **weak reference**: only admins may create or delete one, reading it requires `BROWSE` on both linked datasets, at most one relationship may exist per dataset pair, and deleting either dataset cascades to delete the relationship.
 
 ## External dependencies
 

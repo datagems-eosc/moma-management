@@ -684,6 +684,42 @@
                     }
                 }
             }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "FileObjectLinkingElement"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset_relationship/fileObjectLinkingElement.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "labels": {
+                        "contains": {
+                            "const": "FileObjectComparison"
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "properties": {
+                        "$ref": "dataset_relationship/fileObjectComparison.schema.json#/$defs/pgProperties"
+                    }
+                }
+            }
         }
     ],
     "$id": "nodes/node.schema.json"
